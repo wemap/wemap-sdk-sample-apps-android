@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/InitialFragment">
+
+    <fragment
+        android:id="@+id/MapFragment"
+        android:name="com.getwemap.example.map.MapFragment"
+        android:label="@string/map_fragment_label"
+        tools:layout="@layout/fragment_map"/>
+    <fragment
+        android:id="@+id/InitialFragment"
+        android:name="com.getwemap.example.map.InitialFragment"
+        android:label="@string/initial_fragment_label"
+        tools:layout="@layout/fragment_initial">
+
+        <action
+            android:id="@+id/action_InitialFragment_to_MapFragment"
+            app:destination="@id/MapFragment" />
+    </fragment>
+</navigation>
