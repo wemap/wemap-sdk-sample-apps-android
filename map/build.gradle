@@ -11,8 +11,8 @@ android {
         applicationId namespace
         minSdk 21
         targetSdk 33
-        versionCode 1
-        versionName '0.1.0'
+        versionCode 2
+        versionName '0.2.0'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,7 +35,7 @@ android {
 }
 
 dependencies {
-    implementation 'com.getwemap.sdk:map:0.1.0'
+    implementation 'com.getwemap.sdk:map:0.2.0'
 
     implementation 'eu.polestar:naosdk:4.11.11'
 

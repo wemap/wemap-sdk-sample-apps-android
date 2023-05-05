@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,12 +24,15 @@ import com.getwemap.sdk.map.buildings.Building
 import com.getwemap.sdk.map.buildings.OnActiveLevelChangeListener
 import com.getwemap.sdk.map.buildings.OnBuildingFocusChangeListener
 import com.getwemap.sdk.map.itineraries.ItineraryOptions
+import com.getwemap.sdk.map.navigation.NavigationInfo
 import com.getwemap.sdk.map.navigation.NavigationOptions
+import com.getwemap.sdk.map.navigation.OnNavigationInfoChangedListener
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
 import com.mapbox.geojson.Feature
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
+import com.mapbox.mapboxsdk.location.modes.CameraMode
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class MapFragment : Fragment() {
@@ -45,6 +47,10 @@ class MapFragment : Fragment() {
     private lateinit var binding: FragmentMapBinding
     private val mapView get() = binding.mapView
     private val levelToggle get() = binding.levelToggle
+    private val textView get() = binding.textView
+
+    // also you can use simulator to generate locations along the itinerary
+//    private val simulator = IndoorLocationProviderSimulator(SimulationOptions(true))
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         Mapbox.getInstance(requireContext())
@@ -52,7 +58,7 @@ class MapFragment : Fragment() {
         return binding.root
     }
 
-    // TODO: it's due to Parcelable usage. Pass initial bounds in another way if it's blocking for you
+    // TODO: it's due to Parcelable usage. Maybe it's better to use something less modern. But as soon as it's just for sample app I'll keep it as-is for now
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -71,8 +77,15 @@ class MapFragment : Fragment() {
         }
 
         mapView.getMapAsync {
+
+            it.uiSettings.apply {
+                isLogoEnabled = false
+                isAttributionEnabled = false
+            }
+
             it.getStyle {
                 startLocationService()
+                createItinerary()
             }
 
             mapView.buildingManager.addOnBuildingFocusChangeListener(object : OnBuildingFocusChangeListener {
@@ -87,7 +100,11 @@ class MapFragment : Fragment() {
                 }
             })
 
-            createItinerary()
+            mapView.navigationManager.addOnNavigationInfoChangedListener(object : OnNavigationInfoChangedListener {
+                override fun onNavigationInfoChanged(info: NavigationInfo) {
+                    textView.text = info.shortDescription
+                }
+            })
         }
 
         levelToggle.addOnButtonCheckedListener { group, checkedId, isChecked ->
@@ -105,40 +122,45 @@ class MapFragment : Fragment() {
 
     private fun createItinerary() {
         val from = Coordinate(Location("Hardcoded"), 0F)
-        from.location.latitude = 48.8445445
-        from.location.longitude = 2.3732009
+        from.latitude = 48.844548658057306
+        from.longitude = 2.3732023740778025
 
         val to = Coordinate(Location("Hardcoded"), 1F)
-        to.location.latitude = 48.844423524854314
-        to.location.longitude = 2.373660055406727
+        to.latitude = 48.84442126724909
+        to.longitude = 2.373656619804761
 
-        val disposable = mapView.itineraryManager
-            .getItineraries(from, to)
-            .subscribe({ itineraries ->
-                println("Successfully received itineraries $itineraries")
-                if (itineraries.isEmpty()) {
-                    return@subscribe
-                }
-                val itinerary = itineraries[0]
-                mapView.itineraryManager.addItinerary(
-                    itinerary,
-                    ItineraryOptions(10f, 1f, Color.RED)
-                )
-                Handler().postDelayed({
-                    mapView.itineraryManager.removeItinerary(itinerary)
-                }, 10000)
-
+        // Navigation to a coordinate using user location as start or optional custom location
+        val disposable = mapView.navigationManager
+            .startNavigation(
+                from,
+                to,
+                NavigationOptions(ItineraryOptions(10f, 1f, Color.RED), CameraMode.TRACKING)
+            )
+            .subscribe({
+                // also you can use simulator to generate locations along the itinerary
+//                simulator.setItinerary(it)
+                println("Successfully started navigation itinerary: $it")
             }, {
-                println("Failed to get itineraries $it")
+                println("Failed to start navigation with error: $it")
             })
 
-        // Navigation to a coordinate using user location as start
-//        val disposable = mapView.navigationManager
-//            .startNavigation(
-//                to,
-//                NavigationOptions(ItineraryOptions(10f, 1f, Color.RED))
-//            )
-//            .subscribe()
+//        val disposable = mapView.itineraryManager
+//            .getItineraries(from, to)
+//            .flatMap { itineraries ->
+//                println("Successfully received itineraries $itineraries")
+//                if (itineraries.isEmpty()) {
+//                    return@flatMap Single.error(NavigationError.noItinerariesFoundToDestination)
+//                }
+//                return@flatMap Single.just(itineraries.first())
+//            }
+//            .subscribe({
+//                mapView.itineraryManager.addItinerary(
+//                    it,
+//                    ItineraryOptions(10f, 1f, Color.RED)
+//                )
+//            }, {
+//                println("Failed to get itineraries with error: $it")
+//            })
 
         disposeBag.add(disposable)
     }
@@ -187,6 +209,8 @@ class MapFragment : Fragment() {
     private fun setupLocationProvider() {
         val provider = PolestarIndoorLocationProvider(requireContext(), "emulator")
         mapView.indoorLocationProvider = provider
+        // also you can use simulator to generate locations along the itinerary
+//        mapView.indoorLocationProvider = simulator
     }
 
     override fun onStart() {

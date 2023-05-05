@@ -10,7 +10,12 @@ import com.mapbox.mapboxsdk.location.engine.LocationEngine
 import com.mapbox.mapboxsdk.location.engine.LocationEngineCallback
 import com.mapbox.mapboxsdk.location.engine.LocationEngineRequest
 import com.mapbox.mapboxsdk.location.engine.LocationEngineResult
-import com.polestar.naosdk.api.external.*
+import com.polestar.naosdk.api.external.NAOERRORCODE
+import com.polestar.naosdk.api.external.NAOLocationHandle
+import com.polestar.naosdk.api.external.NAOLocationListener
+import com.polestar.naosdk.api.external.NAOSensorsListener
+import com.polestar.naosdk.api.external.NAOSyncListener
+import com.polestar.naosdk.api.external.TNAOFIXSTATUS
 import com.polestar.naosdk.managers.NaoServiceManager
 
 class PolestarIndoorLocationProviderServiceManager : NaoServiceManager()
@@ -18,7 +23,7 @@ class PolestarIndoorLocationProviderServiceManager : NaoServiceManager()
 class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
     : IndoorLocationProvider(), NAOLocationListener, NAOSensorsListener, NAOSyncListener, LocationEngine {
 
-    override var isStarted = false
+    var isStarted = false
         private set
 
     private var dataSynchronized = false
@@ -73,6 +78,7 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
         standardLocation.latitude = location.latitude
         standardLocation.longitude = location.longitude
         standardLocation.time = System.currentTimeMillis()
+        _callback?.onSuccess(LocationEngineResult.create(standardLocation))
 
         val altitude = location.altitude
         val indoorLocation: Coordinate = if (floorByAltitudeMap == null) {
@@ -86,7 +92,6 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
             }
         }
         dispatchIndoorLocationChange(indoorLocation)
-        _callback?.onSuccess(LocationEngineResult.create(standardLocation))
     }
 
     override fun onLocationStatusChanged(tnaofixstatus: TNAOFIXSTATUS?) {}

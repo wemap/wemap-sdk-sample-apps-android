@@ -32,6 +32,9 @@ class InitialFragment : Fragment() {
     }
 
     private fun loadMap() {
+        // uncomment if you want to use dev environment
+//        WemapMapSDK.setEnvironment(Environment.Dev())
+
         val disposable = WemapMapSDK.instance
             .map(Constants.mapId, Constants.token)
             .observeOn(AndroidSchedulers.mainThread())

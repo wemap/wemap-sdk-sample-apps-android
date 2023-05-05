@@ -9,7 +9,9 @@
     <com.getwemap.sdk.map.WemapMapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+    </com.getwemap.sdk.map.WemapMapView>
 
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/levelToggle"
@@ -20,6 +22,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:selectionRequired="true"
-        app:singleSelection="true"/>
+        app:singleSelection="true"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="#80000000"
+        android:text="Navigation info will be here"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/levelToggle" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
