@@ -5,14 +5,12 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.getwemap.example.map.databinding.FragmentMapBinding
@@ -23,7 +21,9 @@ import com.getwemap.sdk.map.OnMapViewClickListener
 import com.getwemap.sdk.map.buildings.Building
 import com.getwemap.sdk.map.buildings.OnActiveLevelChangeListener
 import com.getwemap.sdk.map.buildings.OnBuildingFocusChangeListener
+import com.getwemap.sdk.map.extensions.latLng
 import com.getwemap.sdk.map.itineraries.ItineraryOptions
+import com.getwemap.sdk.map.model.entities.MapData
 import com.getwemap.sdk.map.navigation.NavigationInfo
 import com.getwemap.sdk.map.navigation.NavigationOptions
 import com.getwemap.sdk.map.navigation.OnNavigationInfoChangedListener
@@ -33,6 +33,10 @@ import com.mapbox.geojson.Feature
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
 import com.mapbox.mapboxsdk.location.modes.CameraMode
+import com.mapbox.mapboxsdk.maps.Style
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions
+import com.mapbox.mapboxsdk.utils.BitmapUtils
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class MapFragment : Fragment() {
@@ -58,21 +62,27 @@ class MapFragment : Fragment() {
         return binding.root
     }
 
-    // TODO: it's due to Parcelable usage. Maybe it's better to use something less modern. But as soon as it's just for sample app I'll keep it as-is for now
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val style = requireArguments().getString("styleUrl")
-        val bounds = requireArguments().getParcelable("initialBounds", LatLngBounds::class.java)
-        mapView.styleUrl = style
-        mapView.initialBounds = bounds
+        val args = requireArguments()
+        val data = MapData(
+            args.getInt("id"),
+            args.getString("styleUrl")!!,
+            LatLngBounds.from(
+                args.getDouble("latitudeNorth"),
+                args.getDouble("longitudeEast"),
+                args.getDouble("latitudeSouth"),
+                args.getDouble("longitudeWest")
+            )
+        )
+        mapView.mapData = data
         mapView.onCreate(savedInstanceState)
 
         mapView.onMapViewClickListener = object : OnMapViewClickListener {
             override fun onFeatureClick(feature: Feature) {
-                val externalId = feature.getStringProperty("externalId")
-                Snackbar.make(mapView, "Map feature clicked with id $externalId", Snackbar.LENGTH_LONG).show()
+                selectFeatureByPOI(feature)
+//                selectFeatureByWemapID(feature)
             }
         }
 
@@ -120,6 +130,60 @@ class MapFragment : Fragment() {
         }
     }
 
+    private fun selectFeatureByPOI(feature: Feature) {
+        val wemapId = feature.getNumberProperty("wemapId").toInt()
+
+        val poi = mapView.pointOfInterestManager.getPOIs().firstOrNull { it.id == wemapId }
+            ?: return println("failed to find cached POI for feature - $feature")
+
+        mapView.pointOfInterestManager.centerToPOI(poi, true)
+
+        addUserImageToStyle(mapView.map.style!!)
+
+        val manager = SymbolManager(mapView, mapView.map, mapView.map.style!!)
+
+        val symbolOptions = SymbolOptions()
+            .withLatLng(poi.latLng)
+            .withIconImage("user")
+            .withIconSize(1.3F)
+
+        val annotation = manager.create(symbolOptions)
+
+        showSnackbar(wemapId) { manager.delete(annotation) }
+    }
+
+    private fun addUserImageToStyle(style: Style) {
+        style.addImage(
+            "user",
+            BitmapUtils.getBitmapFromDrawable(resources.getDrawable(com.mapbox.mapboxsdk.R.drawable.maplibre_user_icon))!!,
+            true
+        )
+    }
+
+    private fun selectFeatureByWemapID(feature: Feature) {
+        val wemapId = feature.getNumberProperty("wemapId").toInt()
+
+        mapView.pointOfInterestManager.centerToPOI(wemapId, true)
+
+        showSnackbar(wemapId)
+    }
+
+    private fun showSnackbar(wemapId: Int, onDismissed: (() -> Unit)? = null) {
+
+        Snackbar
+            .make(mapView, "Map feature clicked with id $wemapId", Snackbar.LENGTH_LONG)
+            .addCallback(object : Snackbar.Callback() {
+                override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+                    mapView.pointOfInterestManager.showAllPOIs()
+                    onDismissed?.invoke()
+                    super.onDismissed(transientBottomBar, event)
+                }
+            })
+            .show()
+
+        mapView.pointOfInterestManager.hideAllPOIs()
+    }
+
     private fun createItinerary() {
         val from = Coordinate(Location("Hardcoded"), 0F)
         from.latitude = 48.844548658057306
@@ -134,7 +198,7 @@ class MapFragment : Fragment() {
             .startNavigation(
                 from,
                 to,
-                NavigationOptions(ItineraryOptions(10f, 1f, Color.RED), CameraMode.TRACKING)
+                NavigationOptions(ItineraryOptions(10f, 1f, Color.RED), CameraMode.TRACKING_COMPASS)
             )
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary

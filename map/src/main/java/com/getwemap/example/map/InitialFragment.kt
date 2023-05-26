@@ -41,8 +41,12 @@ class InitialFragment : Fragment() {
             .subscribe({
                 println("Received map data - $it")
                 val bundle = Bundle()
+                bundle.putInt("id", it.id)
                 bundle.putString("styleUrl", it.style)
-                bundle.putParcelable("initialBounds", it.bounds)
+                bundle.putDouble("latitudeNorth", it.bounds.latitudeNorth)
+                bundle.putDouble("longitudeEast", it.bounds.longitudeEast)
+                bundle.putDouble("latitudeSouth", it.bounds.latitudeSouth)
+                bundle.putDouble("longitudeWest", it.bounds.longitudeWest)
                 findNavController().navigate(R.id.action_InitialFragment_to_MapFragment, bundle)
             }, {
                 println("Failed to receive map data with error - ${it.message}")
