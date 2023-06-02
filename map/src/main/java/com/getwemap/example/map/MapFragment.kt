@@ -201,11 +201,11 @@ class MapFragment : Fragment() {
     }
 
     private fun createItinerary() {
-        val from = Coordinate(Location("Hardcoded"), 0F)
+        val from = Coordinate(Location("Hardcoded"), -1F)
         from.latitude = 48.844548658057306
         from.longitude = 2.3732023740778025
 
-        val to = Coordinate(Location("Hardcoded"), 1F)
+        val to = Coordinate(Location("Hardcoded"), 0F)
         to.latitude = 48.84442126724909
         to.longitude = 2.373656619804761
 
