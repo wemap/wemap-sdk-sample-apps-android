@@ -47,6 +47,13 @@ class InitialFragment : Fragment() {
                 bundle.putDouble("longitudeEast", it.bounds.longitudeEast)
                 bundle.putDouble("latitudeSouth", it.bounds.latitudeSouth)
                 bundle.putDouble("longitudeWest", it.bounds.longitudeWest)
+                it.maxBounds?.let { maxBounds ->
+                    bundle.putBoolean("hasMaxBounds", true)
+                    bundle.putDouble("maxLatitudeNorth", maxBounds.latitudeNorth)
+                    bundle.putDouble("maxLongitudeEast", maxBounds.longitudeEast)
+                    bundle.putDouble("maxLatitudeSouth", maxBounds.latitudeSouth)
+                    bundle.putDouble("maxLongitudeWest", maxBounds.longitudeWest)
+                }
                 findNavController().navigate(R.id.action_InitialFragment_to_MapFragment, bundle)
             }, {
                 println("Failed to receive map data with error - ${it.message}")

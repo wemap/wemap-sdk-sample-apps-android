@@ -56,6 +56,10 @@ class MapFragment : Fragment() {
     // also you can use simulator to generate locations along the itinerary
 //    private val simulator = IndoorLocationProviderSimulator(SimulationOptions(true))
 
+    private val maxBounds = LatLngBounds
+        .from(48.84811619854466, 2.377353558713054,
+            48.84045277048898, 2.371600716985739)
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         Mapbox.getInstance(requireContext())
         binding = FragmentMapBinding.inflate(inflater, container, false)
@@ -66,6 +70,15 @@ class MapFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val args = requireArguments()
+        var maxBounds: LatLngBounds? = null
+        if (args.containsKey("hasMaxBounds")) {
+            maxBounds = LatLngBounds.from(
+                args.getDouble("maxLatitudeNorth"),
+                args.getDouble("maxLongitudeEast"),
+                args.getDouble("maxLatitudeSouth"),
+                args.getDouble("maxLongitudeWest")
+            )
+        }
         val data = MapData(
             args.getInt("id"),
             args.getString("styleUrl")!!,
@@ -74,9 +87,12 @@ class MapFragment : Fragment() {
                 args.getDouble("longitudeEast"),
                 args.getDouble("latitudeSouth"),
                 args.getDouble("longitudeWest")
-            )
+            ),
+            maxBounds
         )
         mapView.mapData = data
+        // camera bounds can be specified even if they don't exist in MapData
+//        mapView.cameraBounds = maxBounds
         mapView.onCreate(savedInstanceState)
 
         mapView.onMapViewClickListener = object : OnMapViewClickListener {
@@ -174,14 +190,14 @@ class MapFragment : Fragment() {
             .make(mapView, "Map feature clicked with id $wemapId", Snackbar.LENGTH_LONG)
             .addCallback(object : Snackbar.Callback() {
                 override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
-                    mapView.pointOfInterestManager.showAllPOIs()
+                    mapView.pointOfInterestManager.showPOI(wemapId)
                     onDismissed?.invoke()
                     super.onDismissed(transientBottomBar, event)
                 }
             })
             .show()
 
-        mapView.pointOfInterestManager.hideAllPOIs()
+        mapView.pointOfInterestManager.hidePOI(wemapId)
     }
 
     private fun createItinerary() {
@@ -207,6 +223,16 @@ class MapFragment : Fragment() {
             }, {
                 println("Failed to start navigation with error: $it")
             })
+
+        // to stop navigation
+//        val disp = mapView.navigationManager
+//            .stopNavigation()
+//            .subscribe({
+//                println("Successfully stopped navigation itinerary: $it")
+//            }, {
+//                println("Failed to stop navigation with error: $it")
+//            })
+//        disposeBag.add(disp)
 
 //        val disposable = mapView.itineraryManager
 //            .getItineraries(from, to)
