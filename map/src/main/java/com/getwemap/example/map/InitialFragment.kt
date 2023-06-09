@@ -29,6 +29,20 @@ class InitialFragment : Fragment() {
         binding.buttonLoadMap.setOnClickListener {
             loadMap()
         }
+
+        // if you need to retrieve all points of interest for some map in advance
+//        val service = ServiceFactory.createService(
+//            IPointOfInterestService::class.java,
+//            CoreConstants.API_BASE_URL
+//        )
+//        val disp = service
+//            .pointsOfInterestById(23254)
+//            .subscribe({
+//                println("received pois - $it")
+//            }, {
+//                println("failed to receive pois with error - $it")
+//            })
+//        disposeBag.add(disp)
     }
 
     private fun loadMap() {

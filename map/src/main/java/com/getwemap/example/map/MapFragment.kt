@@ -21,7 +21,6 @@ import com.getwemap.sdk.map.OnMapViewClickListener
 import com.getwemap.sdk.map.buildings.Building
 import com.getwemap.sdk.map.buildings.OnActiveLevelChangeListener
 import com.getwemap.sdk.map.buildings.OnBuildingFocusChangeListener
-import com.getwemap.sdk.map.extensions.latLng
 import com.getwemap.sdk.map.itineraries.ItineraryOptions
 import com.getwemap.sdk.map.model.entities.MapData
 import com.getwemap.sdk.map.navigation.NavigationInfo
@@ -33,10 +32,7 @@ import com.mapbox.geojson.Feature
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.geometry.LatLngBounds
 import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager
-import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions
-import com.mapbox.mapboxsdk.utils.BitmapUtils
+import com.mapbox.mapboxsdk.location.modes.RenderMode
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class MapFragment : Fragment() {
@@ -56,9 +52,9 @@ class MapFragment : Fragment() {
     // also you can use simulator to generate locations along the itinerary
 //    private val simulator = IndoorLocationProviderSimulator(SimulationOptions(true))
 
-    private val maxBounds = LatLngBounds
-        .from(48.84811619854466, 2.377353558713054,
-            48.84045277048898, 2.371600716985739)
+//    private val maxBounds = LatLngBounds
+//        .from(48.84811619854466, 2.377353558713054,
+//            48.84045277048898, 2.371600716985739)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         Mapbox.getInstance(requireContext())
@@ -150,54 +146,38 @@ class MapFragment : Fragment() {
         val wemapId = feature.getNumberProperty("wemapId").toInt()
 
         val poi = mapView.pointOfInterestManager.getPOIs().firstOrNull { it.id == wemapId }
-            ?: return println("failed to find cached POI for feature - $feature")
+        if (poi == null) {
+            println("failed to find cached POI for feature - $feature")
+            return
+        }
 
-        mapView.pointOfInterestManager.centerToPOI(poi, true)
+        mapView.pointOfInterestManager.selectPOI(poi)
 
-        addUserImageToStyle(mapView.map.style!!)
-
-        val manager = SymbolManager(mapView, mapView.map, mapView.map.style!!)
-
-        val symbolOptions = SymbolOptions()
-            .withLatLng(poi.latLng)
-            .withIconImage("user")
-            .withIconSize(1.3F)
-
-        val annotation = manager.create(symbolOptions)
-
-        showSnackbar(wemapId) { manager.delete(annotation) }
-    }
-
-    private fun addUserImageToStyle(style: Style) {
-        style.addImage(
-            "user",
-            BitmapUtils.getBitmapFromDrawable(resources.getDrawable(com.mapbox.mapboxsdk.R.drawable.maplibre_user_icon))!!,
-            true
-        )
+        showSnackbar(wemapId) {
+            mapView.pointOfInterestManager.unselectPOI(poi)
+        }
     }
 
     private fun selectFeatureByWemapID(feature: Feature) {
         val wemapId = feature.getNumberProperty("wemapId").toInt()
 
-        mapView.pointOfInterestManager.centerToPOI(wemapId, true)
+        mapView.pointOfInterestManager.selectPOI(wemapId)
 
-        showSnackbar(wemapId)
+        showSnackbar(wemapId) {
+            mapView.pointOfInterestManager.unselectPOI(wemapId)
+        }
     }
 
     private fun showSnackbar(wemapId: Int, onDismissed: (() -> Unit)? = null) {
-
         Snackbar
             .make(mapView, "Map feature clicked with id $wemapId", Snackbar.LENGTH_LONG)
             .addCallback(object : Snackbar.Callback() {
                 override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
-                    mapView.pointOfInterestManager.showPOI(wemapId)
                     onDismissed?.invoke()
                     super.onDismissed(transientBottomBar, event)
                 }
             })
             .show()
-
-        mapView.pointOfInterestManager.hidePOI(wemapId)
     }
 
     private fun createItinerary() {
@@ -214,7 +194,7 @@ class MapFragment : Fragment() {
             .startNavigation(
                 from,
                 to,
-                NavigationOptions(ItineraryOptions(10f, 1f, Color.RED), CameraMode.TRACKING_COMPASS)
+                NavigationOptions(ItineraryOptions(10f, 1f, Color.RED), CameraMode.TRACKING_COMPASS, renderMode = RenderMode.COMPASS)
             )
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
@@ -301,6 +281,18 @@ class MapFragment : Fragment() {
         mapView.indoorLocationProvider = provider
         // also you can use simulator to generate locations along the itinerary
 //        mapView.indoorLocationProvider = simulator
+
+        // this way you can specify user location indicator appearance
+//        mapView.userLocationViewManager.style = UserLocationViewStyle(
+//            Color.parseColor("#FFC0CB"), // pink
+//            Color.BLACK,
+//            Color.GREEN,
+//            UserLocationViewStyle.OutOfActiveLevelStyle(
+//                Color.WHITE,
+//                Color.RED,
+//                0.8F
+//            )
+//        )
     }
 
     override fun onStart() {

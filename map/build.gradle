@@ -11,8 +11,8 @@ android {
         applicationId namespace
         minSdk 21
         targetSdk 33
-        versionCode 5
-        versionName '0.4.0'
+        versionCode 6
+        versionName '0.5.0'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,8 +35,7 @@ android {
 }
 
 dependencies {
-    implementation 'com.getwemap.sdk:map:0.4.0'
-    implementation 'org.maplibre.gl:android-plugin-annotation-v9:1.0.0'
+    implementation 'com.getwemap.sdk:map:0.5.0'
 
     implementation 'eu.polestar:naosdk:4.11.11'
 
