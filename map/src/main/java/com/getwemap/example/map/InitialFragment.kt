@@ -36,7 +36,7 @@ class InitialFragment : Fragment() {
 //            CoreConstants.API_BASE_URL
 //        )
 //        val disp = service
-//            .pointsOfInterestById(23254)
+//            .pointsOfInterestById(Constants.mapId)
 //            .subscribe({
 //                println("received pois - $it")
 //            }, {

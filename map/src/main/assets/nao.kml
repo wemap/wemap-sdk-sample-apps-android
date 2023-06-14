@@ -1,44 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
-<Document>
-	<name>naoMulti.kml</name>
-	<StyleMap id="m_ylw-pushpin">
-		<Pair>
-			<key>normal</key>
-			<styleUrl>#s_ylw-pushpin</styleUrl>
-		</Pair>
-		<Pair>
-			<key>highlight</key>
-			<styleUrl>#s_ylw-pushpin_hl</styleUrl>
-		</Pair>
-	</StyleMap>
-	<Style id="s_ylw-pushpin">
-		<IconStyle>
-			<scale>1.1</scale>
-			<Icon>
-				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
-			</Icon>
-			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
-		</IconStyle>
-	</Style>
-	<Style id="s_ylw-pushpin_hl">
-		<IconStyle>
-			<scale>1.3</scale>
-			<Icon>
-				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
-			</Icon>
-			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
-		</IconStyle>
-	</Style>
-	<Placemark>
-		<name>Ruta sin título</name>
-		<styleUrl>#m_ylw-pushpin</styleUrl>
-		<LineString>
-			<tessellate>1</tessellate>
-			<coordinates>
-                2.3732009,48.8445445,-5 2.373224746590648,48.84456441959642,-5 2.373256320292494,48.84459079381137,-5 2.3732847,48.8446145,-5 2.373314566694184,48.84459909005882,-5 2.3733411,48.8445854,-5 2.37337502204019,48.84456705029975,-5 2.373426045268668,48.84453944991452,-5 2.373484,48.8445081,0 2.3735279,48.8444795,0 2.3735448,48.8444929,0 2.3735776749626454,48.84447261384176,0 2.373607218292671,48.84445438352758,0 2.3736315,48.8444394,0 2.373660055406727,48.844423524854314,0
-            </coordinates>
-		</LineString>
-	</Placemark>
-</Document>
+<kml xmlns="http://www.opengis.net/kml/2.2"
+	xmlns:gx="http://www.google.com/kml/ext/2.2"
+	xmlns:kml="http://www.opengis.net/kml/2.2"
+	xmlns:atom="http://www.w3.org/2005/Atom">
+	<Document>
+		<name>naoMulti.kml</name>
+		<StyleMap id="m_ylw-pushpin">
+			<Pair>
+				<key>normal</key>
+				<styleUrl>#s_ylw-pushpin</styleUrl>
+			</Pair>
+			<Pair>
+				<key>highlight</key>
+				<styleUrl>#s_ylw-pushpin_hl</styleUrl>
+			</Pair>
+		</StyleMap>
+		<Style id="s_ylw-pushpin">
+			<IconStyle>
+				<scale>1.1</scale>
+				<Icon>
+					<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+				</Icon>
+				<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+			</IconStyle>
+		</Style>
+		<Style id="s_ylw-pushpin_hl">
+			<IconStyle>
+				<scale>1.3</scale>
+				<Icon>
+					<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+				</Icon>
+				<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+			</IconStyle>
+		</Style>
+		<Placemark>
+			<name>Ruta sin título</name>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<LineString>
+				<tessellate>1</tessellate>
+				<coordinates>
+                2.37362684,48.84487592,-5 2.37367312,48.84490872,-5 2.37373007,48.84495440,-5 2.37381412,48.84498299,-5 2.37389002,48.84493822,-2.5 2.37400763,48.84487581,0 2.37394034,48.84497481,0 2.37387502,48.84502561,0 2.37384988,48.84503426,0 2.37390382,48.84508903,0 2.37398088,48.84505252,0 2.37405793,48.84500789,0 2.37414270,48.84494907,0 2.37410577,48.84487848,0 2.37396760,48.84482785,0 2.37394103,48.84475105,0 2.37378367,48.84470028,0 2.37375206,48.84459847,0 2.37363626,48.84455509,0 2.37361814,48.84447514,0 2.37375879,48.84436643,0 2.37390447,48.84428454,0
+				</coordinates>
+			</LineString>
+		</Placemark>
+	</Document>
 </kml>
