@@ -182,12 +182,12 @@ class MapFragment : Fragment() {
 
     private fun createItinerary() {
         val from = Coordinate(Location("Hardcoded"), 0F)
-        from.latitude = 48.844330
-        from.longitude = 2.373846
+        from.latitude = 48.845029
+        from.longitude = 2.373849
 
         val to = Coordinate(Location("Hardcoded"), 0F)
-        to.latitude = 48.845029
-        to.longitude = 2.373849
+        to.latitude = 48.844330
+        to.longitude = 2.373846
 
         // Navigation to a coordinate using user location as start or optional custom location
         val disposable = mapView.navigationManager
