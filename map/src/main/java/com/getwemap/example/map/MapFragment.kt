@@ -229,14 +229,12 @@ class MapFragment : Fragment() {
             })
 
         // to stop navigation
-//        val disp = mapView.navigationManager
+//        mapView.navigationManager
 //            .stopNavigation()
-//            .subscribe({
-//                println("Successfully stopped navigation itinerary: $it")
-//            }, {
-//                println("Failed to stop navigation with error: $it")
-//            })
-//        disposeBag.add(disp)
+//            .fold(
+//                { println("Successfully stopped navigation itinerary: $it") },
+//                { println("Failed to stop navigation with error: $it") }
+//            )
 
 //        val disposable = mapView.itineraryManager
 //            .getItineraries(from, to)
