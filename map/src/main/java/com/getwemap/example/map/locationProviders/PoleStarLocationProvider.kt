@@ -1,15 +1,10 @@
 package com.getwemap.example.map.locationProviders
 
-import android.app.PendingIntent
 import android.content.Context
 import android.location.Location
-import android.os.Looper
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.map.locationProviders.IndoorLocationProvider
-import com.mapbox.mapboxsdk.location.engine.LocationEngine
-import com.mapbox.mapboxsdk.location.engine.LocationEngineCallback
-import com.mapbox.mapboxsdk.location.engine.LocationEngineRequest
-import com.mapbox.mapboxsdk.location.engine.LocationEngineResult
+import com.getwemap.sdk.map.locationProviders.IndoorLocationProviderListener
 import com.polestar.naosdk.api.external.NAOERRORCODE
 import com.polestar.naosdk.api.external.NAOLocationHandle
 import com.polestar.naosdk.api.external.NAOLocationListener
@@ -21,7 +16,9 @@ import com.polestar.naosdk.managers.NaoServiceManager
 class PolestarIndoorLocationProviderServiceManager : NaoServiceManager()
 
 class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
-    : IndoorLocationProvider(), NAOLocationListener, NAOSensorsListener, NAOSyncListener, LocationEngine {
+    : IndoorLocationProvider, NAOLocationListener, NAOSensorsListener, NAOSyncListener {
+
+    override var listener: IndoorLocationProviderListener? = null
 
     var isStarted = false
         private set
@@ -39,21 +36,12 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
 
     }
 
-    fun setFloorByAltitudeMap(floorByAltitudeMap: Map<Double, Double>?) {
-        this.floorByAltitudeMap = floorByAltitudeMap
-    }
-
-    override fun supportsFloor(): Boolean {
-        return true
-    }
-
     override fun start() {
         if (!isStarted) {
             if (dataSynchronized) {
                 naoLocationHandle.start()
                 isStarted = true
                 shouldStart = false
-                this.dispatchOnProviderStarted()
             } else {
                 shouldStart = true
             }
@@ -64,7 +52,6 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
         if (isStarted) {
             naoLocationHandle.stop()
             isStarted = false
-            this.dispatchOnProviderStopped()
         }
     }
 
@@ -74,11 +61,10 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
     override fun onLocationChanged(location: Location) {
 
         println("onLocationChanged: $location")
-        val standardLocation = Location(name)
+        val standardLocation = Location("PoleStar")
         standardLocation.latitude = location.latitude
         standardLocation.longitude = location.longitude
         standardLocation.time = System.currentTimeMillis()
-        _callback?.onSuccess(LocationEngineResult.create(standardLocation))
 
         val altitude = location.altitude
         val indoorLocation: Coordinate = if (floorByAltitudeMap == null) {
@@ -91,7 +77,7 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
                 Coordinate(standardLocation, floor.toFloat())
             }
         }
-        dispatchIndoorLocationChange(indoorLocation)
+        listener?.onLocationChanged(indoorLocation)
     }
 
     override fun onLocationStatusChanged(tnaofixstatus: TNAOFIXSTATUS?) {}
@@ -102,7 +88,7 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
     NAOErrorListener
      */
     override fun onError(naoerrorcode: NAOERRORCODE?, s: String?) {
-        this.dispatchOnProviderError(Error(s))
+        listener?.onError(Error(s))
     }
 
     /*
@@ -124,37 +110,6 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
     }
 
     override fun onSynchronizationFailure(naoerrorcode: NAOERRORCODE?, s: String?) {
-        this.dispatchOnProviderError(Error(s))
-    }
-
-    /*
-    LocationEngine
-     */
-
-    private var _callback: LocationEngineCallback<LocationEngineResult>? = null
-
-    override fun getLastLocation(callback: LocationEngineCallback<LocationEngineResult>) {
-        _callback = callback
-        callback.onSuccess(LocationEngineResult.create(lastLocation?.location))
-    }
-
-    override fun requestLocationUpdates(request: LocationEngineRequest, callback: LocationEngineCallback<LocationEngineResult>, looper: Looper?) {
-        start()
-        _callback = callback
-        callback.onSuccess(LocationEngineResult.create(lastLocation?.location))
-    }
-
-    override fun requestLocationUpdates(request: LocationEngineRequest, pendingIntent: PendingIntent?) {
-        TODO("Not yet implemented")
-    }
-
-    override fun removeLocationUpdates(callback: LocationEngineCallback<LocationEngineResult>) {
-        stop()
-        _callback = null
-        callback.onSuccess(LocationEngineResult.create(lastLocation?.location))
-    }
-
-    override fun removeLocationUpdates(pendingIntent: PendingIntent?) {
-        TODO("Not yet implemented")
+        listener?.onError(Error(s))
     }
 }

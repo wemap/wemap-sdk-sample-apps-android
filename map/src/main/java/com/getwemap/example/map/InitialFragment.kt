@@ -57,6 +57,8 @@ class InitialFragment : Fragment() {
                 val bundle = Bundle()
                 bundle.putInt("id", it.id)
                 bundle.putString("styleUrl", it.style)
+                bundle.putDouble("minZoom", it.minZoom)
+                bundle.putDouble("maxZoom", it.maxZoom)
                 bundle.putDouble("latitudeNorth", it.bounds.latitudeNorth)
                 bundle.putDouble("longitudeEast", it.bounds.longitudeEast)
                 bundle.putDouble("latitudeSouth", it.bounds.latitudeSouth)

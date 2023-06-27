@@ -4,7 +4,6 @@ import android.Manifest.permission
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.location.Location
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -23,9 +22,8 @@ import com.getwemap.sdk.map.buildings.OnActiveLevelChangeListener
 import com.getwemap.sdk.map.buildings.OnBuildingFocusChangeListener
 import com.getwemap.sdk.map.itineraries.ItineraryOptions
 import com.getwemap.sdk.map.model.entities.MapData
-import com.getwemap.sdk.map.navigation.NavigationInfo
+import com.getwemap.sdk.map.navigation.NavigationManagerListener
 import com.getwemap.sdk.map.navigation.NavigationOptions
-import com.getwemap.sdk.map.navigation.OnNavigationInfoChangedListener
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
 import com.mapbox.geojson.Feature
@@ -78,6 +76,8 @@ class MapFragment : Fragment() {
         val data = MapData(
             args.getInt("id"),
             args.getString("styleUrl")!!,
+            args.getDouble("minZoom"),
+            args.getDouble("maxZoom"),
             LatLngBounds.from(
                 args.getDouble("latitudeNorth"),
                 args.getDouble("longitudeEast"),
@@ -122,11 +122,27 @@ class MapFragment : Fragment() {
                 }
             })
 
-            mapView.navigationManager.addOnNavigationInfoChangedListener(object : OnNavigationInfoChangedListener {
-                override fun onNavigationInfoChanged(info: NavigationInfo) {
+            mapView.navigationManager.addNavigationManagerListener(NavigationManagerListener(
+                onInfoChanged = { info ->
                     textView.text = info.shortDescription
+                    textView.visibility = View.VISIBLE
+                },
+                onStarted = {
+                    textView.visibility = View.VISIBLE
+                    Snackbar.make(mapView, "Navigation started", Snackbar.LENGTH_LONG).show()
+                },
+                onFinished = {
+                    textView.visibility = View.GONE
+                    Snackbar.make(mapView, "Navigation finished", Snackbar.LENGTH_LONG).show()
+                },
+                onFailed = { error ->
+                    textView.visibility = View.GONE
+                    Snackbar.make(mapView, "Navigation failed with error - $error", Snackbar.LENGTH_LONG).show()
+                },
+                onRecalculated = {
+                    Snackbar.make(mapView, "Navigation recalculated", Snackbar.LENGTH_LONG).show()
                 }
-            })
+            ))
         }
 
         levelToggle.addOnButtonCheckedListener { group, checkedId, isChecked ->
@@ -181,20 +197,28 @@ class MapFragment : Fragment() {
     }
 
     private fun createItinerary() {
-        val from = Coordinate(Location("Hardcoded"), 0F)
-        from.latitude = 48.845029
-        from.longitude = 2.373849
+        // Default path
+//        val from = Coordinate(48.84487592, 2.37362684, -1F)
+//        val to = Coordinate(48.84428454, 2.37390447, 0F)
 
-        val to = Coordinate(Location("Hardcoded"), 0F)
-        to.latitude = 48.844330
-        to.longitude = 2.373846
+        // Path at less than 3 meters from network
+        val from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
+        val to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
+
+        // Path at less than 3 meters from network and route recalculation
+//        val from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
+//        val to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
 
         // Navigation to a coordinate using user location as start or optional custom location
         val disposable = mapView.navigationManager
             .startNavigation(
                 from,
                 to,
-                NavigationOptions(ItineraryOptions(10f, 1f, Color.RED), CameraMode.TRACKING_COMPASS, renderMode = RenderMode.COMPASS)
+                NavigationOptions(ItineraryOptions(10f, 1f, Color.RED),
+                    CameraMode.TRACKING_COMPASS,
+                    renderMode = RenderMode.COMPASS,
+                    stopOptions = NavigationOptions.StopOptions(stopDistanceThreshold = 3.0F)
+                )
             )
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
