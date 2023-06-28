@@ -27,7 +27,6 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
     private var shouldStart = false
     private val context: Context
     private val naoLocationHandle: NAOLocationHandle
-    private var floorByAltitudeMap: Map<Double, Double>? = null
 
     init {
         this.context = context
@@ -67,15 +66,10 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
         standardLocation.time = System.currentTimeMillis()
 
         val altitude = location.altitude
-        val indoorLocation: Coordinate = if (floorByAltitudeMap == null) {
-            Coordinate(standardLocation, (altitude / 5).toFloat())
+        val indoorLocation: Coordinate = if (altitude == 1000.0) { // workaround for outdoor
+            Coordinate(standardLocation)
         } else {
-            val floor = floorByAltitudeMap!![altitude]
-            if (floor == null) {
-                Coordinate(standardLocation, (altitude / 5).toFloat())
-            } else {
-                Coordinate(standardLocation, floor.toFloat())
-            }
+            Coordinate(standardLocation, (altitude / 5).toFloat())
         }
         listener?.onLocationChanged(indoorLocation)
     }

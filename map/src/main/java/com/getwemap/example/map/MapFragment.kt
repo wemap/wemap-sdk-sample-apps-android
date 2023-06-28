@@ -209,6 +209,14 @@ class MapFragment : Fragment() {
 //        val from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
 //        val to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
 
+        // Path from level -1 to 0 and route recalculation
+//        val from = Coordinate(48.84445563, 2.37319782, -1F)
+//        val to = Coordinate(48.84502948, 2.37451864, 0F)
+
+        // Path indoor to outdoor
+//        val from = Coordinate(48.84482873, 2.37378956, 0F)
+//        val to = Coordinate(48.8455159, 2.37305333)
+
         // Navigation to a coordinate using user location as start or optional custom location
         val disposable = mapView.navigationManager
             .startNavigation(
