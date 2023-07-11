@@ -21,7 +21,7 @@
                </coordinates>
            </LineString>
         </Placemark> -->
-        <Placemark>
+        <!-- <Placemark>
             <name>Path at less than 3 meters from network</name>
             <LineString>
                 <tessellate>1</tessellate>
@@ -37,7 +37,7 @@
                     2.3737907890471566,48.84511752906156,0
                 </coordinates>
             </LineString>
-        </Placemark>
+        </Placemark> -->
         <!-- <Placemark>
            <name>Path at less than 3 meters from network and route recalculation</name>
            <LineString>
@@ -62,7 +62,7 @@
                </coordinates>
            </LineString>
        </Placemark> -->
-        <!-- <Placemark>
+        <Placemark>
             <name>Path from level -1 to 0 and route recalculation</name>
             <LineString>
                 <tessellate>1</tessellate>
@@ -96,7 +96,7 @@
                     2.3745113892367016,48.84502433269711,0
                 </coordinates>
             </LineString>
-        </Placemark> -->
+        </Placemark>
         <!-- <Placemark>
             <name>Full path at level -1 and user location goes level 0</name>
             <LineString>

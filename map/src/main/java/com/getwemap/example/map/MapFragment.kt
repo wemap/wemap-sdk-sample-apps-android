@@ -131,9 +131,12 @@ class MapFragment : Fragment() {
                     textView.visibility = View.VISIBLE
                     Snackbar.make(mapView, "Navigation started", Snackbar.LENGTH_LONG).show()
                 },
-                onFinished = {
+                onStopped = {
                     textView.visibility = View.GONE
-                    Snackbar.make(mapView, "Navigation finished", Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(mapView, "Navigation stopped", Snackbar.LENGTH_LONG).show()
+                },
+                onArrived = {
+                    Snackbar.make(mapView, "Navigation arrived at destination", Snackbar.LENGTH_LONG).show()
                 },
                 onFailed = { error ->
                     textView.visibility = View.GONE
@@ -202,16 +205,16 @@ class MapFragment : Fragment() {
 //        val to = Coordinate(48.84428454, 2.37390447, 0F)
 
         // Path at less than 3 meters from network
-        val from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
-        val to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
+//        val from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
+//        val to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
 
         // Path at less than 3 meters from network and route recalculation
 //        val from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
 //        val to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
 
         // Path from level -1 to 0 and route recalculation
-//        val from = Coordinate(48.84445563, 2.37319782, -1F)
-//        val to = Coordinate(48.84502948, 2.37451864, 0F)
+        val from = Coordinate(48.84445563, 2.37319782, -1F)
+        val to = Coordinate(48.84502948, 2.37451864, 0F)
 
         // Path indoor to outdoor
 //        val from = Coordinate(48.84482873, 2.37378956, 0F)
@@ -219,9 +222,7 @@ class MapFragment : Fragment() {
 
         // Navigation to a coordinate using user location as start or optional custom location
         val disposable = mapView.navigationManager
-            .startNavigation(
-                from,
-                to,
+            .startNavigation(from, to,
                 NavigationOptions(ItineraryOptions(10f, 1f, Color.RED),
                     CameraMode.TRACKING_COMPASS,
                     renderMode = RenderMode.COMPASS,
