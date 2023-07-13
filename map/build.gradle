@@ -11,8 +11,8 @@ android {
         applicationId namespace
         minSdk 21
         targetSdk 33
-        versionCode 11
-        versionName '0.6.3'
+        versionCode 12
+        versionName '0.7.0'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,12 +35,12 @@ android {
 }
 
 dependencies {
-    implementation 'com.getwemap.sdk:map:0.6.3'
+    implementation 'com.getwemap.sdk:map:0.7.0'
 
     implementation 'eu.polestar:naosdk:4.11.11'
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.6.0'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.6.0'
 }
