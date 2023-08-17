@@ -6,18 +6,48 @@
     app:startDestination="@id/InitialFragment">
 
     <fragment
-        android:id="@+id/MapFragment"
-        android:name="com.getwemap.example.map.MapFragment"
-        android:label="@string/map_fragment_label"
-        tools:layout="@layout/fragment_map"/>
-    <fragment
         android:id="@+id/InitialFragment"
-        android:name="com.getwemap.example.map.InitialFragment"
+        android:name="com.getwemap.example.map.fragments.InitialFragment"
         android:label="@string/initial_fragment_label"
         tools:layout="@layout/fragment_initial">
 
         <action
-            android:id="@+id/action_InitialFragment_to_MapFragment"
-            app:destination="@id/MapFragment" />
+            android:id="@+id/action_InitialFragment_to_SamplesListFragment"
+            app:destination="@id/SamplesListFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/SamplesListFragment"
+        android:name="com.getwemap.example.map.fragments.SamplesListFragment"
+        android:label="@string/samples_fragment_label"
+        tools:layout="@layout/fragment_item_list">
+
+        <action
+            android:id="@+id/action_SamplesListFragment_to_LevelsFragment"
+            app:destination="@id/LevelsFragment" />
+        <action
+            android:id="@+id/action_SamplesListFragment_to_POIsFragment"
+            app:destination="@id/POIsFragment" />
+        <action
+            android:id="@+id/action_SamplesListFragment_to_NavigationFragment"
+            app:destination="@id/NavigationFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/LevelsFragment"
+        android:name="com.getwemap.example.map.fragments.LevelsFragment"
+        android:label="@string/levels_fragment_label"
+        tools:layout="@layout/fragment_levels"/>
+
+    <fragment
+        android:id="@+id/POIsFragment"
+        android:name="com.getwemap.example.map.fragments.POIsFragment"
+        android:label="@string/pois_fragment_label"
+        tools:layout="@layout/fragment_p_o_is"/>
+
+    <fragment
+        android:id="@+id/NavigationFragment"
+        android:name="com.getwemap.example.map.fragments.NavigationFragment"
+        android:label="@string/navigation_fragment_label"
+        tools:layout="@layout/fragment_navigation"/>
 </navigation>

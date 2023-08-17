@@ -18,7 +18,6 @@
         <activity
             android:name=".InitialActivity"
             android:exported="true"
-            android:label="@string/title_activity_initial"
             android:theme="@style/Theme.PositioningSDK.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,6 +25,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="com.getwemap.example.map.locationProviders.PolestarIndoorLocationProviderServiceManager" />
+        <service android:name="com.getwemap.sdk.locationsources.PolestarLocationSourceServiceManager" />
     </application>
 </manifest>

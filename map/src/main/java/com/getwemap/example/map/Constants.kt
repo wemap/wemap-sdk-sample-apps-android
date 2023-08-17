@@ -9,4 +9,8 @@ object Constants {
     val token: String get() {
         throw Exception("Specify token and remove fatalError")
     }
+
+    val polestarKey: String get() {
+        throw Exception("Specify polestar key and remove fatalError")
+    }
 }

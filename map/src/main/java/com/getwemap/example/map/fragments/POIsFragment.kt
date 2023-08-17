@@ -1,0 +1,222 @@
+package com.getwemap.example.map.fragments
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import com.getwemap.example.map.databinding.FragmentPOIsBinding
+import com.getwemap.example.map.multiline
+import com.getwemap.sdk.core.model.entities.Coordinate
+import com.getwemap.sdk.core.model.entities.PointOfInterest
+import com.getwemap.sdk.map.navigation.NavigationManagerListener
+import com.getwemap.sdk.map.poi.PointOfInterestManagerListener
+import com.google.android.material.snackbar.Snackbar
+import com.google.gson.JsonPrimitive
+import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.plugins.annotation.Circle
+import com.mapbox.mapboxsdk.plugins.annotation.CircleManager
+import com.mapbox.mapboxsdk.plugins.annotation.CircleOptions
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+
+class POIsFragment : MapFragment() {
+
+    override val mapView get() = binding.mapView
+    override val levelToggle get() = binding.levelToggle
+    private val textView get() = binding.textView
+
+    private val disposeBag = CompositeDisposable()
+
+    private val buttonStartNavigation get() = binding.startNavigation
+    private val buttonStopNavigation get() = binding.stopNavigation
+    private val buttonStartNavigationFromSimulatedUserPosition get() = binding.startNavigationFromSimulatedUserPosition
+    private val buttonRemoveSimulatedUserPosition get() = binding.removeSimulatedUserPosition
+    private val userLocationTextView get() = binding.userLocationTextView
+
+    private val navigationManager get() = mapView.navigationManager
+    private val pointOfInterestManager get() = mapView.pointOfInterestManager
+    private val focusedBuilding get() = mapView.buildingManager.focusedBuilding
+
+    private lateinit var binding: FragmentPOIsBinding
+    private lateinit var circleManager: CircleManager
+
+    private var selectedPOI: PointOfInterest? = null
+    private var simulatedUserPosition: Circle? = null
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        Mapbox.getInstance(requireContext())
+        binding = FragmentPOIsBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        mapView.getMapAsync { map ->
+            pointOfInterestManager.addPointOfInterestManagerListener(PointOfInterestManagerListener(
+                onSelected = {
+                    val poi = selectedPOI
+                    if (poi != null)
+                        pointOfInterestManager.unselectPOI(poi)
+                    selectedPOI = it
+                    updateUI()
+                },
+                onUnselected = {
+                    selectedPOI = null
+                    updateUI()
+                }
+            ))
+
+            map.getStyle { style ->
+                circleManager = CircleManager(mapView, map, style)
+                setupNavigationManagerListener()
+
+                val coordinateUpdate = mapView.locationManager.coordinateUpdated.subscribe {
+                    userLocationTextView.text = "$it"
+                }
+                disposeBag.add(coordinateUpdate)
+            }
+
+            map.addOnMapLongClickListener {
+                if (simulatedUserPosition != null)
+                    circleManager.delete(simulatedUserPosition)
+
+                val options = CircleOptions()
+                    .withLatLng(it)
+                    .withData(JsonPrimitive(focusedBuilding?.activeLevelId ?: 0F))
+
+                simulatedUserPosition = circleManager.create(options)
+                updateUI()
+
+                return@addOnMapLongClickListener true
+            }
+        }
+
+        buttonStartNavigation.setOnClickListener {
+            startNavigation()
+        }
+
+        buttonStopNavigation.setOnClickListener {
+            stopNavigation()
+        }
+
+        buttonStartNavigationFromSimulatedUserPosition.setOnClickListener {
+            startNavigationFromSimulatedUserPosition()
+        }
+
+        buttonRemoveSimulatedUserPosition.setOnClickListener {
+            removeSimulatedUserPosition()
+        }
+    }
+
+    override fun locationManagerReady() {
+        val coordinateUpdate = mapView.locationManager.coordinateUpdated.subscribe {
+            userLocationTextView.text = "$it"
+        }
+        disposeBag.add(coordinateUpdate)
+    }
+
+    private fun startNavigation() {
+        startNavigationToSelectedPOI()
+    }
+
+    private fun stopNavigation() {
+        navigationManager
+            .stopNavigation()
+            .fold(
+                {
+                    simulator.reset()
+                    buttonStopNavigation.isEnabled = false
+                    updateUI()
+                },
+                { println("Failed to stop navigation with error: $it") }
+            )
+    }
+
+    private fun startNavigationFromSimulatedUserPosition() {
+        val annotation = simulatedUserPosition!!
+        val latLng = annotation.latLng
+        val from = Coordinate(latLng.latitude, latLng.longitude, getLevelFromAnnotation(annotation))
+        startNavigationToSelectedPOI(from)
+    }
+
+    private fun startNavigationToSelectedPOI(from: Coordinate? = null) {
+        disableStartButtons()
+
+        val poi = selectedPOI!!
+        val levels: List<Float> = if (poi.levelID != null) listOf(poi.levelID!!) else listOf()
+        val to = Coordinate(poi.latitude, poi.longitude, levels)
+
+        val disposable = navigationManager
+            .startNavigation(from, to)
+            .subscribe({
+                // also you can use simulator to generate locations along the itinerary
+                simulator.setItinerary(it)
+                buttonStopNavigation.isEnabled = true
+                println("Successfully started navigation itinerary: $it")
+            }, {
+                Snackbar.make(mapView, "Failed to start navigation with error - $it", Snackbar.LENGTH_LONG).multiline().show()
+                updateUI()
+            })
+
+        disposeBag.add(disposable)
+    }
+
+    private fun setupNavigationManagerListener() {
+        mapView.navigationManager.addNavigationManagerListener(NavigationManagerListener(
+            onInfoChanged = { info ->
+                textView.text = info.shortDescription
+                textView.visibility = View.VISIBLE
+            },
+            onStarted = {
+                textView.visibility = View.VISIBLE
+                Snackbar.make(mapView, "Navigation started", Snackbar.LENGTH_LONG).multiline().show()
+                buttonStopNavigation.isEnabled = true
+            },
+            onStopped = {
+                textView.visibility = View.GONE
+                Snackbar.make(mapView, "Navigation stopped", Snackbar.LENGTH_LONG).multiline().show()
+                buttonStopNavigation.isEnabled = false
+            },
+            onArrived = {
+                Snackbar.make(mapView, "Navigation arrived at destination", Snackbar.LENGTH_LONG).multiline().show()
+            },
+            onFailed = { error ->
+                textView.visibility = View.GONE
+                Snackbar.make(mapView, "Navigation failed with error - $error", Snackbar.LENGTH_LONG).multiline().show()
+            },
+            onRecalculated = {
+                Snackbar.make(mapView, "Navigation recalculated", Snackbar.LENGTH_LONG).multiline().show()
+            }
+        ))
+    }
+
+    private fun updateUI() {
+        buttonStartNavigation.isEnabled = selectedPOI != null && !buttonStopNavigation.isEnabled
+        buttonStartNavigationFromSimulatedUserPosition.isEnabled = selectedPOI != null && simulatedUserPosition != null && !buttonStopNavigation.isEnabled
+        buttonRemoveSimulatedUserPosition.isEnabled = simulatedUserPosition != null
+    }
+
+    private fun disableStartButtons() {
+        buttonStartNavigation.isEnabled = false
+        buttonStartNavigationFromSimulatedUserPosition.isEnabled = false
+    }
+
+    private fun removeSimulatedUserPosition() {
+        circleManager.delete(simulatedUserPosition!!)
+        simulatedUserPosition = null
+        updateUI()
+    }
+
+    private fun getLevelFromAnnotation(annotation: Circle): List<Float> {
+        val building = focusedBuilding
+        if (building == null) {
+            println("Failed to retrieve focused building. Can't check if annotation is indoor or outdoor")
+            return listOf()
+        }
+
+        return if (building.boundingBox.contains(annotation.latLng))
+            listOf(annotation.data!!.asFloat)
+        else
+            listOf()
+    }
+}

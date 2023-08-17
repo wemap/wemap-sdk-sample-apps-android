@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="location_sources">
+        <item>Polestar Emulator</item>
+        <item>Polestar</item>
+        <item>Simulator Location Source</item>
+        <item>GMS Location Source</item>
+    </string-array>
+</resources>

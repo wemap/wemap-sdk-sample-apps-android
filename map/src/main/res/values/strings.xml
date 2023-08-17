@@ -1,8 +1,24 @@
 <resources>
-    <string name="app_name">Map Example</string>
-    <string name="title_activity_initial">InitialActivity</string>
+    <string name="app_name" translatable="false">Map Example</string>
+
     <!-- Strings used for fragments for navigation -->
-    <string name="map_fragment_label">Map Fragment</string>
-    <string name="initial_fragment_label">Initial Fragment</string>
-    <string name="load_map">Load Map</string>
+    <string name="levels_fragment_label" translatable="false">Levels Fragment</string>
+    <string name="pois_fragment_label" translatable="false">POIs Fragment</string>
+    <string name="navigation_fragment_label" translatable="false">Navigation Fragment</string>
+    <string name="settings_fragment_label" translatable="false">Settings Fragment</string>
+    <string name="initial_fragment_label" translatable="false">Initial Fragment</string>
+    <string name="samples_fragment_label" translatable="false">Samples Fragment</string>
+    <string name="load_map" translatable="false">Load Map</string>
+    <string name="navigation_placeholder" translatable="false">Navigation info will be here</string>
+
+    <string name="start_navigation_user_position" translatable="false">Start navigation from simulated user position</string>
+    <string name="start_navigation" translatable="false">Start navigation</string>
+    <string name="stop_navigation" translatable="false">Stop navigation</string>
+    <string name="remove_user_position" translatable="false">Remove simulated user position</string>
+
+    <string name="start_navigation_user_created_annotations" translatable="false">Start navigation from user-created annotations</string>
+    <string name="remove_user_created_annotations" translatable="false">Remove user-created annotations</string>
+
+    <string name="first_poi" translatable="false">Relay (shop)</string>
+    <string name="second_poi" translatable="false">Etam lingerie</string>
 </resources>
