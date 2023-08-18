@@ -6,9 +6,33 @@
 
 ### Fixed
 
-* CoreSDK: Fix low frequency position updates
+* CoreSDK: Fix low frequency position updates (regression appeared in 0.8.0)
 
 ## [0.8.0]
+
+### Breaking changes
+
+* `IndoorLocationProvider` has been renamed to `LocationSource` and moved from `com.getwemap.sdk.map.locationProviders` to `com.getwemap.sdk.core.LocationSource`
+* `IndoorLocationProviderListener` has been renamed to `LocationSourceListener` and moved from `com.getwemap.sdk.map.locationProviders` to `com.getwemap.sdk.core.LocationSource`
+* `Polestar` `onLocationChanged` should take into account `hasAltitude()` for proper calculation as shown below
+
+    ``` kotlin
+    override fun onLocationChanged(location: Location) {
+
+        val standardLocation = Location("PoleStar")
+        standardLocation.latitude = location.latitude
+        standardLocation.longitude = location.longitude
+        standardLocation.time = System.currentTimeMillis()
+
+        val altitude = location.altitude
+        val coordinate: Coordinate = if (!location.hasAltitude()) { // outdoor location
+            Coordinate(standardLocation)
+        } else {
+            Coordinate(standardLocation, (altitude / 5).toFloat())
+        }
+        listener?.onLocationChanged(coordinate)
+    }
+    ```
 
 ### Added
 
