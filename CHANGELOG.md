@@ -34,6 +34,9 @@
     }
     ```
 
+* `OnMapViewClickListener.onFeatureClick(feature: Feature)` is removed in favor of `PointOfInterestManagerListener.onPointOfInterestSelected(poi: PointOfInterest)`.
+  To receive events from `PointOfInterestManager` you have to implement interface `PointOfInterestManagerListener` and add it to manager by `mapView.pointOfInterestManager.addPointOfInterestManagerListener()`
+
 ### Added
 
 * MapSDK: switch level automatically on selectPOI if shouldCenter is true
