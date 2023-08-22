@@ -32,7 +32,6 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
         this.context = context
         naoLocationHandle = NAOLocationHandle(this.context, PolestarIndoorLocationProviderServiceManager::class.java, polestarApiKey, this, this)
         naoLocationHandle.synchronizeData(this)
-
     }
 
     override fun start() {
@@ -66,12 +65,12 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
         standardLocation.time = System.currentTimeMillis()
 
         val altitude = location.altitude
-        val indoorLocation: Coordinate = if (altitude == 1000.0) { // workaround for outdoor
+        val coordinate: Coordinate = if (altitude == 1000.0 || !location.hasAltitude()) { // workaround for outdoor
             Coordinate(standardLocation)
         } else {
             Coordinate(standardLocation, (altitude / 5).toFloat())
         }
-        listener?.onLocationChanged(indoorLocation)
+        listener?.onLocationChanged(coordinate)
     }
 
     override fun onLocationStatusChanged(tnaofixstatus: TNAOFIXSTATUS?) {}
