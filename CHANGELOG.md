@@ -54,6 +54,12 @@
 * Kotlin 1.8.21 -> 1.9.0
 * Gradle 7.4.2 -> 8.1.0
 
+## [0.7.2]
+
+### Fixed
+
+* CoreSDK: fix pointOfInterestManager.getPOIs()
+
 ## [0.7.1]
 
 ### Fixed
