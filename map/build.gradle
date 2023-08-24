@@ -35,7 +35,7 @@ android {
 }
 
 dependencies {
-    implementation 'com.getwemap.sdk:map:0.7.1'
+    implementation 'com.getwemap.sdk:map:0.7.2'
 
     implementation 'eu.polestar:naosdk:4.11.11'
 
