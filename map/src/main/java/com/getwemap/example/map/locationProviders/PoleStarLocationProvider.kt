@@ -2,6 +2,7 @@ package com.getwemap.example.map.locationProviders
 
 import android.content.Context
 import android.location.Location
+import android.os.Build
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.map.locationProviders.IndoorLocationProvider
 import com.getwemap.sdk.map.locationProviders.IndoorLocationProviderListener
@@ -59,18 +60,21 @@ class PolestarIndoorLocationProvider(context: Context, polestarApiKey: String)
     override fun onLocationChanged(location: Location) {
 
         println("onLocationChanged: $location")
+        val coordinate = polestarLocationToCoordinate(location)
+        listener?.onLocationChanged(coordinate)
+    }
+
+    private fun polestarLocationToCoordinate(location: Location) : Coordinate {
         val standardLocation = Location("PoleStar")
         standardLocation.latitude = location.latitude
         standardLocation.longitude = location.longitude
         standardLocation.time = System.currentTimeMillis()
 
+        val verticalAccuracy = location.extras?.getFloat("vertical_accuracy")
+        val isOutdoor = !location.hasAltitude() || location.hasAltitude() && verticalAccuracy == -500f
+
         val altitude = location.altitude
-        val coordinate: Coordinate = if (altitude == 1000.0 || !location.hasAltitude()) { // workaround for outdoor
-            Coordinate(standardLocation)
-        } else {
-            Coordinate(standardLocation, (altitude / 5).toFloat())
-        }
-        listener?.onLocationChanged(coordinate)
+        return Coordinate(standardLocation, if (isOutdoor) emptyList() else listOf((altitude / 5).toFloat()))
     }
 
     override fun onLocationStatusChanged(tnaofixstatus: TNAOFIXSTATUS?) {}

@@ -2,6 +2,12 @@
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+* MapExample: update Polestar condition to detect outdoor location
+
 ## [0.7.2]
 
 ### Fixed
