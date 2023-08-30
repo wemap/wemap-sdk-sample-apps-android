@@ -19,18 +19,21 @@
     ``` kotlin
     override fun onLocationChanged(location: Location) {
 
+        val coordinate = polestarLocationToCoordinate(location)
+        listener?.onLocationChanged(coordinate)
+    }
+
+    fun polestarLocationToCoordinate(location: Location) : Coordinate {
         val standardLocation = Location("PoleStar")
         standardLocation.latitude = location.latitude
         standardLocation.longitude = location.longitude
         standardLocation.time = System.currentTimeMillis()
 
+        val verticalAccuracy = location.extras?.getFloat("vertical_accuracy")
+        val isOutdoor = !location.hasAltitude() || location.hasAltitude() && verticalAccuracy == -500f
+
         val altitude = location.altitude
-        val coordinate: Coordinate = if (!location.hasAltitude()) { // outdoor location
-            Coordinate(standardLocation)
-        } else {
-            Coordinate(standardLocation, (altitude / 5).toFloat())
-        }
-        listener?.onLocationChanged(coordinate)
+        return Coordinate(standardLocation, if (isOutdoor) emptyList() else listOf((altitude / 5).toFloat()))
     }
     ```
 
