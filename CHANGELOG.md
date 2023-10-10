@@ -10,6 +10,20 @@
 
 ## [0.8.0]
 
+We created a `PositioningSDK` to handle multiple sources of positioning. This corresponds to a new transitive dependency. Some positioning systems can be used on the shelf directly in v0.8 by 
+- `com.getwemap.sdk.locationsources:polestar:0.8.0`
+- `com.getwemap.sdk.locationsources:fusedgms:0.8.0`
+
+and used as:
+
+```kotlin
+mapView.locationManager.apply {
+    source = PolestarLocationSource(requireContext(), "emulator")
+    // source = GmsFusedLocationSource(requireContext())
+    isEnabled = true // To start the localization process
+}
+```
+
 ### Breaking changes
 
 * `IndoorLocationProvider` has been renamed to `LocationSource` and moved from `com.getwemap.sdk.map.locationProviders` to `com.getwemap.sdk.core.LocationSource`
