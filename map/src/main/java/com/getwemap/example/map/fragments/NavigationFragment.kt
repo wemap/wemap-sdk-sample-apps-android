@@ -4,9 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.getwemap.example.map.Config
 import com.getwemap.example.map.databinding.FragmentNavigationBinding
 import com.getwemap.example.map.multiline
+import com.getwemap.example.map.onDismissed
 import com.getwemap.sdk.core.model.entities.Coordinate
+import com.getwemap.sdk.map.extensions.getNavigationInstructions
 import com.getwemap.sdk.map.navigation.NavigationManagerListener
 import com.getwemap.sdk.map.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
@@ -32,8 +35,6 @@ class NavigationFragment : MapFragment() {
     private val userLocationTextView get() = binding.userLocationTextView
 
     private val navigationManager get() = mapView.navigationManager
-    private val pointOfInterestManager get() = mapView.pointOfInterestManager
-    private val focusedBuilding get() = mapView.buildingManager.focusedBuilding
 
     private val userCreatedAnnotations: MutableList<Circle> = mutableListOf()
 
@@ -49,7 +50,7 @@ class NavigationFragment : MapFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mapView.getMapAsync { map ->
+        mapView.getWemapMapAsync { mapView, map, _ ->
             pointOfInterestManager.addPointOfInterestManagerListener(PointOfInterestManagerListener(
                 onSelected = {
                     showSnackbar(it.id) {
@@ -58,14 +59,14 @@ class NavigationFragment : MapFragment() {
                 }
             ))
 
-            map.getStyle { style ->
-                circleManager = CircleManager(mapView, map, style)
-                setupNavigationManagerListener()
-            }
+            circleManager = CircleManager(mapView, map, map.style!!)
+            setupNavigationManagerListener()
 
             map.addOnMapLongClickListener {
                 if (userCreatedAnnotations.size >= 2) {
-                    Snackbar.make(mapView, "You already created 2 annotations. Remove old ones to be able to add new", Snackbar.LENGTH_LONG).multiline().show()
+                    Snackbar.make(mapView,
+                        "You already created 2 annotations. Remove old ones to be able to add new",
+                        Snackbar.LENGTH_LONG).multiline().show()
                     return@addOnMapLongClickListener false
                 }
 
@@ -106,7 +107,7 @@ class NavigationFragment : MapFragment() {
     }
 
     private fun startNavigation() {
-        startNavigationToUserCreatedAnnotation()
+        startNavigation(null, getDestinationCoordinate())
     }
 
     private fun stopNavigation() {
@@ -117,29 +118,61 @@ class NavigationFragment : MapFragment() {
                     simulator.reset()
                     buttonStopNavigation.isEnabled = false
                     updateUI()
-                },
-                { println("Failed to stop navigation with error: $it") }
+                }, {
+                    Snackbar.make(mapView, "Failed to stop navigation with error - $it", Snackbar.LENGTH_LONG)
+                        .multiline().show()
+                }
             )
     }
 
     private fun startNavigationFromUserCreatedAnnotations() {
-        startNavigationToUserCreatedAnnotation(getOriginCoordinate())
+
+        val from: Coordinate
+        val to: Coordinate
+        if (locationSourceId != 1) { // not polestar emulator
+            from = getOriginCoordinate()
+            to = getDestinationCoordinate()
+        } else {
+
+            // Default path
+//            from = Coordinate(48.84487592, 2.37362684, -1F)
+//            to = Coordinate(48.84428454, 2.37390447, 0F)
+
+            // Path at less than 3 meters from network
+//            from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
+//            to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
+
+            // Path at less than 3 meters from network and route recalculation
+//            from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
+//            to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
+
+            // Path from level -1 to 0 and route recalculation
+            from = Coordinate(48.84445563, 2.37319782, -1F)
+            to = Coordinate(48.84502948, 2.37451864, 0F)
+
+            // Path indoor to outdoor
+//            from = Coordinate(48.84482873, 2.37378956, 0F)
+//            to = Coordinate(48.8455159, 2.37305333)
+        }
+
+        startNavigation(from, to)
     }
 
-    private fun startNavigationToUserCreatedAnnotation(from: Coordinate? = null) {
+    private fun startNavigation(from: Coordinate?, to: Coordinate) {
         disableStartButtons()
 
-        val coordinates = getCoordinates(from)
+        val navOptions = Config.globalNavigationOptions(requireContext())
 
         val disposable = navigationManager
-            .startNavigation(coordinates.first, coordinates.second)
+//            .startNavigation(from, to, navOptions, itinerarySearchOptions = ItinerarySearchOptions(useStairs = false))
+            .startNavigation(from, to, navOptions)
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
                 simulator.setItinerary(it)
                 buttonStopNavigation.isEnabled = true
-                println("Successfully started navigation itinerary: $it")
             }, {
-                Snackbar.make(mapView, "Failed to start navigation with error - $it", Snackbar.LENGTH_LONG).multiline().show()
+                Snackbar.make(mapView, "Failed to start navigation with error - $it", Snackbar.LENGTH_LONG)
+                    .multiline().show()
                 updateUI()
             })
 
@@ -147,15 +180,19 @@ class NavigationFragment : MapFragment() {
     }
 
     private fun setupNavigationManagerListener() {
-        mapView.navigationManager.addNavigationManagerListener(NavigationManagerListener(
+        navigationManager.addNavigationManagerListener(NavigationManagerListener(
             onInfoChanged = { info ->
                 textView.text = info.shortDescription
                 textView.visibility = View.VISIBLE
             },
-            onStarted = {
+            onStarted = { itinerary ->
                 textView.visibility = View.VISIBLE
                 Snackbar.make(mapView, "Navigation started", Snackbar.LENGTH_LONG).multiline().show()
                 buttonStopNavigation.isEnabled = true
+
+                itinerary.legs.flatMap { it.steps }.forEach {
+                    println(it.getNavigationInstructions(requireContext()))
+                }
             },
             onStopped = {
                 textView.visibility = View.GONE
@@ -192,15 +229,10 @@ class NavigationFragment : MapFragment() {
         updateUI()
     }
 
-    private fun showSnackbar(id: Int, onDismissed: (() -> Unit)? = null) {
+    private fun showSnackbar(id: Int, onDismissed: () -> Unit) {
         Snackbar
-            .make(mapView, "Map feature clicked with id $id", Snackbar.LENGTH_LONG)
-            .addCallback(object : Snackbar.Callback() {
-                override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
-                    onDismissed?.invoke()
-                    super.onDismissed(transientBottomBar, event)
-                }
-            })
+            .make(mapView, "POI clicked with id $id", Snackbar.LENGTH_LONG)
+            .onDismissed(onDismissed)
             .show()
     }
 
@@ -228,35 +260,5 @@ class NavigationFragment : MapFragment() {
     private fun getCoordinateFrom(annotation: Circle): Coordinate {
         val to = annotation.latLng
         return Coordinate(to.latitude, to.longitude, getLevelFromAnnotation(annotation))
-    }
-
-    private fun getCoordinates(origin: Coordinate? = null): Pair<Coordinate?, Coordinate> {
-
-        // it's not a polestar emulator
-        if (locationSourceId != 0) {
-            return Pair(origin, getDestinationCoordinate())
-        }
-
-        // Default path
-//        val from = Coordinate(48.84487592, 2.37362684, -1F)
-//        val to = Coordinate(48.84428454, 2.37390447, 0F)
-
-        // Path at less than 3 meters from network
-//        val from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
-//        val to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
-
-        // Path at less than 3 meters from network and route recalculation
-//        val from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
-//        val to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
-
-        // Path from level -1 to 0 and route recalculation
-        val from = Coordinate(48.84445563, 2.37319782, -1F)
-        val to = Coordinate(48.84502948, 2.37451864, 0F)
-
-        // Path indoor to outdoor
-//        val from = Coordinate(48.84482873, 2.37378956, 0F)
-//        val to = Coordinate(48.8455159, 2.37305333)
-
-        return Pair(from, to)
     }
 }

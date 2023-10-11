@@ -2,6 +2,45 @@
 
 ---
 
+## [0.9.0]
+
+### Added
+
+* MapSDK: Add helper method to translate step data into textual instructions
+* CoreSDK: add itinerary search options for backend
+* MapSDK: Take into account heading from LocationSource
+* MapSDK: Add MapData.externalId
+* MapSDK: Make MapData and its children Parcelable
+* MapSDK: Add NavigationManager.isActive
+* CoreSDK: Add PointOfInterest.coordinate
+* MapSDK: Create a default GPS (fused) LocationSource
+
+### Changed
+
+* MapSDK: improve building selection implementation
+* MapSDK: use Polestar recommendation to detect outdoor location
+* MapSDK: revert back onFeatureClick listener method
+* MapExample: simplify samples
+
+### Fixed
+
+* CoreSDK: fix CompressedCoordinateSerializer for indoor coordinates
+* MapSDK: fix when an outdoor PoI is clicked, the event propagation is not stopped
+* MapExample: Bluetooth permission is not asked in the sample app
+* MapSDK: user position is not projected on stairs
+* MapSDK: outdoors, the user's location annotation is displayed in gray
+
+### Deprecated
+
+* MapSDK: `OnMapViewClickListener.onFeatureClick` listener method has been deprecated and will be removed soon. Use `PointOfInterestManagerListener.onPointOfInterestSelected(poi: PointOfInterest)` instead.
+
+### Dependencies
+
+* Gradle 8.1.0 -> 8.0.2
+* Core-ktx 1.10.1 -> 1.12.0
+* RxJava 3.1.6 -> 3.1.7
+* Serialization 1.5.1 -> 1.6.0
+
 ## [0.8.1]
 
 ### Fixed
@@ -10,13 +49,14 @@
 
 ## [0.8.0]
 
-We created a `PositioningSDK` to handle multiple sources of positioning. This corresponds to a new transitive dependency. Some positioning systems can be used on the shelf directly in v0.8 by 
-- `com.getwemap.sdk.locationsources:polestar:0.8.0`
-- `com.getwemap.sdk.locationsources:fusedgms:0.8.0`
+We created a `PositioningSDK` to handle multiple sources of positioning. This corresponds to a new transitive dependency. Some positioning systems can be used on the shelf directly in v0.8 by
+
+* `com.getwemap.sdk.locationsources:polestar:0.8.0`
+* `com.getwemap.sdk.locationsources:fusedgms:0.8.0`
 
 and used as:
 
-```kotlin
+``` kotlin
 mapView.locationManager.apply {
     source = PolestarLocationSource(requireContext(), "emulator")
     // source = GmsFusedLocationSource(requireContext())

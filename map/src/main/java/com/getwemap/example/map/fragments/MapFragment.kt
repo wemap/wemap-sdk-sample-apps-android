@@ -1,9 +1,11 @@
 package com.getwemap.example.map.fragments
 
-import android.Manifest
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest.permission.BLUETOOTH_SCAN
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
@@ -11,6 +13,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.getwemap.example.map.Constants
+import com.getwemap.example.map.GareDeLyonSimulatorsLocationSource
+import com.getwemap.example.map.multiline
 import com.getwemap.sdk.core.LocationSource
 import com.getwemap.sdk.core.model.entities.Level
 import com.getwemap.sdk.locationsources.GmsFusedLocationSource
@@ -19,10 +23,11 @@ import com.getwemap.sdk.map.WemapMapView
 import com.getwemap.sdk.map.buildings.Building
 import com.getwemap.sdk.map.buildings.OnActiveLevelChangeListener
 import com.getwemap.sdk.map.buildings.OnBuildingFocusChangeListener
-import com.getwemap.sdk.map.location.sources.LocationSourceSimulator
+import com.getwemap.sdk.map.location.sources.SimulatorLocationSource
 import com.getwemap.sdk.map.model.entities.MapData
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.serialization.json.Json
 
 abstract class MapFragment : Fragment() {
@@ -31,15 +36,25 @@ abstract class MapFragment : Fragment() {
     protected abstract val levelToggle: MaterialButtonToggleGroup
 
     // also you can use simulator to generate locations along the itinerary
-    protected val simulator by lazy { LocationSourceSimulator() }
+    protected val simulator by lazy { SimulatorLocationSource() }
 
     protected var locationSourceId: Int = -1
+
+    protected val pointOfInterestManager get() = mapView.pointOfInterestManager
+    protected val focusedBuilding get() = buildingManager.focusedBuilding
 
     private val buildingManager get() = mapView.buildingManager
 
     private val activityResultLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
         if (isGranted) {
-            setupLocationSource()
+            checkPermissionsAndSetupLocationSource()
+        } else {
+            Snackbar.make(
+                mapView,
+                "In order to make sample app work properly you have to accept required permission",
+                Snackbar.LENGTH_LONG)
+                .multiline()
+                .show()
         }
     }
 
@@ -61,11 +76,10 @@ abstract class MapFragment : Fragment() {
 //        mapView.cameraBounds = maxBounds
         mapView.onCreate(savedInstanceState)
 
-        mapView.getMapAsync { map ->
 
-            map.getStyle {
-                checkPermissionsAndSetupLocationSource()
-            }
+        mapView.getWemapMapAsync { _, _, _ ->
+
+            checkPermissionsAndSetupLocationSource()
 
             buildingManager.addOnBuildingFocusChangeListener(object : OnBuildingFocusChangeListener {
                 override fun onBuildingFocusChange(building: Building?) {
@@ -86,7 +100,7 @@ abstract class MapFragment : Fragment() {
                 checkedButton.setBackgroundColor(Color.WHITE)
                 return@addOnButtonCheckedListener
             }
-            val focused = buildingManager.focusedBuilding ?: return@addOnButtonCheckedListener
+            val focused = focusedBuilding ?: return@addOnButtonCheckedListener
             checkedButton.setBackgroundColor(Color.BLUE)
             val desiredLevel = focused.levels.find { it.shortName == checkedButton.text }
             focused.activeLevel = desiredLevel!!
@@ -126,20 +140,45 @@ abstract class MapFragment : Fragment() {
     }
 
     private fun checkPermissionsAndSetupLocationSource() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            activityResultLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        val permissionsAccepted = when (locationSourceId) {
+            1, 3 -> checkGPSPermission() && checkBluetoothPermission()
+            0, 2, 4, 5 -> checkGPSPermission()
+            else -> throw Exception("Location source id should be passed in Bundle")
+        }
+        if (!permissionsAccepted) return
+
+        setupLocationSource()
+    }
+
+    private fun checkGPSPermission(): Boolean {
+        return if (ContextCompat.checkSelfPermission(requireContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            activityResultLauncher.launch(ACCESS_FINE_LOCATION)
+            false
         } else {
-            setupLocationSource()
+            true
+        }
+    }
+
+    private fun checkBluetoothPermission(): Boolean {
+        return if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            ContextCompat.checkSelfPermission(requireContext(), BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+            activityResultLauncher.launch(BLUETOOTH_SCAN)
+            false
+        } else {
+            true
         }
     }
 
     @SuppressLint("MissingPermission")
     private fun setupLocationSource() {
-        val locationSource: LocationSource = when (locationSourceId) {
-            0 -> PolestarLocationSource(requireContext(), "emulator")
+        val locationSource: LocationSource? = when (locationSourceId) {
+            0 -> simulator
             1 -> PolestarLocationSource(requireContext(), Constants.polestarKey)
-            2 -> simulator
-            3 -> GmsFusedLocationSource(requireContext())
+            2 -> null
+            3 -> PolestarLocationSource(requireContext(), "emulator")
+            4 -> GmsFusedLocationSource(requireContext())
+            5 -> GareDeLyonSimulatorsLocationSource.FromIndoorToOutdoor
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         mapView.locationManager.apply {

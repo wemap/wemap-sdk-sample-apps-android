@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.getwemap.example.map.Config
 import com.getwemap.example.map.Constants
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentInitialBinding
@@ -80,6 +81,7 @@ class InitialFragment : Fragment() {
                 val bundle = Bundle()
                 bundle.putInt("locationSourceId", spinner.selectedItemPosition)
                 bundle.putString("mapData", Json.encodeToString(it))
+                Config.applyGlobalOptions(requireContext())
                 findNavController().navigate(R.id.action_InitialFragment_to_SamplesListFragment, bundle)
             }, {
                 println("Failed to receive map data with error - ${it.message}")

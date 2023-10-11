@@ -8,3 +8,12 @@ internal fun Snackbar.multiline(): Snackbar {
     textView.maxLines = 20
     return this
 }
+
+internal fun Snackbar.onDismissed(onDismissed: () -> Unit): Snackbar {
+    return addCallback(object : Snackbar.Callback() {
+        override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+            onDismissed()
+            super.onDismissed(transientBottomBar, event)
+        }
+    })
+}

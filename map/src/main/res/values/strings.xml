@@ -21,4 +21,28 @@
 
     <string name="first_poi" translatable="false">Relay (shop)</string>
     <string name="second_poi" translatable="false">Etam lingerie</string>
+
+    <!-- Preference -->
+    <string name="preferences">Preferences</string>
+
+    <!-- Preference Groups -->
+    <string name="global_preferences">Global</string>
+    <string name="navigation_preferences">Navigation</string>
+
+    <!-- Global Preferences -->
+    <string name="visual_debugger_title">Enable visual debugger</string>
+    <string name="switch_levels_title">Switch levels automatically on user movements</string>
+    <string name="recalculate_itinerary_title">Recalculate itinerary if user is far from itinerary</string>
+    <string name="user_location_projection_title">Project user location on itinerary</string>
+
+    <!-- Navigation Preferences -->
+    <string name="stop_distance_threshold_title">Stop distance threshold</string>
+    <string name="stop_distance_threshold_summary">The distance measured in meters, indicating when the navigation manager considers that the user has arrived at the final destination. Default is 5 meters</string>
+
+    <string name="user_position_threshold_title">User position threshold</string>
+    <string name="user_position_threshold_summary">The distance measured in meters indicates when the user\'s location will no longer be projected onto the itinerary and navigation will be recalculated. Default is 5 meters</string>
+
+    <string name="navigation_recalculation_time_interval_title">Navigation recalculation time interval</string>
+    <string name="navigation_recalculation_time_interval_summary">The navigation recalculation time interval, measured in seconds, indicates the interval between consecutive navigation recalculations. An interval of less than 5 seconds is forbidden. Default is 5 seconds</string>
+
 </resources>

@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.getwemap.example.map.ConsumerData
 import com.getwemap.example.map.databinding.FragmentLevelsBinding
+import com.getwemap.example.map.onDismissed
 import com.getwemap.sdk.core.model.ServiceFactory
 import com.google.android.material.snackbar.Snackbar
 import com.mapbox.mapboxsdk.Mapbox
@@ -16,7 +17,6 @@ class LevelsFragment : MapFragment() {
 
     private val buttonFirstPOI get() = binding.firstPOI
     private val buttonSecondPOI get() = binding.secondPOI
-    private val pointOfInterestManager get() = mapView.pointOfInterestManager
 
     private lateinit var binding: FragmentLevelsBinding
 
@@ -66,15 +66,10 @@ class LevelsFragment : MapFragment() {
         }
     }
 
-    private fun showSnackbar(id: Int, onDismissed: (() -> Unit)? = null) {
+    private fun showSnackbar(id: Int, onDismissed: () -> Unit) {
         Snackbar
             .make(mapView, "POI selected with id $id", Snackbar.LENGTH_LONG)
-            .addCallback(object : Snackbar.Callback() {
-                override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
-                    onDismissed?.invoke()
-                    super.onDismissed(transientBottomBar, event)
-                }
-            })
+            .onDismissed(onDismissed)
             .show()
     }
 }
