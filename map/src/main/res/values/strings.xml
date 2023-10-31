@@ -11,6 +11,8 @@
     <string name="load_map" translatable="false">Load Map</string>
     <string name="navigation_placeholder" translatable="false">Navigation info will be here</string>
 
+    <string name="apply_filter" translatable="false">Apply filter</string>
+    <string name="remove_filters" translatable="false">Remove filters</string>
     <string name="start_navigation_user_position" translatable="false">Start navigation from simulated user position</string>
     <string name="start_navigation" translatable="false">Start navigation</string>
     <string name="stop_navigation" translatable="false">Stop navigation</string>

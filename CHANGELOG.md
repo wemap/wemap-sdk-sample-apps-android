@@ -2,6 +2,24 @@
 
 ---
 
+## [0.10.0]
+
+### Added
+
+* PositioningExample: add an example app to demonstrate VPS functionality
+* MapSDK: Create filter by tags
+* MapSDK: Extend MapData with Extras
+
+### Fixed
+
+* MapSDK: fix automatic level change when CameraMode is not tracking
+* MapSDK: automatic level switch on user movements freezes/lags the app
+
+### Dependencies
+
+* RxJava 3.1.7 -> 3.1.8
+* ARCore 1.39.0 -> 1.40.0
+
 ## [0.9.0]
 
 ### Added

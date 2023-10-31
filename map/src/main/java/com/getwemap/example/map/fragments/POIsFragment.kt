@@ -29,6 +29,8 @@ class POIsFragment : MapFragment() {
 
     private val disposeBag = CompositeDisposable()
 
+    private val buttonApplyFilter get() = binding.applyFilter
+    private val buttonRemoveFilters get() = binding.removeFilters
     private val buttonStartNavigation get() = binding.startNavigation
     private val buttonStopNavigation get() = binding.stopNavigation
     private val buttonStartNavigationFromSimulatedUserPosition get() = binding.startNavigationFromSimulatedUserPosition
@@ -99,6 +101,19 @@ class POIsFragment : MapFragment() {
             }
         }
 
+        buttonApplyFilter.setOnClickListener {
+            if (pointOfInterestManager.filterByTag("52970")) {
+                buttonApplyFilter.isEnabled = false
+                buttonRemoveFilters.isEnabled = true
+            }
+        }
+
+        buttonRemoveFilters.setOnClickListener {
+            pointOfInterestManager.removeFilters()
+            buttonApplyFilter.isEnabled = true
+            buttonRemoveFilters.isEnabled = false
+        }
+
         buttonStartNavigation.setOnClickListener {
             startNavigation()
         }
@@ -118,9 +133,11 @@ class POIsFragment : MapFragment() {
 
     override fun onStart() {
         super.onStart()
-        Snackbar.make(mapView, "Select one POI on the map and after click on start navigation button. " +
-                "If you use simulator - perform long tap at any place on the map and then select at least one POI " +
-                "to start navigation", Snackbar.LENGTH_LONG)
+        Snackbar.make(
+            mapView, "Select one POI on the map and after click on start navigation button. " +
+                    "If you use simulator - perform long tap at any place on the map and then select at least one POI " +
+                    "to start navigation", Snackbar.LENGTH_LONG
+        )
             .multiline().show()
     }
 
@@ -143,7 +160,7 @@ class POIsFragment : MapFragment() {
                     simulator.reset()
                     buttonStopNavigation.isEnabled = false
                     updateUI()
-                  }, {
+                }, {
                     Snackbar.make(mapView, "Failed to stop navigation with error - $it", Snackbar.LENGTH_LONG)
                         .multiline().show()
                 }

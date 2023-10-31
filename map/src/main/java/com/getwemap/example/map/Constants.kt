@@ -11,6 +11,6 @@ object Constants {
     }
 
     val polestarKey: String get() {
-        throw Exception("Specify polestar key and remove fatalError")
+        throw Exception("Specify polestarKey key and remove fatalError")
     }
 }

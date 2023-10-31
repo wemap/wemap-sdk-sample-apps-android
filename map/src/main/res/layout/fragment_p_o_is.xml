@@ -68,6 +68,31 @@
             android:orientation="horizontal">
 
             <Button
+                android:id="@+id/applyFilter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:enabled="true"
+                android:text="@string/apply_filter" />
+
+            <Button
+                android:id="@+id/removeFilters"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:enabled="false"
+                android:text="@string/remove_filters" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
                 android:id="@+id/startNavigationFromSimulatedUserPosition"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

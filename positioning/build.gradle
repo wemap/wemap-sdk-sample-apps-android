@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace "${examples_group_id}.map"
+    namespace "${examples_group_id}.positioning"
     compileSdk compile_sdk
 
     defaultConfig {
@@ -22,28 +22,26 @@ android {
             minifyEnabled false
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
     buildFeatures {
         viewBinding true
     }
 }
 
 dependencies {
-    implementation "com.getwemap.sdk:map:$version_name"
-    implementation "com.getwemap.sdk.locationsources:polestar:$version_name"
-    implementation "com.getwemap.sdk.locationsources:fusedgms:$version_name"
+    implementation "com.getwemap.sdk.locationsources:wemapvpsarcore:$version_name"
 
-    implementation 'org.maplibre.gl:android-plugin-annotation-v9:2.0.1'
-
+    implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.10.0'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.7.4'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.7.4'
-    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }

@@ -8,6 +8,7 @@
             app:title="@string/visual_debugger_title" />
 
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:key="SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS"
             app:title="@string/switch_levels_title" />
 

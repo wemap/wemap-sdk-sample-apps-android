@@ -4,7 +4,7 @@
 
 ## Requirements
 
-* AndroidStudio 2021.3.1 (or later)
+* AndroidStudio 2021.3.1+
 
 ## Installation
 
@@ -24,6 +24,18 @@
     }
     ```
 
-* specify `mapId` and `token` in [`Constants.kt`](map/src/main/java/com/getwemap/example/map/Constants.kt)
+* specify `mapID` and `token` and optionally `polestarKey` in [`Map Example`](map/src/main/java/com/getwemap/example/map/Constants.kt)
 
-* build and run `map` build variant
+* specify `vpsEndpoint` in [`Positioning Example`](positioning/src/main/java/com/getwemap/example/positioning/Constants.kt)
+
+* build and run desired example app build variant
+
+## Examples
+
+* MapExample
+
+  * Levels - shows how to set custom indoor location provider and switch between levels
+  * Points of interests - shows how to perform selection of POIs on the map
+  * Navigation - shows how to start navigation to some user-created annotation
+
+* PositioningExample
