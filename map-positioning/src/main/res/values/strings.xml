@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name" translatable="false">Map+Pos</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="map_fragment_label">Map Fragment</string>
+    <string name="initial_fragment_label">Initial Fragment</string>
+    <string name="map_vps_fragment_label">Map VPS Fragment</string>
+    <string name="load_map">Load Map</string>
+</resources>

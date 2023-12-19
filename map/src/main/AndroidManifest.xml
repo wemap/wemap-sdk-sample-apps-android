@@ -44,6 +44,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="com.getwemap.sdk.locationsources.PolestarLocationSourceServiceManager" />
+        <service android:name="com.getwemap.sdk.positioning.polestar.PolestarLocationSourceServiceManager" />
     </application>
 </manifest>

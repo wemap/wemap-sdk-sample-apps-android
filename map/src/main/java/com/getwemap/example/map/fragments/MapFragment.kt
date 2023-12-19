@@ -15,16 +15,16 @@ import androidx.fragment.app.Fragment
 import com.getwemap.example.map.Constants
 import com.getwemap.example.map.GareDeLyonSimulatorsLocationSource
 import com.getwemap.example.map.multiline
-import com.getwemap.sdk.core.LocationSource
+import com.getwemap.sdk.core.location.LocationSource
 import com.getwemap.sdk.core.model.entities.Level
-import com.getwemap.sdk.locationsources.GmsFusedLocationSource
-import com.getwemap.sdk.locationsources.PolestarLocationSource
 import com.getwemap.sdk.map.WemapMapView
 import com.getwemap.sdk.map.buildings.Building
 import com.getwemap.sdk.map.buildings.OnActiveLevelChangeListener
 import com.getwemap.sdk.map.buildings.OnBuildingFocusChangeListener
-import com.getwemap.sdk.map.location.sources.SimulatorLocationSource
+import com.getwemap.sdk.map.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.map.model.entities.MapData
+import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
+import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.snackbar.Snackbar
@@ -174,7 +174,7 @@ abstract class MapFragment : Fragment() {
     private fun setupLocationSource() {
         val locationSource: LocationSource? = when (locationSourceId) {
             0 -> simulator
-            1 -> PolestarLocationSource(requireContext(), Constants.polestarKey)
+            1 -> PolestarLocationSource(requireContext(), Constants.polestarApiKey)
             2 -> null
             3 -> PolestarLocationSource(requireContext(), "emulator")
             4 -> GmsFusedLocationSource(requireContext())

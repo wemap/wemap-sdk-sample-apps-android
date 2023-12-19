@@ -2,6 +2,33 @@
 
 ---
 
+## [0.11.0]
+
+### Breaking changes
+
+* `LocationSource` and `LocationSourceListener` have been moved from `com.getwemap.sdk.core` to `com.getwemap.sdk.core.location`
+* `SimulatorLocationSource` has been moved from `com.getwemap.sdk.map.location` to `com.getwemap.sdk.map.location.simulation`
+* `polestar`, `fused-gms` and `wemap-vps-arcore` libraries are moved from `com.getwemap.sdk.locationsources:` to `com.getwemap.sdk.positioning:`
+  * `GmsFusedLocationSource` has been moved from `com.getwemap.sdk.locationsources` to `com.getwemap.sdk.positioning.fusedgms`
+  * `PolestarLocationSource` has been moved from `com.getwemap.sdk.locationsources` to `com.getwemap.sdk.positioning.polestar`
+  * `WemapVPSARCore*` classes have been moved from `com.getwemap.sdk.locationsources.vps.*` to `com.getwemap.sdk.positioning.wemapvpsarcore.*`
+
+### Added
+
+* MapSDK: have a method to startNavigation with itineraries as parameter
+* Map+PosExample: sample app with WemapVPSARCoreLocationSource
+
+### Changed
+
+* Samples: update icons and names of sample apps
+* MapSDK: Refactor (i) button popup
+
+### Dependencies
+
+* ARCore 1.40.0 -> 1.41.0
+* LoggingInterceptor 4.11.0 -> 4.12.0
+* Serialization 1.6.0 -> 1.6.2
+
 ## [0.10.0]
 
 ### Added

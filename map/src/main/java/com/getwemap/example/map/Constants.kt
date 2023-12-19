@@ -3,14 +3,14 @@ package com.getwemap.example.map
 object Constants {
 
     val mapId: Int get() {
-        throw Exception("Specify mapId and remove fatalError")
+        return 19158 // TODO: Modify this value with your own map id
     }
 
     val token: String get() {
-        throw Exception("Specify token and remove fatalError")
+        return "GUHTU6TYAWWQHUSR5Z5JZNMXX" // TODO: Modify this value with your own wemap token
     }
 
-    val polestarKey: String get() {
-        throw Exception("Specify polestarKey key and remove fatalError")
+    val polestarApiKey: String get() {
+        throw Exception("Specify polestarKey key and remove exception")
     }
 }

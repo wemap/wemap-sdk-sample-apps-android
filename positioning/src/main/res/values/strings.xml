@@ -1,4 +1,0 @@
-<resources>
-    <string name="app_name">Positioning Example</string>
-    <string translatable="false" name="pose">X/Z: %.3fm, %.3fm\nY: %.2fm\n\nORIENTATION: [%.1f, %.1f, %.1f, %.1f]\n</string>
-</resources>

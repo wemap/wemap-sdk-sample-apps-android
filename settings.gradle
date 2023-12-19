@@ -23,4 +23,4 @@ dependencyResolutionManagement {
 rootProject.name = "WemapSDKSampleApps"
 
 include ':map'
-include ':positioning'
+include ':map-positioning'

@@ -1,7 +1,7 @@
 package com.getwemap.example.map
 
 import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.map.location.sources.SimulatorLocationSource
+import com.getwemap.sdk.map.location.simulation.SimulatorLocationSource
 
 class GareDeLyonSimulatorsLocationSource {
 

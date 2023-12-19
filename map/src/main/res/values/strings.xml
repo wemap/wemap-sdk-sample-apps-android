@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Map Example</string>
+    <string name="app_name" translatable="false">Map</string>
 
     <!-- Strings used for fragments for navigation -->
     <string name="levels_fragment_label" translatable="false">Levels Fragment</string>
