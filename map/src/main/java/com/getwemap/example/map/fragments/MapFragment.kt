@@ -76,7 +76,6 @@ abstract class MapFragment : Fragment() {
 //        mapView.cameraBounds = maxBounds
         mapView.onCreate(savedInstanceState)
 
-
         mapView.getWemapMapAsync { _, _, _ ->
 
             checkPermissionsAndSetupLocationSource()
@@ -98,10 +97,12 @@ abstract class MapFragment : Fragment() {
             val checkedButton = group.findViewById<MaterialButton>(checkedId)
             if (!isChecked) {
                 checkedButton.setBackgroundColor(Color.WHITE)
+                checkedButton.setTextColor(Color.BLACK)
                 return@addOnButtonCheckedListener
             }
             val focused = focusedBuilding ?: return@addOnButtonCheckedListener
             checkedButton.setBackgroundColor(Color.BLUE)
+            checkedButton.setTextColor(Color.WHITE)
             val desiredLevel = focused.levels.find { it.shortName == checkedButton.text }
             focused.activeLevel = desiredLevel!!
         }
@@ -136,7 +137,7 @@ abstract class MapFragment : Fragment() {
             .forEach {
                 levelToggle.addView(it)
             }
-        levelToggle.check(building.defaultLevelIndex)
+        levelToggle.check(building.activeLevelIndex)
     }
 
     private fun checkPermissionsAndSetupLocationSource() {
@@ -188,13 +189,11 @@ abstract class MapFragment : Fragment() {
         locationManagerReady()
         // this way you can specify user location indicator appearance
 //        mapView.locationManager.userLocationViewStyle = UserLocationViewStyle(
-//            Color.parseColor("#FFC0CB"), // pink
-//            Color.BLACK,
-//            Color.GREEN,
-//            UserLocationViewStyle.OutOfActiveLevelStyle(
-//                Color.WHITE,
-//                Color.RED,
-//                0.8F
+//            foregroundDrawable = R.drawable.custom_user_puck_icon,
+//            backgroundTintColor = Color.TRANSPARENT,
+//            bearingDrawable = R.drawable.custom_user_arrow,
+//            outOfActiveLevelStyle = UserLocationViewStyle.OutOfActiveLevelStyle(
+//                foregroundDrawable = R.drawable.ic_layers_clear
 //            )
 //        )
     }

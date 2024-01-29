@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.activityViewModels
 import com.getwemap.example.map.Config
+import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentPOIsBinding
 import com.getwemap.example.map.multiline
 import com.getwemap.sdk.core.model.entities.Coordinate
@@ -13,7 +15,7 @@ import com.getwemap.sdk.map.OnMapViewClickListener
 import com.getwemap.sdk.map.navigation.NavigationManagerListener
 import com.getwemap.sdk.map.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.JsonPrimitive
+import com.google.gson.JsonArray
 import com.mapbox.geojson.Feature
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.plugins.annotation.Circle
@@ -44,6 +46,7 @@ class POIsFragment : MapFragment() {
 
     private var selectedPOI: PointOfInterest? = null
     private var simulatedUserPosition: Circle? = null
+    private val viewModel: PoisViewModel by activityViewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         Mapbox.getInstance(requireContext())
@@ -90,15 +93,22 @@ class POIsFragment : MapFragment() {
                 if (simulatedUserPosition != null)
                     circleManager.delete(simulatedUserPosition)
 
+                val array = JsonArray()
+                if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(it))
+                    array.add(focusedBuilding!!.activeLevel.id)
+
                 val options = CircleOptions()
                     .withLatLng(it)
-                    .withData(JsonPrimitive(focusedBuilding?.activeLevelId ?: 0F))
+                    .withData(array)
 
                 simulatedUserPosition = circleManager.create(options)
                 updateUI()
 
                 return@addOnMapLongClickListener true
             }
+
+            viewModel.mapData = mapView.mapData!!
+            viewModel.poiManager = mapView.pointOfInterestManager
         }
 
         buttonApplyFilter.setOnClickListener {
@@ -129,6 +139,19 @@ class POIsFragment : MapFragment() {
         buttonRemoveSimulatedUserPosition.setOnClickListener {
             removeSimulatedUserPosition()
         }
+
+        binding.poisButton.setOnClickListener {
+            viewModel.userCoordinate = getLastCoordinate()
+            val overlay = PoisListFragment()
+
+            overlay.show(parentFragmentManager, null)
+        }
+
+        binding.toggleSelectionButton.setOnClickListener {
+            pointOfInterestManager.isSelectionEnabled = !pointOfInterestManager.isSelectionEnabled
+            val text = if (pointOfInterestManager.isSelectionEnabled) R.string.disable_selection else R.string.enable_selection
+            binding.toggleSelectionButton.setText(text)
+        }
     }
 
     override fun onStart() {
@@ -142,10 +165,21 @@ class POIsFragment : MapFragment() {
     }
 
     override fun locationManagerReady() {
+        super.locationManagerReady()
         val coordinateUpdate = mapView.locationManager.coordinateUpdated.subscribe {
             userLocationTextView.text = "$it"
         }
         disposeBag.add(coordinateUpdate)
+    }
+
+    private fun getLastCoordinate(): Coordinate {
+        return mapView.locationManager.lastCoordinate ?: getSimulatedCoordinate()
+    }
+
+    private fun getSimulatedCoordinate(): Coordinate {
+        val simulated = simulatedUserPosition!!
+        val latLng = simulated.latLng
+        return Coordinate(latLng.latitude, latLng.longitude, getLevelFromAnnotation(simulated))
     }
 
     private fun startNavigation() {
@@ -168,21 +202,16 @@ class POIsFragment : MapFragment() {
     }
 
     private fun startNavigationFromSimulatedUserPosition() {
-        val annotation = simulatedUserPosition!!
-        val latLng = annotation.latLng
-        val from = Coordinate(latLng.latitude, latLng.longitude, getLevelFromAnnotation(annotation))
-        startNavigationToSelectedPOI(from)
+        startNavigationToSelectedPOI(getSimulatedCoordinate())
     }
 
     private fun startNavigationToSelectedPOI(from: Coordinate? = null) {
         disableStartButtons()
 
-        val poi = selectedPOI!!
-        val levels: List<Float> = if (poi.levelID != null) listOf(poi.levelID!!) else listOf()
-        val to = Coordinate(poi.latitude, poi.longitude, levels)
+        val destination = selectedPOI!!.coordinate
 
         val disposable = navigationManager
-            .startNavigation(from, to, Config.globalNavigationOptions(requireContext()))
+            .startNavigation(from, destination, Config.globalNavigationOptions(requireContext()))
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
                 simulator.setItinerary(it)
@@ -230,6 +259,7 @@ class POIsFragment : MapFragment() {
         buttonStartNavigationFromSimulatedUserPosition.isEnabled =
             selectedPOI != null && simulatedUserPosition != null && !buttonStopNavigation.isEnabled
         buttonRemoveSimulatedUserPosition.isEnabled = simulatedUserPosition != null
+        binding.poisButton.isEnabled = (mapView.locationManager.lastCoordinate ?: simulatedUserPosition) != null
     }
 
     private fun disableStartButtons() {
@@ -244,15 +274,6 @@ class POIsFragment : MapFragment() {
     }
 
     private fun getLevelFromAnnotation(annotation: Circle): List<Float> {
-        val building = focusedBuilding
-        if (building == null) {
-            println("Failed to retrieve focused building. Can't check if annotation is indoor or outdoor")
-            return listOf()
-        }
-
-        return if (building.boundingBox.contains(annotation.latLng))
-            listOf(annotation.data!!.asFloat)
-        else
-            listOf()
+        return annotation.data!!.asJsonArray.map { it.asFloat }
     }
 }

@@ -2,6 +2,51 @@
 
 ---
 
+## [0.12.0]
+
+### Breaking changes
+
+* `PointOfInterest` has been changed:
+  * `latitude` has been moved to `coordinate.latitude`
+  * `longitude` has been moved to `coordinate.longitude`
+  * `levelID` has been moved to `coordinate.levels`
+  * `latLng` has been moved to `coordinate.latLng`
+* `ItineraryOptions` has been changed:
+  * `width` has been moved to `indoorLine.width`
+  * `opacity` has been moved to `indoorLine.opacity`
+  * `color` has been moved to `ItineraryOptions.indoorLine.color`
+  * `projectionOptions.width` has been moved by `projectionLine.width`
+  * `projectionOptions.opacity` has been moved by `projectionLine.opacity`
+  * `projectionOptions.color` has been moved by `projectionLine.color`
+  * `projectionOptions.dashPattern` has been moved by `projectionLine.dashPattern`
+
+### Added
+
+* MapSDK: Add remaining distance to the step in Itinerary info of NavigationInfo
+* MapSDK/CoreSDK: Let the possibility to sort PoIs by travel time/distance from UserPosition in a "batch" version
+* MapSDK: Let the possibility to the developer to disable/enable PoI selection
+* MapSDK: Add the possibility to change the user location icon dynamically
+* MapSDK: ability to change color of outdoor part of itinerary
+
+### Changed
+
+* CoreSDK: use coordinate for POI instead of latitude, longitude and levelID
+
+### Fixed
+
+* MapSDK: filterByTag method do the opposite of the desired effect
+* MapSDK: SDK version in the (i) button is not at the good version for Android
+* MapSDK: building's active level is reset when viewport has significantly changed even if the building is still in focus
+* MapSDK: outdoor part of itinerary is visible only when selected level 0
+* MapSDK: blue dot greyed outdoor when camera is following the user
+
+### Dependencies
+
+* Polestar
+  * NAOSDK 4.11.11 -> 4.11.14
+* Fused-GMS
+  * GMS 21.0.1 -> 21.1.0
+
 ## [0.11.0]
 
 ### Breaking changes

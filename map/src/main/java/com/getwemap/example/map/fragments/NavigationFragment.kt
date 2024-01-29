@@ -13,7 +13,7 @@ import com.getwemap.sdk.map.extensions.getNavigationInstructions
 import com.getwemap.sdk.map.navigation.NavigationManagerListener
 import com.getwemap.sdk.map.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.JsonPrimitive
+import com.google.gson.JsonArray
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.plugins.annotation.Circle
 import com.mapbox.mapboxsdk.plugins.annotation.CircleManager
@@ -70,9 +70,13 @@ class NavigationFragment : MapFragment() {
                     return@addOnMapLongClickListener false
                 }
 
+                val array = JsonArray()
+                if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(it))
+                    array.add(focusedBuilding!!.activeLevel.id)
+
                 val options = CircleOptions()
                     .withLatLng(it)
-                    .withData(JsonPrimitive(focusedBuilding?.activeLevelId ?: 0F))
+                    .withData(array)
 
                 val point = circleManager.create(options)
                 userCreatedAnnotations.add(point)
@@ -100,6 +104,7 @@ class NavigationFragment : MapFragment() {
     }
 
     override fun locationManagerReady() {
+        super.locationManagerReady()
         val coordinateUpdate = mapView.locationManager.coordinateUpdated.subscribe {
             userLocationTextView.text = "$it"
         }
@@ -164,8 +169,7 @@ class NavigationFragment : MapFragment() {
         val navOptions = Config.globalNavigationOptions(requireContext())
 
         val disposable = navigationManager
-//            .startNavigation(from, to, navOptions, itinerarySearchOptions = ItinerarySearchOptions(useStairs = false))
-            .startNavigation(from, to, navOptions)
+            .startNavigation(from, to, navOptions/*, ItinerarySearchOptions(useStairs = false)*/)
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
                 simulator.setItinerary(it)
@@ -182,7 +186,8 @@ class NavigationFragment : MapFragment() {
     private fun setupNavigationManagerListener() {
         navigationManager.addNavigationManagerListener(NavigationManagerListener(
             onInfoChanged = { info ->
-                textView.text = info.shortDescription
+                val nextStepInstructions = info.nextStep?.getNavigationInstructions(requireContext())?.instructions
+                textView.text = info.shortDescription + "\nNext - $nextStepInstructions"
                 textView.visibility = View.VISIBLE
             },
             onStarted = { itinerary ->
@@ -237,16 +242,7 @@ class NavigationFragment : MapFragment() {
     }
 
     private fun getLevelFromAnnotation(annotation: Circle): List<Float> {
-        val building = focusedBuilding
-        if (building == null) {
-            println("Failed to retrieve focused building. Can't check if annotation is indoor or outdoor")
-            return listOf()
-        }
-
-        return if (building.boundingBox.contains(annotation.latLng))
-            listOf(annotation.data!!.asFloat)
-        else
-            listOf()
+        return annotation.data!!.asJsonArray.map { it.asFloat }
     }
 
     private fun getDestinationCoordinate(): Coordinate {

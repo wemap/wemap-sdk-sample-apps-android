@@ -77,7 +77,7 @@ class SamplesRecyclerViewAdapter(
 
     override fun getItemCount(): Int = items.size
 
-    inner class ViewHolder(binding: FragmentItemBinding) : RecyclerView.ViewHolder(binding.root) {
+    class ViewHolder(binding: FragmentItemBinding) : RecyclerView.ViewHolder(binding.root) {
         val contentView = binding.content
         val detailedView = binding.detailed
         var id = -1

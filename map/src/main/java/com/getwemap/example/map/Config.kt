@@ -5,16 +5,20 @@ import android.graphics.Color
 import androidx.preference.PreferenceManager
 import com.getwemap.sdk.map.MapConstants
 import com.getwemap.sdk.map.itineraries.ItineraryOptions
+import com.getwemap.sdk.map.itineraries.LineOptions
 import com.getwemap.sdk.map.navigation.NavigationOptions
 import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory
 
 object Config {
 
     fun globalNavigationOptions(context: Context): NavigationOptions {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         return NavigationOptions(
-            ItineraryOptions(color = Color.CYAN, projectionOptions = ItineraryOptions.ProjectionOptions(5F, color = Color.LTGRAY)),
+            ItineraryOptions(
+                projectionLine = LineOptions(5F, color = Color.LTGRAY, dashPattern = PropertyFactory.lineDasharray(arrayOf(0.5F, 2F))),
+                outdoorLine = LineOptions(10F, color = Color.DKGRAY)),
             CameraMode.TRACKING_COMPASS,
             stopOptions = NavigationOptions.StopOptions(stopDistanceThreshold = prefs.getString(PreferenceKey.STOP_DISTANCE_THRESHOLD.name, "15")!!.toFloat()),
             userPositionThreshold = prefs.getString(PreferenceKey.USER_POSITION_THRESHOLD.name, "25")!!.toFloat(),

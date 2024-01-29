@@ -9,7 +9,7 @@
     <com.getwemap.sdk.map.WemapMapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/levelToggle"
@@ -34,7 +34,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/levelToggle" />
+        app:layout_constraintTop_toBottomOf="@id/toggleSelectionButton" />
+
+    <Button
+        android:id="@+id/toggleSelectionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Disable selection"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/levelToggle" />
 
     <TextView
         android:id="@+id/userLocationTextView"
@@ -136,5 +145,17 @@
                 android:text="@string/stop_navigation" />
         </LinearLayout>
     </LinearLayout>
+
+    <Button
+        android:id="@+id/pois_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:enabled="false"
+        android:text="POIs"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

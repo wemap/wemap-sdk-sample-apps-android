@@ -47,7 +47,11 @@
         android:id="@+id/POIsFragment"
         android:name="com.getwemap.example.map.fragments.POIsFragment"
         android:label="@string/pois_fragment_label"
-        tools:layout="@layout/fragment_p_o_is"/>
+        tools:layout="@layout/fragment_p_o_is">
+        <action
+            android:id="@+id/action_POIsFragment_to_PoisListFragment"
+            app:destination="@id/PoisListFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/NavigationFragment"
@@ -59,4 +63,9 @@
         android:id="@+id/SettingsFragment"
         android:name="com.getwemap.example.map.fragments.SettingsFragment"
         android:label="@string/settings_fragment_label" />
+
+    <fragment
+        android:id="@+id/PoisListFragment"
+        android:name="com.getwemap.example.map.fragments.PoisListFragment"
+        android:label="@string/pois_list_fragment_label" />
 </navigation>
