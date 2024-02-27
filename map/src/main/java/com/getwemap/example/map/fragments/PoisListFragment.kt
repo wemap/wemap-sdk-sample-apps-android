@@ -11,8 +11,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentItemBinding
-import com.getwemap.sdk.core.internal.model.entities.ItineraryInfo
 import com.getwemap.sdk.core.model.entities.Coordinate
+import com.getwemap.sdk.core.model.services.responses.ItineraryInfo
 import com.getwemap.sdk.map.model.entities.MapData
 import com.getwemap.sdk.map.poi.PointOfInterestManager
 import com.getwemap.sdk.map.poi.PointOfInterestWithInfo

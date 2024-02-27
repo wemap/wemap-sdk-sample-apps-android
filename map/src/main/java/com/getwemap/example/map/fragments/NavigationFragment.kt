@@ -132,44 +132,44 @@ class NavigationFragment : MapFragment() {
 
     private fun startNavigationFromUserCreatedAnnotations() {
 
-        val from: Coordinate
-        val to: Coordinate
+        val origin: Coordinate
+        val destination: Coordinate
         if (locationSourceId != 1) { // not polestar emulator
-            from = getOriginCoordinate()
-            to = getDestinationCoordinate()
+            origin = getOriginCoordinate()
+            destination = getDestinationCoordinate()
         } else {
 
             // Default path
-//            from = Coordinate(48.84487592, 2.37362684, -1F)
-//            to = Coordinate(48.84428454, 2.37390447, 0F)
+//            origin = Coordinate(48.84487592, 2.37362684, -1F)
+//            destination = Coordinate(48.84428454, 2.37390447, 0F)
 
             // Path at less than 3 meters from network
-//            from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
-//            to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
+//            origin = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
+//            destination = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
 
             // Path at less than 3 meters from network and route recalculation
-//            from = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
-//            to = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
+//            origin = Coordinate(48.84458308799957, 2.3731548097070134, 0F)
+//            destination = Coordinate(48.84511200990592, 2.3738383127780676, 0F)
 
             // Path from level -1 to 0 and route recalculation
-            from = Coordinate(48.84445563, 2.37319782, -1F)
-            to = Coordinate(48.84502948, 2.37451864, 0F)
+            origin = Coordinate(48.84445563, 2.37319782, -1F)
+            destination = Coordinate(48.84502948, 2.37451864, 0F)
 
             // Path indoor to outdoor
-//            from = Coordinate(48.84482873, 2.37378956, 0F)
-//            to = Coordinate(48.8455159, 2.37305333)
+//            origin = Coordinate(48.84482873, 2.37378956, 0F)
+//            destination = Coordinate(48.8455159, 2.37305333)
         }
 
-        startNavigation(from, to)
+        startNavigation(origin, destination)
     }
 
-    private fun startNavigation(from: Coordinate?, to: Coordinate) {
+    private fun startNavigation(origin: Coordinate?, destination: Coordinate) {
         disableStartButtons()
 
         val navOptions = Config.globalNavigationOptions(requireContext())
 
         val disposable = navigationManager
-            .startNavigation(from, to, navOptions/*, ItinerarySearchOptions(useStairs = false)*/)
+            .startNavigation(origin, destination, options = navOptions/*, ItinerarySearchOptions(avoidStairs = true)*/)
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
                 simulator.setItinerary(it)

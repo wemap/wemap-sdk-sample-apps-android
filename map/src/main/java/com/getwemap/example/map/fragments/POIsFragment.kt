@@ -11,12 +11,10 @@ import com.getwemap.example.map.databinding.FragmentPOIsBinding
 import com.getwemap.example.map.multiline
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.PointOfInterest
-import com.getwemap.sdk.map.OnMapViewClickListener
 import com.getwemap.sdk.map.navigation.NavigationManagerListener
 import com.getwemap.sdk.map.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
-import com.mapbox.geojson.Feature
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.plugins.annotation.Circle
 import com.mapbox.mapboxsdk.plugins.annotation.CircleManager
@@ -57,13 +55,6 @@ class POIsFragment : MapFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mapView.onMapViewClickListener = object : OnMapViewClickListener {
-            override fun onFeatureClick(feature: Feature) {
-                Snackbar.make(mapView, "onFeatureClick", Snackbar.LENGTH_LONG)
-                    .multiline().show()
-            }
-        }
-
         mapView.getWemapMapAsync { mapView, map, _ ->
             pointOfInterestManager.addPointOfInterestManagerListener(PointOfInterestManagerListener(
                 onSelected = {
@@ -76,6 +67,10 @@ class POIsFragment : MapFragment() {
                 onUnselected = {
                     selectedPOI = null
                     updateUI()
+                },
+                onClicked = {
+                    Snackbar.make(mapView, "onPointOfInterestClick - $it", Snackbar.LENGTH_LONG)
+                        .multiline().show()
                 }
             ))
 
@@ -205,13 +200,13 @@ class POIsFragment : MapFragment() {
         startNavigationToSelectedPOI(getSimulatedCoordinate())
     }
 
-    private fun startNavigationToSelectedPOI(from: Coordinate? = null) {
+    private fun startNavigationToSelectedPOI(origin: Coordinate? = null) {
         disableStartButtons()
 
         val destination = selectedPOI!!.coordinate
 
         val disposable = navigationManager
-            .startNavigation(from, destination, Config.globalNavigationOptions(requireContext()))
+            .startNavigation(origin, destination, options = Config.globalNavigationOptions(requireContext()))
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
                 simulator.setItinerary(it)

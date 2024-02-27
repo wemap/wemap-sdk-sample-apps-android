@@ -19,6 +19,7 @@ import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceE
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceObserver
 import com.google.android.material.snackbar.Snackbar
+import com.google.ar.core.TrackingFailureReason
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
@@ -170,24 +171,31 @@ class MapVPSFragment : Fragment() {
         binding.stopScanButton.isEnabled = isScanning
     }
 
+    private fun showCameraHideMap() {
+        binding.mapLayout.visibility = View.VISIBLE
+        binding.cameraLayout.visibility = View.INVISIBLE
+        binding.scanButtons.isEnabled = true
+    }
+
     private val vpsListener by lazy {
         object : WemapVPSARCoreLocationSourceListener {
 
             override fun onScanStatusChanged(status: ScanStatus) {
                 binding.debugTextTitle.text = "Scan status - $status"
                 updateScanButtonsState(status)
+                if (status == ScanStatus.STOPPED && vpsLocationSource.state == State.NORMAL) {
+                    showCameraHideMap()
+                }
             }
 
             override fun onStateChanged(state: State) {
-                println("state - $state")
+                println("state -> $state")
                 when(state) {
                     State.NORMAL -> {
                         if (rescanRequested) return
-                        binding.mapLayout.visibility = View.VISIBLE
-                        binding.cameraLayout.visibility = View.INVISIBLE
-                        binding.scanButtons.isEnabled = true
+                        showCameraHideMap()
                     }
-                    State.SCAN_REQUIRED, State.LIMITED_CORRECTION -> {
+                    State.SCAN_REQUIRED -> {
                         rescanRequested = false
                         hideMapShowCamera()
                     }
@@ -197,8 +205,12 @@ class MapVPSFragment : Fragment() {
                 }
             }
 
+            override fun onTrackingFailureReasonChanged(reason: TrackingFailureReason) {
+                binding.debugTextMessage.text = "Tracking failure reason - $reason"
+            }
+
             override fun onError(error: WemapVPSARCoreLocationSourceError) {
-                binding.debugTextMessage.text = "Error occurred- $error"
+                binding.debugTextMessage.text = "Error occurred - $error"
             }
         }
     }

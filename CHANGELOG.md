@@ -2,6 +2,64 @@
 
 ---
 
+## [0.13.0]
+
+### Breaking changes
+
+* `WemapVPSARCoreLocationSource.State.LIMITED_CORRECTION` has been removed
+* `WemapMapView.onMapViewClickListener` property has been removed
+  * `OnMapViewClickListener.onFeatureClick` method has been removed. Use `PointOfInterestManagerListener.onPointOfInterestSelected(poi: PointOfInterest)` or `PointOfInterestManagerListener.onPointOfInterestClicked(poi: PointOfInterest)` instead.
+* `WemapMapSDK` has been changed:
+  * `setEnvironment(environment: IEnvironment)` has been moved to `WemapCoreSDK.setEnvironment(environment: IEnvironment)`
+  * `map(id: Int, token: String): Single<MapData>` has been renamed to `mapData(id: Int, token: String): Single<MapData>`
+* `ItinerariesResponse` has been changed:
+  * `val from: Coordinate` has been removed
+  * `val to: Coordinate` has been removed
+  * `val error: String?` has been replaced by `val status: Status`
+* `Itinerary` has been changed:
+  * `val from: Coordinate` has been renamed to `val origin: Coordinate`
+  * `val to: Coordinate` has been renamed to `val destination: Coordinate`
+  * `val mode: TravelMode` has been renamed to `val transitMode: TravelMode`
+* `ItinerarySearchOptions` has been changed:
+  * `val useStairs: Boolean` has been replaced by `val avoidStairs: Boolean`
+  * `val useEscalators: Boolean` has been replaced by `val avoidEscalators: Boolean`
+  * `val useElevators: Boolean` has been replaced by `val avoidElevators: Boolean`
+* `Leg` has been changed:
+  * `val from: Destination` has been renamed to `val start: Destination`
+  * `val to: Destination` has been renamed to `val end: Destination`
+  * `val mode: TravelMode` has been renamed to `val transitMode: TravelMode`
+* `TravelMode` has been changed:
+  * `WALK` has been changed to `Walk()`
+  * `CAR` has been changed to `Car()`
+  * `BIKE` has been changed to `Bike(preference: TravelMode.Preference)`
+* `ItineraryParameters` has been changed:
+  * `val waypoints: List<Coordinate>` has been replaced by `val origin: Coordinate` and `val destination: Coordinate`
+  * `val mode: TravelMode` has been renamed to `val travelMode: TravelMode`
+  * `val options: ItinerarySearchOptions` has been changed to `val searchOptions: ItinerarySearchOptions?`
+* `ItinerariesParametersMultipleDestinations` has been changed:
+  * `fromPOIs(origin: Coordinate, destinations: List<PointOfInterest>, mapID: Int, mode: TravelMode, searchOptions: ItinerarySearchOptions)` has been changed to `fromPOIs(origin: Coordinate, destinations: List<PointOfInterest>, mapID: Int, travelMode: TravelMode, searchOptions: ItinerarySearchOptions?)`
+  * `fromCoordinates(origin: Coordinate, destinations: List<Coordinate>, mapID: Int?, mode: TravelMode, searchOptions: ItinerarySearchOptions)` has been changed to `fromCoordinates(origin: Coordinate, destinations: List<Coordinate>, mapID: Int?, travelMode: TravelMode, searchOptions: ItinerarySearchOptions?)`
+* `ItineraryManager.getItineraries(from: Coordinate, to: Coordinate, mode: TravelMode, searchOptions: ItinerarySearchOptions)` has been changed to `ItineraryManager.getItineraries(origin: Coordinate, destination: Coordinate, travelMode: TravelMode, searchOptions: ItinerarySearchOptions?)`
+* `NavigationManager` has been changed:
+  * `startNavigation(from: Coordinate, to: Coordinate, options: NavigationOptions, timeout: Long, itinerarySearchOptions: ItinerarySearchOptions)` has been changed to `startNavigation(origin: Coordinate?, destination: Coordinate, travelMode: TravelMode, options: NavigationOptions, searchOptions: ItinerarySearchOptions?, timeout: Long)`
+  * `startNavigation(itinerary: Itinerary, options: NavigationOptions, itinerarySearchOptions: ItinerarySearchOptions)` has been changed to  `startNavigation(itinerary: Itinerary, options: NavigationOptions, searchOptions: ItinerarySearchOptions?)`
+
+### Added
+
+* CoreSDK: Add FASTEST, SAFEST, TOURISM preferences for Bike travel mode
+* MapSDK: expose pitch from the back office, take into account the initial value
+* MapSDK: expose bearing from the back office, take into account the initial value
+
+### Changed
+
+* CoreSDK: migrate to Itineraries API v2
+* MapSDK: replace onFeatureClick by onPOIClick
+
+### Dependencies
+
+* Itineraries API v1 -> v2
+* Gradle 8.0.2 -> 8.2.2
+
 ## [0.12.0]
 
 ### Breaking changes

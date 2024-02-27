@@ -11,6 +11,8 @@ import com.getwemap.example.map.Config
 import com.getwemap.example.map.Constants
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentInitialBinding
+import com.getwemap.sdk.core.WemapCoreSDK
+import com.getwemap.sdk.core.internal.Environment
 import com.getwemap.sdk.map.WemapMapSDK
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -37,7 +39,8 @@ class InitialFragment : Fragment() {
         mapIdTextView.setText("${Constants.mapId}")
 
         // uncomment if you want to use dev environment
-//        WemapMapSDK.setEnvironment(Environment.Dev())
+//        WemapCoreSDK.setEnvironment(Environment.Dev())
+//        WemapCoreSDK.setItinerariesEnvironment(Environment.Dev())
 
         ArrayAdapter
             .createFromResource(requireContext(), R.array.location_sources, android.R.layout.simple_spinner_item)
@@ -74,7 +77,7 @@ class InitialFragment : Fragment() {
         }
 
         val disposable = WemapMapSDK.instance
-            .map(id, Constants.token)
+            .mapData(id, Constants.token)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 println("Received map data - $it")

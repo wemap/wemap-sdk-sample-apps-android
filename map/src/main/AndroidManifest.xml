@@ -32,12 +32,12 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.PositioningSDK"
+        android:theme="@style/Theme.WemapSDK"
         tools:targetApi="31">
         <activity
             android:name=".InitialActivity"
             android:exported="true"
-            android:theme="@style/Theme.PositioningSDK.NoActionBar">
+            android:theme="@style/Theme.WemapSDK.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
