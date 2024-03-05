@@ -2,6 +2,25 @@
 
 ---
 
+## [0.14.0]
+
+### Breaking changes
+
+* `NavigationInfo` and `NavigationInfoHandler` have been moved from `com.getwemap.sdk.map.navigation` to `com.getwemap.sdk.core.navigation`
+
+### Added
+
+* CoreSDK: add optional mapId parameter to ItineraryParameters
+
+### Changed
+
+* CoreSDK: Make NavigationInfoHandler usable without MapSDK
+
+### Dependencies
+
+* Serialization 1.6.2 -> 1.6.3
+* Gradle 8.2.2 -> 8.3.0
+
 ## [0.13.0]
 
 ### Breaking changes

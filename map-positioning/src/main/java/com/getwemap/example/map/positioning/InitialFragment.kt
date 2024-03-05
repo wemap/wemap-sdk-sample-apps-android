@@ -8,8 +8,6 @@ import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.map.positioning.databinding.FragmentInitialBinding
-import com.getwemap.sdk.core.WemapCoreSDK
-import com.getwemap.sdk.core.internal.Environment
 import com.getwemap.sdk.map.WemapMapSDK
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable

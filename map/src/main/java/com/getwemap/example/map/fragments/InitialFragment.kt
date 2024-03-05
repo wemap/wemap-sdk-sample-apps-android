@@ -11,8 +11,6 @@ import com.getwemap.example.map.Config
 import com.getwemap.example.map.Constants
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentInitialBinding
-import com.getwemap.sdk.core.WemapCoreSDK
-import com.getwemap.sdk.core.internal.Environment
 import com.getwemap.sdk.map.WemapMapSDK
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
