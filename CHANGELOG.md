@@ -2,6 +2,20 @@
 
 ---
 
+## [0.14.1]
+
+### Fixed
+
+* MapSDK: allow POIs that are not attached to the building to be shown on the map
+
+### Dependencies
+
+* MapLibre 10.2.0 -> 10.3.0
+* Retrofit 2.9.0 -> 2.10.0
+* Gradle 8.3.0 -> 8.3.1
+* Fused-GMS
+  * GMS 21.1.0 -> 21.2.0
+
 ## [0.14.0]
 
 ### Breaking changes

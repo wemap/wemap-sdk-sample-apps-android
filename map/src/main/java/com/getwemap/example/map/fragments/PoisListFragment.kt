@@ -67,6 +67,11 @@ class PoisListFragment : BottomSheetDialogFragment() {
             })
         disposeBag.add(disposable)
     }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        disposeBag.dispose()
+    }
 }
 
 class PoisRecyclerViewAdapter(

@@ -271,4 +271,9 @@ class POIsFragment : MapFragment() {
     private fun getLevelFromAnnotation(annotation: Circle): List<Float> {
         return annotation.data!!.asJsonArray.map { it.asFloat }
     }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        disposeBag.dispose()
+    }
 }

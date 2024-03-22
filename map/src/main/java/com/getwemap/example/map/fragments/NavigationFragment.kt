@@ -257,4 +257,9 @@ class NavigationFragment : MapFragment() {
         val to = annotation.latLng
         return Coordinate(to.latitude, to.longitude, getLevelFromAnnotation(annotation))
     }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        disposeBag.dispose()
+    }
 }
