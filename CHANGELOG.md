@@ -2,6 +2,12 @@
 
 ---
 
+## [0.14.2]
+
+### Fixed
+
+* MapSDK: centerToPOI fails if POI doesn't have level or there is no building in focus
+
 ## [0.14.1]
 
 ### Fixed
