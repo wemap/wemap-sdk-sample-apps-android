@@ -28,6 +28,8 @@ import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.snackbar.Snackbar
+import com.mapbox.mapboxsdk.location.modes.CameraMode
+import com.mapbox.mapboxsdk.location.modes.RenderMode
 import kotlinx.serialization.json.Json
 
 abstract class MapFragment : Fragment() {
@@ -185,6 +187,10 @@ abstract class MapFragment : Fragment() {
         mapView.locationManager.apply {
             source = locationSource
             isEnabled = true
+        }
+        mapView.map.locationComponent.apply {
+            cameraMode = CameraMode.TRACKING_COMPASS
+            renderMode = RenderMode.COMPASS
         }
         locationManagerReady()
         // this way you can specify user location indicator appearance
