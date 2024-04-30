@@ -2,6 +2,48 @@
 
 ---
 
+## [0.15.0]
+
+### Breaking changes
+
+* `WemapCoreSDK.name` has been renamed to `WemapCoreSDK.NAME`
+* `MapConstants` has been moved from `com.getwemap.sdk.map` to `com.getwemap.sdk.map.helpers`
+* `Coordinate.distanceTo(other: Coordinate): Float?` has been changed to `Coordinate.distanceTo(other: Coordinate): Double?`
+* `Itinerary.distance: Float` has been changed to `Itinerary.distance: Double`
+* `Leg.distance: Float` has been changed to `Leg.distance: Double`
+* `LevelChange.direction: Direction` has been changed to `LevelChange.direction: Incline`
+* `Projection.distance: Float` has been changed to `Projection.distance: Double`
+* `Segment.distance: Float` has been changed to `Segment.distance: Double`
+* `Step` has been changed:
+  * `val angle: Double` has been changed to `val angle: Float`
+  * `val previousBearing: Double` has been changed to `val previousBearing: Float`
+  * `val nextBearing: Double` has been changed to `val nextBearing: Float`
+  * `val isGate: Boolean` has been moved to `extras.isGate`
+  * `val subwayEntranceName: String?` has been moved to `extras.subwayEntranceName`
+* `ItinerariesParametersMultipleDestinations` has been renamed to `ItinerariesParametersMultiDestinations`
+* `NavigationInfo` has been changed:
+  * `val traveledDistance: Float` has been changed to `val traveledDistance: Double`
+  * `val remainingDistance: Float` has been changed to `val remainingDistance: Double`
+  * `val remainingStepDistance: Float?` has been changed to `val remainingStepDistance: Double?`
+* `ItineraryInfo.distance: Float` has been changed to `ItineraryInfo.distance: Double`
+* `Destination.coords: Coordinate` has been changed to `Destination.coordinate: Coordinate`
+* `ItinerarySearchOptions` has been replaced everywhere from nullable parameter to parameter with a default value
+
+### Added
+
+* PosSDK(VPS): add checkVpsAvailability() method
+* MapSDK: offline maps support
+
+### Dependencies
+
+* MapLibre 10.2.0 -> 10.3.0
+* Gradle 8.3.1 -> 8.3.2
+* Retrofit 2.10.0 -> 2.11.0
+* Polestar
+  * NAOSDK 4.11.14 -> 4.11.15
+* VPS
+  * ARCore 1.41.0 -> 1.42.0
+
 ## [0.14.2]
 
 ### Fixed

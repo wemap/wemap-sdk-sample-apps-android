@@ -26,8 +26,6 @@ class NavigationFragment : MapFragment() {
     override val levelToggle get() = binding.levelToggle
     private val textView get() = binding.textView
 
-    private val disposeBag = CompositeDisposable()
-
     private val buttonStartNavigation get() = binding.startNavigation
     private val buttonStopNavigation get() = binding.stopNavigation
     private val buttonStartNavigationFromUserCreatedAnnotations get() = binding.startNavigationFromUserCreatedAnnotations

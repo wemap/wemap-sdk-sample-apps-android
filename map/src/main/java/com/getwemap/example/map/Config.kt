@@ -3,7 +3,7 @@ package com.getwemap.example.map
 import android.content.Context
 import android.graphics.Color
 import androidx.preference.PreferenceManager
-import com.getwemap.sdk.map.MapConstants
+import com.getwemap.sdk.map.helpers.MapConstants
 import com.getwemap.sdk.map.itineraries.ItineraryOptions
 import com.getwemap.sdk.map.itineraries.LineOptions
 import com.getwemap.sdk.map.navigation.NavigationOptions

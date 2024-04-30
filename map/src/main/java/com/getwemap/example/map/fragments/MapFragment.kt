@@ -30,12 +30,15 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.snackbar.Snackbar
 import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
+import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.serialization.json.Json
 
 abstract class MapFragment : Fragment() {
 
     protected abstract val mapView: WemapMapView
     protected abstract val levelToggle: MaterialButtonToggleGroup
+
+    protected val disposeBag = CompositeDisposable()
 
     // also you can use simulator to generate locations along the itinerary
     protected val simulator by lazy { SimulatorLocationSource() }
@@ -188,10 +191,12 @@ abstract class MapFragment : Fragment() {
             source = locationSource
             isEnabled = true
         }
+
         mapView.map.locationComponent.apply {
             cameraMode = CameraMode.TRACKING_COMPASS
             renderMode = RenderMode.COMPASS
         }
+
         locationManagerReady()
         // this way you can specify user location indicator appearance
 //        mapView.locationManager.userLocationViewStyle = UserLocationViewStyle(
@@ -240,6 +245,7 @@ abstract class MapFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        disposeBag.dispose()
         mapView.onDestroy()
     }
 }

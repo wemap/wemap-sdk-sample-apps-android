@@ -27,8 +27,6 @@ class POIsFragment : MapFragment() {
     override val levelToggle get() = binding.levelToggle
     private val textView get() = binding.textView
 
-    private val disposeBag = CompositeDisposable()
-
     private val buttonApplyFilter get() = binding.applyFilter
     private val buttonRemoveFilters get() = binding.removeFilters
     private val buttonStartNavigation get() = binding.startNavigation
