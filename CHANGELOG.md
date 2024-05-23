@@ -2,6 +2,13 @@
 
 ---
 
+## [0.15.1]
+
+### Fixed
+
+* MapSDK: hideAllPOIs() and showAllPOIs() does not work
+* CoreSDK: accept VPS endpoint without '/' at the end
+
 ## [0.15.0]
 
 ### Breaking changes
