@@ -9,7 +9,6 @@ import com.getwemap.example.map.databinding.FragmentNavigationBinding
 import com.getwemap.example.map.multiline
 import com.getwemap.example.map.onDismissed
 import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.map.extensions.getNavigationInstructions
 import com.getwemap.sdk.map.navigation.NavigationManagerListener
 import com.getwemap.sdk.map.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
@@ -18,7 +17,6 @@ import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.plugins.annotation.Circle
 import com.mapbox.mapboxsdk.plugins.annotation.CircleManager
 import com.mapbox.mapboxsdk.plugins.annotation.CircleOptions
-import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class NavigationFragment : MapFragment() {
 

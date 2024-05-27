@@ -2,6 +2,31 @@
 
 ---
 
+## [0.16.0]
+
+### Breaking changes
+
+* `NavigationInstructions` class has been moved from `com.getwemap.sdk.map.navigation.instructions` to `com.getwemap.sdk.core.navigation.instructions`
+* `Direction` class has been moved from `com.getwemap.sdk.map.navigation.instructions` to `com.getwemap.sdk.core.navigation.instructions`
+* `Step.getNavigationInstructions` has been moved from `com.getwemap.sdk.map.extensions` to `com.getwemap.sdk.core.model.entities`
+
+### Added
+
+* CoreSDK: expose mediaUrl, mediaType of POI
+
+### Changed
+
+* CoreSDK: move Step.getNavigationInstructions to CoreSDK
+
+### Dependencies
+
+* Gradle 8.3.2 -> 8.4.1
+* Core-ktx 1.12.0 -> 1.13.1
+* Map
+  * MapLibre 10.3.0 -> 10.3.1
+* VPS
+  * ARCore 1.42.0 -> 1.43.0
+
 ## [0.15.1]
 
 ### Fixed
