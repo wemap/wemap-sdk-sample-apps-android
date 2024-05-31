@@ -27,6 +27,12 @@
 * VPS
   * ARCore 1.42.0 -> 1.43.0
 
+## [0.15.2]
+
+### Fixed
+
+* MapSDK: buildings that are not related to the current map have been loaded
+
 ## [0.15.1]
 
 ### Fixed
