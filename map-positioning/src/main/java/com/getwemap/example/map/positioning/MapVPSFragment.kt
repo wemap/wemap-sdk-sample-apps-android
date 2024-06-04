@@ -25,10 +25,12 @@ import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
 import kotlinx.serialization.json.Json
 
-class MapVPSFragment : Fragment() {
+class MapVPSFragment : BaseFragment() {
+
+    override val mapView get() = binding.mapView
+    override val levelToggle get() = binding.levelToggle
 
     private lateinit var binding: FragmentMapVpsBinding
-    private val mapView get() = binding.mapView
     private val surfaceView get() = binding.surfaceView
 
     private var rescanRequested = false
@@ -36,19 +38,6 @@ class MapVPSFragment : Fragment() {
     private val vpsLocationSource by lazy {
         WemapVPSARCoreLocationSource(requireContext(), Constants.vpsEndpoint)
     }
-
-    private val activityResultLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                checkPermissionsAndSetupLocationSource()
-            } else {
-                Snackbar.make(
-                    mapView,
-                    "In order to make sample app work properly you have to accept required permission",
-                    Snackbar.LENGTH_LONG)
-                    .show()
-            }
-        }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         Mapbox.getInstance(requireContext())
@@ -60,16 +49,6 @@ class MapVPSFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val mapDataString = requireArguments().getString("mapData")!!
-        val mapData: MapData = Json.decodeFromString(mapDataString)
-        mapView.mapData = mapData
-
-        mapView.onCreate(savedInstanceState)
-
-        mapView.getWemapMapAsync { _, _, _ ->
-            checkPermissionsAndSetupLocationSource()
-        }
-
         binding.startScanButton.setOnClickListener { vpsLocationSource.startScan() }
         binding.stopScanButton.setOnClickListener { vpsLocationSource.stopScan() }
 
@@ -79,21 +58,10 @@ class MapVPSFragment : Fragment() {
         }
     }
 
-    private fun checkPermissionsAndSetupLocationSource() {
+    override fun checkPermissionsAndSetupLocationSource() {
         val permissionsAccepted = checkGPSPermission() && checkCameraPermission()
         if (!permissionsAccepted) return
         setupLocationSource()
-    }
-
-    private fun checkGPSPermission(): Boolean {
-        return if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            activityResultLauncher.launch(permission.ACCESS_FINE_LOCATION)
-            false
-        } else {
-            true
-        }
     }
 
     private fun checkCameraPermission(): Boolean {
@@ -108,7 +76,7 @@ class MapVPSFragment : Fragment() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun setupLocationSource() {
+    override fun setupLocationSource() {
         vpsLocationSource.listeners.add(vpsListener)
         vpsLocationSource.observers.add(vpsObserver)
 
@@ -128,41 +96,14 @@ class MapVPSFragment : Fragment() {
         binding.scanButtons.isEnabled = true
     }
 
-    override fun onStart() {
-        super.onStart()
-        mapView.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mapView.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        mapView.onPause()
-    }
-
     override fun onStop() {
         super.onStop()
         vpsLocationSource.stop()
-        mapView.onStop()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        mapView.onLowMemory()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         vpsLocationSource.unbind()
-        mapView.onDestroy()
     }
 
     private fun updateScanButtonsState(status: ScanStatus) {
