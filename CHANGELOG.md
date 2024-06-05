@@ -2,6 +2,12 @@
 
 ---
 
+## [0.16.1]
+
+### Fixed
+
+* MapSDK: buildings that are not related to the current map have been loaded
+
 ## [0.16.0]
 
 ### Breaking changes
