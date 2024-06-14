@@ -43,6 +43,7 @@ class InitialFragment : Fragment() {
             .also { adapter ->
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 spinner.adapter = adapter
+                spinner.setSelection(3)
             }
 
         binding.buttonLoadMap.setOnClickListener {
@@ -67,6 +68,7 @@ class InitialFragment : Fragment() {
                 bundle.putInt("locationSourceId", spinner.selectedItemPosition)
                 bundle.putString("mapData", Json.encodeToString(it))
 
+                Config.applyGlobalOptions(requireContext())
                 if (spinner.selectedItemPosition == 3)
                     findNavController().navigate(R.id.action_InitialFragment_to_MapVPSFragment, bundle)
                 else

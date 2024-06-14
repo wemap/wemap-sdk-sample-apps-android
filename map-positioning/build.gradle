@@ -40,6 +40,8 @@ dependencies {
     implementation "com.getwemap.sdk.positioning:fused-gms:$version_name"
     implementation "com.getwemap.sdk.positioning:wemap-vps-arcore:$version_name"
 
+    implementation 'org.maplibre.gl:android-plugin-annotation-v9:2.0.2'
+
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.7.7'

@@ -3,52 +3,52 @@ package com.getwemap.example.map.positioning
 import android.Manifest.permission
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import com.getwemap.example.map.positioning.databinding.FragmentMapVpsBinding
-import com.getwemap.sdk.map.model.entities.MapData
+import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.*
+import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.ScanStatus
+import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.State
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceError
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceObserver
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.TrackingFailureReason
+import com.google.gson.JsonArray
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.location.modes.CameraMode
 import com.mapbox.mapboxsdk.location.modes.RenderMode
-import kotlinx.serialization.json.Json
+import com.mapbox.mapboxsdk.plugins.annotation.Circle
+import com.mapbox.mapboxsdk.plugins.annotation.CircleManager
+import com.mapbox.mapboxsdk.plugins.annotation.CircleOptions
 
-class MapVPSFragment : Fragment() {
+class MapVPSFragment : BaseFragment() {
 
-    private lateinit var binding: FragmentMapVpsBinding
-    private val mapView get() = binding.mapView
+    override val mapView get() = binding.mapView
+    override val levelToggle get() = binding.levelToggle
+
     private val surfaceView get() = binding.surfaceView
 
+    private val buttonStartNavigation get() = binding.startNavigation
+    private val buttonStopNavigation get() = binding.stopNavigation
+    private val buttonStartNavigationFromUserCreatedAnnotations get() = binding.startNavigationFromUserCreatedAnnotations
+    private val buttonRemoveUserCreatedAnnotations get() = binding.removeUserCreatedAnnotations
+
+    private val navigationManager get() = mapView.navigationManager
+
+    private val userCreatedAnnotations: MutableList<Circle> = mutableListOf()
+
     private var rescanRequested = false
+
+    private lateinit var binding: FragmentMapVpsBinding
+    private lateinit var circleManager: CircleManager
 
     private val vpsLocationSource by lazy {
         WemapVPSARCoreLocationSource(requireContext(), Constants.vpsEndpoint)
     }
-
-    private val activityResultLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                checkPermissionsAndSetupLocationSource()
-            } else {
-                Snackbar.make(
-                    mapView,
-                    "In order to make sample app work properly you have to accept required permission",
-                    Snackbar.LENGTH_LONG)
-                    .show()
-            }
-        }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         Mapbox.getInstance(requireContext())
@@ -60,14 +60,32 @@ class MapVPSFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val mapDataString = requireArguments().getString("mapData")!!
-        val mapData: MapData = Json.decodeFromString(mapDataString)
-        mapView.mapData = mapData
+        mapView.getWemapMapAsync { _, map, _ ->
 
-        mapView.onCreate(savedInstanceState)
+            circleManager = CircleManager(mapView, map, map.style!!)
 
-        mapView.getWemapMapAsync { _, _, _ ->
-            checkPermissionsAndSetupLocationSource()
+            map.addOnMapLongClickListener {
+                if (userCreatedAnnotations.size >= 2) {
+                    Snackbar.make(mapView,
+                        "You already created 2 annotations. Remove old ones to be able to add new",
+                        Snackbar.LENGTH_LONG).show()
+                    return@addOnMapLongClickListener false
+                }
+
+                val array = JsonArray()
+                if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(it))
+                    array.add(focusedBuilding!!.activeLevel.id)
+
+                val options = CircleOptions()
+                    .withLatLng(it)
+                    .withData(array)
+
+                val point = circleManager.create(options)
+                userCreatedAnnotations.add(point)
+                updateUI()
+
+                return@addOnMapLongClickListener true
+            }
         }
 
         binding.startScanButton.setOnClickListener { vpsLocationSource.startScan() }
@@ -77,23 +95,102 @@ class MapVPSFragment : Fragment() {
             rescanRequested = true
             hideMapShowCamera()
         }
+
+        buttonStartNavigation.setOnClickListener {
+            startNavigation()
+        }
+
+        buttonStopNavigation.setOnClickListener {
+            stopNavigation()
+        }
+
+        buttonStartNavigationFromUserCreatedAnnotations.setOnClickListener {
+            startNavigationFromUserCreatedAnnotations()
+        }
+
+        buttonRemoveUserCreatedAnnotations.setOnClickListener {
+            removeUserCreatedAnnotations()
+        }
     }
 
-    private fun checkPermissionsAndSetupLocationSource() {
+    private fun startNavigation() {
+        startNavigation(null, getDestinationCoordinate())
+    }
+
+    private fun stopNavigation() {
+        navigationManager
+            .stopNavigation()
+            .fold(
+                {
+                    buttonStopNavigation.isEnabled = false
+                    updateUI()
+                }, {
+                    Snackbar.make(mapView, "Failed to stop navigation with error - $it", Snackbar.LENGTH_LONG)
+                        .show()
+                }
+            )
+    }
+
+    private fun startNavigationFromUserCreatedAnnotations() {
+        val origin = getOriginCoordinate()
+        val destination = getDestinationCoordinate()
+
+        startNavigation(origin, destination)
+    }
+
+    private fun startNavigation(origin: Coordinate?, destination: Coordinate) {
+        disableStartButtons()
+
+        val disposable = navigationManager
+            .startNavigation(origin, destination)
+            .subscribe({
+                buttonStopNavigation.isEnabled = true
+            }, {
+                Snackbar.make(mapView, "Failed to start navigation with error - $it", Snackbar.LENGTH_LONG).show()
+                updateUI()
+            })
+
+        disposeBag.add(disposable)
+    }
+
+    private fun removeUserCreatedAnnotations() {
+        circleManager.delete(userCreatedAnnotations)
+        userCreatedAnnotations.clear()
+        updateUI()
+    }
+
+    private fun updateUI() {
+        buttonStartNavigation.isEnabled = userCreatedAnnotations.size == 1 && !buttonStopNavigation.isEnabled
+        buttonStartNavigationFromUserCreatedAnnotations.isEnabled = userCreatedAnnotations.size == 2 && !buttonStopNavigation.isEnabled
+        buttonRemoveUserCreatedAnnotations.isEnabled = userCreatedAnnotations.isNotEmpty()
+    }
+
+    private fun disableStartButtons() {
+        buttonStartNavigation.isEnabled = false
+        buttonStartNavigationFromUserCreatedAnnotations.isEnabled = false
+    }
+
+    private fun getLevelFromAnnotation(annotation: Circle): List<Float> {
+        return annotation.data!!.asJsonArray.map { it.asFloat }
+    }
+
+    private fun getDestinationCoordinate(): Coordinate {
+        return getCoordinateFrom(userCreatedAnnotations.first())
+    }
+
+    private fun getOriginCoordinate(): Coordinate {
+        return getCoordinateFrom(userCreatedAnnotations[1])
+    }
+
+    private fun getCoordinateFrom(annotation: Circle): Coordinate {
+        val to = annotation.latLng
+        return Coordinate(to.latitude, to.longitude, getLevelFromAnnotation(annotation))
+    }
+
+    override fun checkPermissionsAndSetupLocationSource() {
         val permissionsAccepted = checkGPSPermission() && checkCameraPermission()
         if (!permissionsAccepted) return
         setupLocationSource()
-    }
-
-    private fun checkGPSPermission(): Boolean {
-        return if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            activityResultLauncher.launch(permission.ACCESS_FINE_LOCATION)
-            false
-        } else {
-            true
-        }
     }
 
     private fun checkCameraPermission(): Boolean {
@@ -108,9 +205,8 @@ class MapVPSFragment : Fragment() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun setupLocationSource() {
+    override fun setupLocationSource() {
         vpsLocationSource.listeners.add(vpsListener)
-        vpsLocationSource.observers.add(vpsObserver)
 
         mapView.locationManager.apply {
             source = vpsLocationSource
@@ -128,41 +224,14 @@ class MapVPSFragment : Fragment() {
         binding.scanButtons.isEnabled = true
     }
 
-    override fun onStart() {
-        super.onStart()
-        mapView.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mapView.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        mapView.onPause()
-    }
-
     override fun onStop() {
         super.onStop()
         vpsLocationSource.stop()
-        mapView.onStop()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        mapView.onLowMemory()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         vpsLocationSource.unbind()
-        mapView.onDestroy()
     }
 
     private fun updateScanButtonsState(status: ScanStatus) {
@@ -171,10 +240,15 @@ class MapVPSFragment : Fragment() {
         binding.stopScanButton.isEnabled = isScanning
     }
 
-    private fun showCameraHideMap() {
+    private fun showMapHideCamera() {
         binding.mapLayout.visibility = View.VISIBLE
         binding.cameraLayout.visibility = View.INVISIBLE
         binding.scanButtons.isEnabled = true
+
+        mapView.map.locationComponent.apply {
+            cameraMode = CameraMode.TRACKING_COMPASS
+            renderMode = RenderMode.COMPASS
+        }
     }
 
     private val vpsListener by lazy {
@@ -184,7 +258,7 @@ class MapVPSFragment : Fragment() {
                 binding.debugTextTitle.text = "Scan status - $status"
                 updateScanButtonsState(status)
                 if (status == ScanStatus.STOPPED && vpsLocationSource.state == State.NORMAL) {
-                    showCameraHideMap()
+                    showMapHideCamera()
                 }
             }
 
@@ -193,7 +267,7 @@ class MapVPSFragment : Fragment() {
                 when(state) {
                     State.NORMAL -> {
                         if (rescanRequested) return
-                        showCameraHideMap()
+                        showMapHideCamera()
                     }
                     State.SCAN_REQUIRED -> {
                         rescanRequested = false
@@ -211,15 +285,6 @@ class MapVPSFragment : Fragment() {
 
             override fun onError(error: WemapVPSARCoreLocationSourceError) {
                 binding.debugTextMessage.text = "Error occurred - $error"
-            }
-        }
-    }
-
-    private val vpsObserver by lazy {
-        object : WemapVPSARCoreLocationSourceObserver {
-            override fun onImageSend(bitmap: Bitmap) {
-                println("onImageSend")
-                binding.imageview.setImageBitmap(bitmap)
             }
         }
     }

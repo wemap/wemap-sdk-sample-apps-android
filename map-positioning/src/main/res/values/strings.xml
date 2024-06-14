@@ -4,5 +4,40 @@
     <string name="map_fragment_label">Map Fragment</string>
     <string name="initial_fragment_label">Initial Fragment</string>
     <string name="map_vps_fragment_label">Map VPS Fragment</string>
+    <string name="settings_fragment_label" translatable="false">Settings Fragment</string>
     <string name="load_map">Load Map</string>
+
+    <string name="start_navigation" translatable="false">Start navigation</string>
+    <string name="stop_navigation" translatable="false">Stop navigation</string>
+
+    <string name="start_navigation_user_created_annotations" translatable="false">Start navigation from user-created annotations</string>
+    <string name="remove_user_created_annotations" translatable="false">Remove user-created annotations</string>
+
+    <!-- Preference -->
+    <string name="preferences">Preferences</string>
+
+    <!-- Preference Groups -->
+    <string name="global_preferences">Global</string>
+    <string name="navigation_preferences">Navigation</string>
+
+    <!-- Global Preferences -->
+    <string name="visual_debugger_title">Enable visual debugger</string>
+    <string name="switch_levels_title">Switch levels automatically on user movements</string>
+    <string name="recalculate_itinerary_title">Recalculate itinerary if user is far from itinerary</string>
+    <string name="user_location_projection_title">Project user location on itinerary</string>
+
+    <!-- VPS Conveying Detector Preferences -->
+
+    <string name="vps_static_position_detector_preferences">VPS Static Position Detector Preferences</string>
+
+    <string name="vps_static_position_detector_window_duration_seconds">Window duration seconds</string>
+    <string name="vps_static_position_detector_geofence_radius_meters">Geofence radius meters</string>
+
+    <!-- VPS Static Position Detector Preferences -->
+    <string name="vps_conveying_detector_preferences">VPS Conveying Detector Preferences</string>
+
+    <string name="vps_conveying_detector_duration_seconds">Duration seconds</string>
+    <string name="vps_conveying_detector_elevator_buffer_width">Elevator buffer width</string>
+
+    <string name="vps_conveying_detector_linear_conveying_buffers_width">Linear conveying buffers width</string>
 </resources>
