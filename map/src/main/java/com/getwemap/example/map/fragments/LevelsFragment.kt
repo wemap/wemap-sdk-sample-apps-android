@@ -9,7 +9,7 @@ import com.getwemap.example.map.databinding.FragmentLevelsBinding
 import com.getwemap.example.map.onDismissed
 import com.getwemap.sdk.core.model.ServiceFactory
 import com.google.android.material.snackbar.Snackbar
-import com.mapbox.mapboxsdk.Mapbox
+import org.maplibre.android.MapLibre
 
 class LevelsFragment : MapFragment() {
     override val mapView get() = binding.mapView
@@ -27,7 +27,7 @@ class LevelsFragment : MapFragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        Mapbox.getInstance(requireContext())
+        MapLibre.getInstance(requireContext())
         binding = FragmentLevelsBinding.inflate(inflater, container, false)
         return binding.root
     }

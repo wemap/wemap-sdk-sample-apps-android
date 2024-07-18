@@ -13,10 +13,10 @@ import com.getwemap.sdk.map.navigation.NavigationManagerListener
 import com.getwemap.sdk.map.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.plugins.annotation.Circle
-import com.mapbox.mapboxsdk.plugins.annotation.CircleManager
-import com.mapbox.mapboxsdk.plugins.annotation.CircleOptions
+import org.maplibre.android.MapLibre
+import org.maplibre.android.plugins.annotation.Circle
+import org.maplibre.android.plugins.annotation.CircleManager
+import org.maplibre.android.plugins.annotation.CircleOptions
 
 class NavigationFragment : MapFragment() {
 
@@ -38,7 +38,7 @@ class NavigationFragment : MapFragment() {
     private lateinit var circleManager: CircleManager
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        Mapbox.getInstance(requireContext())
+        MapLibre.getInstance(requireContext())
         binding = FragmentNavigationBinding.inflate(inflater, container, false)
         return binding.root
     }

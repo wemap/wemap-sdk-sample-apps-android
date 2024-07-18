@@ -15,11 +15,10 @@ import com.getwemap.sdk.map.navigation.NavigationManagerListener
 import com.getwemap.sdk.map.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.plugins.annotation.Circle
-import com.mapbox.mapboxsdk.plugins.annotation.CircleManager
-import com.mapbox.mapboxsdk.plugins.annotation.CircleOptions
-import io.reactivex.rxjava3.disposables.CompositeDisposable
+import org.maplibre.android.MapLibre
+import org.maplibre.android.plugins.annotation.Circle
+import org.maplibre.android.plugins.annotation.CircleManager
+import org.maplibre.android.plugins.annotation.CircleOptions
 
 class POIsFragment : MapFragment() {
 
@@ -45,7 +44,7 @@ class POIsFragment : MapFragment() {
     private val viewModel: PoisViewModel by activityViewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        Mapbox.getInstance(requireContext())
+        MapLibre.getInstance(requireContext())
         binding = FragmentPOIsBinding.inflate(inflater, container, false)
         return binding.root
     }

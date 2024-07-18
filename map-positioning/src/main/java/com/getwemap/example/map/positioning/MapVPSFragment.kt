@@ -18,12 +18,12 @@ import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceL
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.TrackingFailureReason
 import com.google.gson.JsonArray
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.location.modes.RenderMode
-import com.mapbox.mapboxsdk.plugins.annotation.Circle
-import com.mapbox.mapboxsdk.plugins.annotation.CircleManager
-import com.mapbox.mapboxsdk.plugins.annotation.CircleOptions
+import org.maplibre.android.MapLibre
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
+import org.maplibre.android.plugins.annotation.Circle
+import org.maplibre.android.plugins.annotation.CircleManager
+import org.maplibre.android.plugins.annotation.CircleOptions
 
 class MapVPSFragment : BaseFragment() {
 
@@ -51,7 +51,7 @@ class MapVPSFragment : BaseFragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        Mapbox.getInstance(requireContext())
+        MapLibre.getInstance(requireContext())
         binding = FragmentMapVpsBinding.inflate(inflater, container, false)
         vpsLocationSource.bind(surfaceView) // you can't create GLSurfaceView and set renderer later
         return binding.root

@@ -2,28 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="true" />
-    <uses-feature
-        android:glEsVersion="0x00020000"
-        android:required="true" />
-
-    <!-- NORMAL PERMISSIONS: explicit user confirmation not needed -->
-
-    <!-- Internet connectivity (for data synchro) -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Bluetooth -->
-    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"/>
-    <!-- Wifi -->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:glEsVersion="0x00030000" android:required="true"/>
 
     <application
         android:allowBackup="true"
@@ -48,10 +27,5 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
-        <service android:name="com.getwemap.sdk.positioning.polestar.PolestarLocationSourceServiceManager" />
-
-        <meta-data
-            android:name="com.google.ar.core"
-            android:value="required" />
     </application>
 </manifest>

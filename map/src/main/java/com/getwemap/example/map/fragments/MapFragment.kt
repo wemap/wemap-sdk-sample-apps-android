@@ -28,10 +28,10 @@ import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.snackbar.Snackbar
-import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.location.modes.RenderMode
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.serialization.json.Json
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
 
 abstract class MapFragment : Fragment() {
 

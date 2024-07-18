@@ -1,5 +1,6 @@
 package com.getwemap.example.map.fragments
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +13,9 @@ import com.getwemap.example.map.Constants
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentInitialBinding
 import com.getwemap.sdk.map.WemapMapSDK
+import com.getwemap.sdk.map.location.simulation.SimulatorLocationSource
+import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
+import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.serialization.encodeToString
@@ -48,7 +52,7 @@ class InitialFragment : Fragment() {
             }
 
         binding.buttonLoadMap.setOnClickListener {
-            loadMap()
+            checkAvailability()
         }
 
         // if you need to retrieve all points of interest for some map in advance
@@ -66,6 +70,29 @@ class InitialFragment : Fragment() {
 //        disposeBag.add(disp)
     }
 
+    private fun checkAvailability() {
+        when (spinner.selectedItemPosition) {
+            0, 5 ->
+                if (SimulatorLocationSource.isAvailable) loadMap() else showUnavailableAlert()
+            2 ->
+                loadMap()
+            1, 3 ->
+                if (PolestarLocationSource.isAvailable) loadMap() else showUnavailableAlert()
+            4 ->
+                if (GmsFusedLocationSource.isAvailable) loadMap() else showUnavailableAlert()
+            else ->
+                throw RuntimeException("Unknown Location Source")
+        }
+    }
+
+    private fun showUnavailableAlert() {
+        AlertDialog.Builder(requireContext())
+            .setMessage("Desired location source is unavailable on this device")
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+            .create()
+            .show()
+    }
+
     private fun loadMap() {
         val text = mapIdTextView.text.toString()
         val id = text.toIntOrNull()
@@ -81,7 +108,9 @@ class InitialFragment : Fragment() {
                 println("Received map data - $it")
                 val bundle = Bundle()
                 bundle.putInt("locationSourceId", spinner.selectedItemPosition)
+
                 bundle.putString("mapData", Json.encodeToString(it))
+
                 Config.applyGlobalOptions(requireContext())
                 findNavController().navigate(R.id.action_InitialFragment_to_SamplesListFragment, bundle)
             }, {

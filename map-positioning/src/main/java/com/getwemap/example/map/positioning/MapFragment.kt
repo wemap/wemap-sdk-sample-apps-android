@@ -13,21 +13,21 @@ import com.getwemap.example.map.positioning.databinding.FragmentMapBinding
 import com.getwemap.sdk.core.location.LocationSource
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.location.modes.RenderMode
+import org.maplibre.android.MapLibre
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
 
 class MapFragment : BaseFragment() {
-
-    private var locationSourceId: Int = -1
 
     override val mapView get() = binding.mapView
     override val levelToggle get() = binding.levelToggle
 
+    private var locationSourceId: Int = -1
+
     private lateinit var binding: FragmentMapBinding
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        Mapbox.getInstance(requireContext())
+        MapLibre.getInstance(requireContext())
         binding = FragmentMapBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -46,7 +46,6 @@ class MapFragment : BaseFragment() {
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         if (!permissionsAccepted) return
-
         setupLocationSource()
     }
 
@@ -66,14 +65,7 @@ class MapFragment : BaseFragment() {
     @SuppressLint("MissingPermission")
     override fun setupLocationSource() {
         val locationSource: LocationSource = when (locationSourceId) {
-            0 -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                GmsFusedLocationSource(requireContext())
-            } else {
-                throw Exception(
-                    "Requested FusedLocationSource, but it available only starting Android version ${Build.VERSION_CODES.S}."
-                            + " Current Android version is ${Build.VERSION.SDK_INT}"
-                )
-            }
+            0 -> GmsFusedLocationSource(requireContext())
             1 -> PolestarLocationSource(requireContext(), "emulator")
             2 -> PolestarLocationSource(requireContext(), Constants.polestarApiKey)
             else -> throw Exception("Location source id should be passed in Bundle")

@@ -1,8 +1,8 @@
 package com.getwemap.example.map
 
 import com.getwemap.sdk.map.internal.model.serializers.LatLngSerializer
-import com.mapbox.mapboxsdk.geometry.LatLng
 import kotlinx.serialization.Serializable
+import org.maplibre.android.geometry.LatLng
 
 @Serializable
 data class ConsumerData(

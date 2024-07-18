@@ -7,9 +7,9 @@ import com.getwemap.sdk.map.helpers.MapConstants
 import com.getwemap.sdk.map.itineraries.ItineraryOptions
 import com.getwemap.sdk.map.itineraries.LineOptions
 import com.getwemap.sdk.map.navigation.NavigationOptions
-import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.location.modes.RenderMode
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
+import org.maplibre.android.style.layers.PropertyFactory
 
 object Config {
 

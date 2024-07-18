@@ -2,6 +2,43 @@
 
 ---
 
+## [0.17.0]
+
+### Breaking changes
+
+* Due to migration from MapLibre 10.3.1 to [11.0.0][0] additional changes needed:
+  * Change package of all classes from `com.mapbox.mapboxsdk` to `org.maplibre.android`. This means you will need to fix your imports.
+    > To migrate:
+    > In your imports in each of your project files, replace `com.mapbox.mapboxsdk.` with `org.maplibre.android.*`.
+  * Rename several classes to no longer contain the word "Mapbox". You will need to migrate by renaming references.
+    > To migrate:  
+    > Each affected occurrence will be marked as an error during compilation. Replace each occurrence of "Mapbox" with "MapLibre" and let your IDE do the import.
+    >
+    > These are the most important classes that have been renamed:
+    >
+    > * `Mapbox` → `MapLibre`
+    > * `MapboxMap` → `MapLibreMap`
+  * Turf and GeoJson: Change package prefix from `com.mapbox.*` to `org.maplibre.*`.
+
+### Added
+
+* PosSDK: Add "isAvailable" method to LocationSource
+
+### Fixed
+
+* MapSDK: Multi-level itinerary segments are shown for all levels
+* PosSDK(VPS): Switch to SCAN_REQUIRED state when user is static in an elevator or escalator in navigation mode
+
+### Dependencies
+
+* Core
+  * Turf 5.9.0 -> 6.0.0
+  * GeoJson 5.9.0 -> 6.0.0
+* Map
+  * MapLibre 10.3.1 -> [11.0.0][0]
+* Examples
+  * PluginAnnotation 2.0.2 -> 3.0.0
+
 ## [0.16.1]
 
 ### Fixed
@@ -412,3 +449,5 @@ mapView.locationManager.apply {
 
 * Kotlin 1.8.21 -> 1.9.0
 * Gradle 7.4.2 -> 8.0.2
+
+[0]: https://github.com/maplibre/maplibre-native/releases/tag/android-v11.0.0
