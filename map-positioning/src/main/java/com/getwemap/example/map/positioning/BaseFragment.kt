@@ -10,20 +10,16 @@ import android.widget.LinearLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.getwemap.sdk.core.location.LocationSource
 import com.getwemap.sdk.core.model.entities.Level
 import com.getwemap.sdk.map.WemapMapView
 import com.getwemap.sdk.map.buildings.Building
 import com.getwemap.sdk.map.buildings.OnActiveLevelChangeListener
 import com.getwemap.sdk.map.buildings.OnBuildingFocusChangeListener
 import com.getwemap.sdk.map.model.entities.MapData
-import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
-import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.snackbar.Snackbar
-import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.location.modes.RenderMode
+import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.serialization.json.Json
 
 abstract class BaseFragment : Fragment() {
@@ -31,9 +27,11 @@ abstract class BaseFragment : Fragment() {
     protected abstract val mapView: WemapMapView
     protected abstract val levelToggle: MaterialButtonToggleGroup
 
-    private val focusedBuilding get() = buildingManager.focusedBuilding
+    protected val focusedBuilding get() = buildingManager.focusedBuilding
 
     private val buildingManager get() = mapView.buildingManager
+
+    protected val disposeBag = CompositeDisposable()
 
     protected val activityResultLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
         if (isGranted) {
@@ -166,6 +164,7 @@ abstract class BaseFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        disposeBag.dispose()
         mapView.onDestroy()
     }
 }

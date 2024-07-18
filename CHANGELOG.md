@@ -33,6 +33,13 @@
 * VPS
   * ARCore 1.42.0 -> 1.43.0
 
+## [0.15.4]
+
+### Fixed
+
+* PosSDK(VPS): Switch to SCAN_REQUIRED state when user is static in an elevator or escalator in navigation mode
+* PosSDK(VPS): Change VPS request timeout to 20s
+
 ## [0.15.2]
 
 ### Fixed

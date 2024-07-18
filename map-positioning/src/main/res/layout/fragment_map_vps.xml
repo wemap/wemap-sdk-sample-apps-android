@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="invisible"
-        tools:visibility="invisible">
+        tools:visibility="visible">
 
         <com.getwemap.sdk.map.WemapMapView
             android:id="@+id/mapView"
@@ -37,11 +37,73 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
             android:text="Rescan"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             tools:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/startNavigationFromUserCreatedAnnotations"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:enabled="false"
+                    android:text="@string/start_navigation_user_created_annotations" />
+
+                <Button
+                    android:id="@+id/removeUserCreatedAnnotations"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:enabled="false"
+                    android:text="@string/remove_user_created_annotations" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/startNavigation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:enabled="false"
+                    android:gravity="center"
+                    android:text="@string/start_navigation" />
+
+                <Button
+                    android:id="@+id/stopNavigation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:enabled="false"
+                    android:gravity="center"
+                    android:text="@string/stop_navigation" />
+            </LinearLayout>
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -49,6 +111,7 @@
         android:id="@+id/cameraLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="invisible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -102,31 +165,54 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/debugTextTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#DDDDDDDD"
-            android:text="Info will be here"
-            app:layout_constraintBottom_toTopOf="@id/debugTextMessage"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintVertical_bias="0.5" />
-
-        <TextView
-            android:id="@+id/debugTextMessage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:background="#DDDDDDDD"
-            android:text=""
-            app:layout_constraintBottom_toTopOf="@id/scan_buttons"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintVertical_bias="0.5" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/debugTextTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#DDDDDDDD"
+        android:text="Info will be here"
+        app:layout_constraintBottom_toTopOf="@id/debugTextMessage"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <TextView
+        android:id="@+id/debugTextMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:background="#DDDDDDDD"
+        android:text=""
+        app:layout_constraintBottom_toTopOf="@id/debugTextMessage2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <TextView
+        android:id="@+id/debugTextMessage2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:background="#DDDDDDDD"
+        android:text=""
+        app:layout_constraintBottom_toTopOf="@id/invisibleView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <View
+        android:id="@+id/invisibleView"
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:visibility="invisible"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
