@@ -4,21 +4,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MapFragment">
+    tools:context="fragments.MapFragment">
 
     <com.getwemap.sdk.map.WemapMapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <com.google.android.material.button.MaterialButtonToggleGroup
-        android:id="@+id/levelToggle"
+    <com.getwemap.example.common.map.MapLevelsSwitcher
+        android:id="@+id/levelsSwitcher"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        android:layout_margin="16dp"
         app:selectionRequired="true"
         app:singleSelection="true"
         tools:visibility="visible" />

@@ -1,26 +1,32 @@
-package com.getwemap.example.map.positioning
+package com.getwemap.example.map.positioning.fragments
 
 import android.Manifest.permission
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import com.getwemap.example.common.Constants
 import com.getwemap.example.map.positioning.databinding.FragmentMapVpsBinding
 import com.getwemap.sdk.core.model.entities.Coordinate
+import com.getwemap.sdk.map.WemapMapView
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.ScanStatus
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.State
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceError
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
+import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceObserver
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.TrackingFailureReason
 import com.google.gson.JsonArray
 import org.maplibre.android.MapLibre
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.Style
 import org.maplibre.android.plugins.annotation.Circle
 import org.maplibre.android.plugins.annotation.CircleManager
 import org.maplibre.android.plugins.annotation.CircleOptions
@@ -28,7 +34,7 @@ import org.maplibre.android.plugins.annotation.CircleOptions
 class MapVPSFragment : BaseFragment() {
 
     override val mapView get() = binding.mapView
-    override val levelToggle get() = binding.levelToggle
+    override val levelsSwitcher get() = binding.levelsSwitcher
 
     private val surfaceView get() = binding.surfaceView
 
@@ -43,7 +49,9 @@ class MapVPSFragment : BaseFragment() {
 
     private var rescanRequested = false
 
-    private lateinit var binding: FragmentMapVpsBinding
+    private var _binding: FragmentMapVpsBinding? = null
+    private val binding get() = _binding!!
+
     private lateinit var circleManager: CircleManager
 
     private val vpsLocationSource by lazy {
@@ -52,40 +60,16 @@ class MapVPSFragment : BaseFragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
-        binding = FragmentMapVpsBinding.inflate(inflater, container, false)
-        vpsLocationSource.bind(surfaceView) // you can't create GLSurfaceView and set renderer later
+        _binding = FragmentMapVpsBinding.inflate(inflater, container, false)
+        vpsLocationSource.bind(requireContext(), surfaceView)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mapView.getWemapMapAsync { _, map, _ ->
-
-            circleManager = CircleManager(mapView, map, map.style!!)
-
-            map.addOnMapLongClickListener {
-                if (userCreatedAnnotations.size >= 2) {
-                    Snackbar.make(mapView,
-                        "You already created 2 annotations. Remove old ones to be able to add new",
-                        Snackbar.LENGTH_LONG).show()
-                    return@addOnMapLongClickListener false
-                }
-
-                val array = JsonArray()
-                if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(it))
-                    array.add(focusedBuilding!!.activeLevel.id)
-
-                val options = CircleOptions()
-                    .withLatLng(it)
-                    .withData(array)
-
-                val point = circleManager.create(options)
-                userCreatedAnnotations.add(point)
-                updateUI()
-
-                return@addOnMapLongClickListener true
-            }
+        mapView.getMapViewAsync { mapView, map, style, _ ->
+            createCircleManager(mapView, map, style)
         }
 
         binding.startScanButton.setOnClickListener { vpsLocationSource.startScan() }
@@ -96,13 +80,8 @@ class MapVPSFragment : BaseFragment() {
             hideMapShowCamera()
         }
 
-        buttonStartNavigation.setOnClickListener {
-            startNavigation()
-        }
-
-        buttonStopNavigation.setOnClickListener {
-            stopNavigation()
-        }
+        buttonStartNavigation.setOnClickListener { startNavigation() }
+        buttonStopNavigation.setOnClickListener { stopNavigation() }
 
         buttonStartNavigationFromUserCreatedAnnotations.setOnClickListener {
             startNavigationFromUserCreatedAnnotations()
@@ -110,6 +89,35 @@ class MapVPSFragment : BaseFragment() {
 
         buttonRemoveUserCreatedAnnotations.setOnClickListener {
             removeUserCreatedAnnotations()
+        }
+
+        hideMapShowCamera()
+    }
+
+    private fun createCircleManager(mapView: WemapMapView, map: MapLibreMap, style: Style) {
+        circleManager = CircleManager(mapView, map, style)
+
+        map.addOnMapLongClickListener {
+            if (userCreatedAnnotations.size >= 2) {
+                Snackbar.make(mapView,
+                    "You already created 2 annotations. Remove old ones to be able to add new",
+                    Snackbar.LENGTH_LONG).show()
+                return@addOnMapLongClickListener false
+            }
+
+            val array = JsonArray()
+            if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(it))
+                array.add(focusedBuilding!!.activeLevel.id)
+
+            val options = CircleOptions()
+                .withLatLng(it)
+                .withData(array)
+
+            val point = circleManager.create(options)
+            userCreatedAnnotations.add(point)
+            updateUI()
+
+            return@addOnMapLongClickListener true
         }
     }
 
@@ -188,7 +196,7 @@ class MapVPSFragment : BaseFragment() {
     }
 
     override fun checkPermissionsAndSetupLocationSource() {
-        val permissionsAccepted = checkGPSPermission() && checkCameraPermission()
+        val permissionsAccepted = checkGPSPermission() && checkCameraPermission() && checkActivityPermission()
         if (!permissionsAccepted) return
         setupLocationSource()
     }
@@ -204,24 +212,38 @@ class MapVPSFragment : BaseFragment() {
         }
     }
 
+    private fun checkActivityPermission(): Boolean {
+        return if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+            activityResultLauncher.launch(permission.ACTIVITY_RECOGNITION)
+            false
+        } else {
+            true
+        }
+    }
+
     @SuppressLint("MissingPermission")
     override fun setupLocationSource() {
-        vpsLocationSource.listeners.add(vpsListener)
+        vpsLocationSource.apply {
+            vpsListeners.add(vpsListener)
+            observers.add(vpsObserver)
+        }
 
         mapView.locationManager.apply {
-            source = vpsLocationSource
+            locationSource = vpsLocationSource
             isEnabled = true
-        }
-        mapView.map.locationComponent.apply {
             cameraMode = CameraMode.TRACKING_COMPASS
             renderMode = RenderMode.COMPASS
         }
     }
 
     private fun hideMapShowCamera() {
-        binding.mapLayout.visibility = View.INVISIBLE
-        binding.cameraLayout.visibility = View.VISIBLE
-        binding.scanButtons.isEnabled = true
+        binding.apply {
+            mapLayout.visibility = View.INVISIBLE
+            cameraLayout.visibility = View.VISIBLE
+            scanButtons.isEnabled = true
+        }
     }
 
     override fun onStop() {
@@ -231,21 +253,30 @@ class MapVPSFragment : BaseFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        vpsLocationSource.unbind()
+        vpsLocationSource.apply {
+            vpsListeners.remove(vpsListener)
+            observers.remove(vpsObserver)
+            unbind()
+        }
+        _binding = null
     }
 
     private fun updateScanButtonsState(status: ScanStatus) {
         val isScanning = status == ScanStatus.STARTED
-        binding.startScanButton.isEnabled = !isScanning
-        binding.stopScanButton.isEnabled = isScanning
+        binding.apply {
+            startScanButton.isEnabled = !isScanning
+            stopScanButton.isEnabled = isScanning
+        }
     }
 
     private fun showMapHideCamera() {
-        binding.mapLayout.visibility = View.VISIBLE
-        binding.cameraLayout.visibility = View.INVISIBLE
-        binding.scanButtons.isEnabled = true
+        binding.apply {
+            mapLayout.visibility = View.VISIBLE
+            cameraLayout.visibility = View.INVISIBLE
+            scanButtons.isEnabled = true
+        }
 
-        mapView.map.locationComponent.apply {
+        mapView.locationManager.apply {
             cameraMode = CameraMode.TRACKING_COMPASS
             renderMode = RenderMode.COMPASS
         }
@@ -257,7 +288,7 @@ class MapVPSFragment : BaseFragment() {
             override fun onScanStatusChanged(status: ScanStatus) {
                 binding.debugTextTitle.text = "Scan status - $status"
                 updateScanButtonsState(status)
-                if (status == ScanStatus.STOPPED && vpsLocationSource.state == State.NORMAL) {
+                if (status == ScanStatus.STOPPED && vpsLocationSource.state == State.ACCURATE_POSITIONING) {
                     showMapHideCamera()
                 }
             }
@@ -265,18 +296,19 @@ class MapVPSFragment : BaseFragment() {
             override fun onStateChanged(state: State) {
                 println("state -> $state")
                 when(state) {
-                    State.NORMAL -> {
+                    State.ACCURATE_POSITIONING, State.DEGRADED_POSITIONING -> {
                         if (rescanRequested) return
                         showMapHideCamera()
                     }
-                    State.SCAN_REQUIRED -> {
+                    State.NOT_POSITIONING -> {
                         rescanRequested = false
                         hideMapShowCamera()
                     }
-                    State.NO_TRACKING -> {
-                        binding.scanButtons.isEnabled = false
-                    }
                 }
+            }
+
+            override fun onNotPositioningReasonChanged(reason: WemapVPSARCoreLocationSource.NotPositioningReason) {
+                binding.debugTextMessage.text = "Not positioning reason - $reason"
             }
 
             override fun onTrackingFailureReasonChanged(reason: TrackingFailureReason) {
@@ -285,6 +317,23 @@ class MapVPSFragment : BaseFragment() {
 
             override fun onError(error: WemapVPSARCoreLocationSourceError) {
                 binding.debugTextMessage.text = "Error occurred - $error"
+            }
+        }
+    }
+
+    private val vpsObserver by lazy {
+        object : WemapVPSARCoreLocationSourceObserver {
+            override fun onImageSend(bitmap: Bitmap) {
+                println("onImageSend")
+                binding.imageview.setImageBitmap(bitmap)
+            }
+
+            override fun onMovementStateChanged(state: String) {
+                binding.debugTextTitle.text = "-> Movement state changed: $state"
+            }
+
+            override fun onConveyingStateChanged(state: String) {
+                binding.debugTextMessage2.text = "-> Conveying state changed: $state"
             }
         }
     }

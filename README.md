@@ -24,11 +24,9 @@
     }
     ```
 
-* specify `mapID` and `token` and optionally `polestarApiKey` in [`Map Example`](./map/src/main/java/com/getwemap/example/map/Constants.kt)
+* specify `mapID` and `token` and optionally `polestarApiKey` and `vpsEndpoint` in [`common Constants`](./common/src/main/java/com/getwemap/example/common/Constants.kt)
 
-* specify `mapID` and `token` and optionally `polestarApiKey` and `vpsEndpoint` in [`Map+Pos Example`](./map-positioning/src/main/java/com/getwemap/example/map/positioning/Constants.kt)
-
-* build and run desired example app build variant
+* build and run desired example app
 
 ## Examples
 

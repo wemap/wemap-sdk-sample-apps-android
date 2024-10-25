@@ -35,10 +35,7 @@
     <string name="navigation_preferences">Navigation</string>
 
     <!-- Global Preferences -->
-    <string name="visual_debugger_title">Enable visual debugger</string>
     <string name="switch_levels_title">Switch levels automatically on user movements</string>
-    <string name="recalculate_itinerary_title">Recalculate itinerary if user is far from itinerary</string>
-    <string name="user_location_projection_title">Project user location on itinerary</string>
 
     <!-- Navigation Preferences -->
     <string name="stop_distance_threshold_title">Stop distance threshold</string>

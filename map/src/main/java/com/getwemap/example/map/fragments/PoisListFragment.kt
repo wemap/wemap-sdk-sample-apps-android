@@ -12,16 +12,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentItemBinding
 import com.getwemap.sdk.core.model.entities.Coordinate
+import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.core.model.services.responses.ItineraryInfo
-import com.getwemap.sdk.map.model.entities.MapData
-import com.getwemap.sdk.map.poi.PointOfInterestManager
-import com.getwemap.sdk.map.poi.PointOfInterestWithInfo
+import com.getwemap.sdk.core.poi.PointOfInterestWithInfo
+import com.getwemap.sdk.map.poi.IMapPointOfInterestManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
 class PoisViewModel: ViewModel() {
-    lateinit var poiManager: PointOfInterestManager
+    lateinit var poiManager: IMapPointOfInterestManager
     lateinit var userCoordinate: Coordinate
     lateinit var mapData: MapData
 }
@@ -30,7 +30,9 @@ class PoisListFragment : BottomSheetDialogFragment() {
 
     private val viewModel: PoisViewModel by activityViewModels()
     private val disposeBag = CompositeDisposable()
-    private lateinit var poisAdapter: PoisRecyclerViewAdapter
+
+    private var _poisAdapter: PoisRecyclerViewAdapter? = null
+    private val poisAdapter get() = _poisAdapter!!
 
     private val listener by lazy {
         object : OnRecyclerViewClickListener {
@@ -44,8 +46,8 @@ class PoisListFragment : BottomSheetDialogFragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.fragment_item_list, container, false) as RecyclerView
-        val poisWithDistance = viewModel.poiManager.getPOIs().map { PointOfInterestWithInfo(it, ItineraryInfo.unknown()) }
-        poisAdapter = PoisRecyclerViewAdapter(listener, poisWithDistance)
+        val poisWithDistance = viewModel.poiManager.getPOIs().map { PointOfInterestWithInfo(it, null) }
+        _poisAdapter = PoisRecyclerViewAdapter(listener, poisWithDistance)
         with(view) {
             layoutManager = LinearLayoutManager(context)
             adapter = poisAdapter
@@ -70,6 +72,12 @@ class PoisListFragment : BottomSheetDialogFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        disposeBag.clear()
+        _poisAdapter = null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         disposeBag.dispose()
     }
 }
@@ -86,7 +94,8 @@ class PoisRecyclerViewAdapter(
             SamplesItem(
                 poi.name,
                 "id - ${poi.id}\nlevel - ${poi.coordinate.levels.firstOrNull() ?: "ground"}\n" +
-                        "address - ${poi.address}\ndistance - ${info.distance}\nduration - ${info.duration}"
+                        "address - ${poi.address}\ndistance - ${info?.distance ?: Double.MAX_VALUE}\n" +
+                        "duration - ${info?.duration ?: Float.MAX_VALUE}"
             )
         }
     }

@@ -1,4 +1,4 @@
-package com.getwemap.example.map.positioning
+package com.getwemap.example.map.positioning.fragments
 
 import android.app.AlertDialog
 import android.os.Bundle
@@ -8,26 +8,31 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.getwemap.example.common.Constants
+import com.getwemap.example.common.multiline
+import com.getwemap.example.map.positioning.Config
+import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.databinding.FragmentInitialBinding
 import com.getwemap.sdk.map.WemapMapSDK
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
+import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class InitialFragment : Fragment() {
 
-    private val disposeBag by lazy { CompositeDisposable() }
+    private var request: Disposable? = null
 
     private var _binding: FragmentInitialBinding? = null
-
     private val binding get() = _binding!!
+
     private val spinner get() = binding.spinner
     private val mapIdTextView get() = binding.mapIdTextView
 
@@ -116,7 +121,10 @@ class InitialFragment : Fragment() {
             return
         }
 
-        val disposable = WemapMapSDK.instance
+        if (request?.isDisposed == false)
+            return
+
+        request = WemapMapSDK.instance
             .mapData(id, Constants.token)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
@@ -131,12 +139,13 @@ class InitialFragment : Fragment() {
                 else
                     findNavController().navigate(R.id.action_InitialFragment_to_MapFragment, bundle)
             }, {
-                println("Failed to receive map data with error - ${it.message}")
+                val str = "Failed to receive map data with error - ${it.message}"
+                Snackbar.make(binding.root, str, Snackbar.LENGTH_LONG).multiline().show()
             })
-        disposeBag.add(disposable)
     }
 
     override fun onDestroyView() {
+        request?.dispose()
         super.onDestroyView()
         _binding = null
     }

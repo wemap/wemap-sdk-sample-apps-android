@@ -4,29 +4,22 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.BLUETOOTH_SCAN
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.widget.LinearLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.getwemap.example.map.Constants
+import com.getwemap.example.common.Constants
+import com.getwemap.example.common.map.MapLevelsSwitcher
+import com.getwemap.example.common.multiline
 import com.getwemap.example.map.GareDeLyonSimulatorsLocationSource
-import com.getwemap.example.map.multiline
 import com.getwemap.sdk.core.location.LocationSource
-import com.getwemap.sdk.core.model.entities.Level
+import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
+import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.WemapMapView
-import com.getwemap.sdk.map.buildings.Building
-import com.getwemap.sdk.map.buildings.OnActiveLevelChangeListener
-import com.getwemap.sdk.map.buildings.OnBuildingFocusChangeListener
-import com.getwemap.sdk.map.location.simulation.SimulatorLocationSource
-import com.getwemap.sdk.map.model.entities.MapData
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.serialization.json.Json
@@ -36,7 +29,7 @@ import org.maplibre.android.location.modes.RenderMode
 abstract class MapFragment : Fragment() {
 
     protected abstract val mapView: WemapMapView
-    protected abstract val levelToggle: MaterialButtonToggleGroup
+    protected abstract val levelsSwitcher: MapLevelsSwitcher
 
     protected val disposeBag = CompositeDisposable()
 
@@ -54,12 +47,8 @@ abstract class MapFragment : Fragment() {
         if (isGranted) {
             checkPermissionsAndSetupLocationSource()
         } else {
-            Snackbar.make(
-                mapView,
-                "In order to make sample app work properly you have to accept required permission",
-                Snackbar.LENGTH_LONG)
-                .multiline()
-                .show()
+            val text = "In order to make sample app work properly you have to accept required permission"
+            Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
         }
     }
 
@@ -80,69 +69,11 @@ abstract class MapFragment : Fragment() {
         // camera bounds can be specified even if they don't exist in MapData
 //        mapView.cameraBounds = maxBounds
         mapView.onCreate(savedInstanceState)
+        levelsSwitcher.bind(mapView)
 
-        mapView.getWemapMapAsync { _, _, _ ->
-
+        mapView.getMapViewAsync { _, _, _, _ ->
             checkPermissionsAndSetupLocationSource()
-
-            buildingManager.addOnBuildingFocusChangeListener(object : OnBuildingFocusChangeListener {
-                override fun onBuildingFocusChange(building: Building?) {
-                    populateLevels(building)
-                }
-            })
-
-            buildingManager.addOnActiveLevelChangeListener(object : OnActiveLevelChangeListener {
-                override fun onActiveLevelChange(building: Building, level: Level) {
-                    levelToggle.check(building.activeLevelIndex)
-                }
-            })
         }
-
-        levelToggle.addOnButtonCheckedListener { group, checkedId, isChecked ->
-            val checkedButton = group.findViewById<MaterialButton>(checkedId)
-            if (!isChecked) {
-                checkedButton.setBackgroundColor(Color.WHITE)
-                checkedButton.setTextColor(Color.BLACK)
-                return@addOnButtonCheckedListener
-            }
-            val focused = focusedBuilding ?: return@addOnButtonCheckedListener
-            checkedButton.setBackgroundColor(Color.BLUE)
-            checkedButton.setTextColor(Color.WHITE)
-            val desiredLevel = focused.levels.find { it.shortName == checkedButton.text }
-            focused.activeLevel = desiredLevel!!
-        }
-    }
-
-    private fun populateLevels(building: Building?) {
-        if (building == null) {
-            levelToggle.visibility = View.INVISIBLE
-            return
-        }
-
-        levelToggle.removeAllViews()
-        levelToggle.visibility = View.VISIBLE
-
-        val layout = LinearLayout.LayoutParams(
-            150,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-        )
-
-        println("received levels count - ${building.levels.count()}")
-
-        building.levels
-            .map { level ->
-                MaterialButton(requireContext()).apply {
-                    id = building.levels.indexOf(level)
-                    text = level.shortName
-                    layoutParams = layout
-                    setTextColor(Color.BLACK)
-                    setBackgroundColor(Color.WHITE)
-                }
-            }
-            .forEach {
-                levelToggle.addView(it)
-            }
-        levelToggle.check(building.activeLevelIndex)
     }
 
     private fun checkPermissionsAndSetupLocationSource() {
@@ -188,11 +119,8 @@ abstract class MapFragment : Fragment() {
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         mapView.locationManager.apply {
-            source = locationSource
+            this.locationSource = locationSource
             isEnabled = true
-        }
-
-        mapView.map.locationComponent.apply {
             cameraMode = CameraMode.TRACKING_COMPASS
             renderMode = RenderMode.COMPASS
         }
@@ -245,7 +173,12 @@ abstract class MapFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        disposeBag.dispose()
+        disposeBag.clear()
         mapView.onDestroy()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        disposeBag.dispose()
     }
 }

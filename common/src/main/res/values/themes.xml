@@ -19,7 +19,7 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="Theme.PositioningSDK.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.WemapSDK.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <style name="Theme.PositioningSDK.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="Theme.WemapSDK.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

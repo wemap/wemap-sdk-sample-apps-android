@@ -4,20 +4,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".POIsFragment">
+    tools:context=".fragments.POIsFragment">
 
     <com.getwemap.sdk.map.WemapMapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
 
-    <com.google.android.material.button.MaterialButtonToggleGroup
-        android:id="@+id/levelToggle"
+    </com.getwemap.sdk.map.WemapMapView>
+
+    <com.getwemap.example.common.map.MapLevelsSwitcher
+        android:id="@+id/levelsSwitcher"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_margin="16dp"
         android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:selectionRequired="true"
         app:singleSelection="true"
@@ -34,16 +37,28 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toggleSelectionButton" />
+        app:layout_constraintTop_toBottomOf="@+id/toggleSelectionModeButton" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/userSelectionSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:checked="true"
+        android:text="User selection"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/toggleSelectionButton"
+        android:id="@+id/toggleSelectionModeButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:text="Disable selection"
+        android:layout_marginTop="8dp"
+        android:text="Selection: single"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/levelToggle" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/userLocationTextView"

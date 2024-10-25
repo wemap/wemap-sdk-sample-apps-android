@@ -3,24 +3,9 @@
     <PreferenceCategory app:title="@string/global_preferences">
 
         <SwitchPreferenceCompat
-            app:defaultValue="false"
-            app:key="VISUAL_DEBUGGER_ENABLED"
-            app:title="@string/visual_debugger_title" />
-
-        <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS"
             app:title="@string/switch_levels_title" />
-
-        <SwitchPreferenceCompat
-            app:defaultValue="true"
-            app:key="USER_LOCATION_PROJECTION_ON_ITINERARY_ENABLED"
-            app:title="@string/user_location_projection_title" />
-
-        <SwitchPreferenceCompat
-            app:defaultValue="true"
-            app:key="ITINERARY_RECALCULATION_ENABLED"
-            app:title="@string/recalculate_itinerary_title" />
 
     </PreferenceCategory>
 

@@ -4,16 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.getwemap.example.common.multiline
+import com.getwemap.example.common.onDismissed
 import com.getwemap.example.map.Config
 import com.getwemap.example.map.databinding.FragmentNavigationBinding
-import com.getwemap.example.map.multiline
-import com.getwemap.example.map.onDismissed
 import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.map.navigation.NavigationManagerListener
-import com.getwemap.sdk.map.poi.PointOfInterestManagerListener
+import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
+import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
 import org.maplibre.android.MapLibre
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.plugins.annotation.Circle
 import org.maplibre.android.plugins.annotation.CircleManager
 import org.maplibre.android.plugins.annotation.CircleOptions
@@ -21,7 +23,7 @@ import org.maplibre.android.plugins.annotation.CircleOptions
 class NavigationFragment : MapFragment() {
 
     override val mapView get() = binding.mapView
-    override val levelToggle get() = binding.levelToggle
+    override val levelsSwitcher get() = binding.levelsSwitcher
     private val textView get() = binding.textView
 
     private val buttonStartNavigation get() = binding.startNavigation
@@ -34,20 +36,22 @@ class NavigationFragment : MapFragment() {
 
     private val userCreatedAnnotations: MutableList<Circle> = mutableListOf()
 
-    private lateinit var binding: FragmentNavigationBinding
+    private var _binding: FragmentNavigationBinding? = null
+    private val binding get() = _binding!!
+
     private lateinit var circleManager: CircleManager
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
-        binding = FragmentNavigationBinding.inflate(inflater, container, false)
+        _binding = FragmentNavigationBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mapView.getWemapMapAsync { mapView, map, _ ->
-            pointOfInterestManager.addPointOfInterestManagerListener(PointOfInterestManagerListener(
+        mapView.getMapViewAsync { mapView, map, style, _ ->
+            pointOfInterestManager.addListener(PointOfInterestManagerListener(
                 onSelected = {
                     showSnackbar(it.id) {
                         pointOfInterestManager.unselectPOI(it.id)
@@ -55,7 +59,7 @@ class NavigationFragment : MapFragment() {
                 }
             ))
 
-            circleManager = CircleManager(mapView, map, map.style!!)
+            circleManager = CircleManager(mapView, map, style)
             setupNavigationManagerListener()
 
             map.addOnMapLongClickListener {
@@ -101,7 +105,7 @@ class NavigationFragment : MapFragment() {
 
     override fun locationManagerReady() {
         super.locationManagerReady()
-        val coordinateUpdate = mapView.locationManager.coordinateUpdated.subscribe {
+        val coordinateUpdate = mapView.locationManager.rxCoordinate.subscribe {
             userLocationTextView.text = "$it"
         }
         disposeBag.add(coordinateUpdate)
@@ -165,11 +169,20 @@ class NavigationFragment : MapFragment() {
         val navOptions = Config.globalNavigationOptions(requireContext())
 
         val disposable = navigationManager
-            .startNavigation(origin, destination, options = navOptions/*, ItinerarySearchOptions(avoidStairs = true)*/)
+            .startNavigation(
+                origin, destination,
+                options = navOptions,
+//                ItinerarySearchOptions(avoidStairs = true),
+                itineraryOptions = Config.globalItineraryOptions
+            )
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
-                simulator.setItinerary(it)
+                simulator.setItinerary(it.itinerary)
                 buttonStopNavigation.isEnabled = true
+                mapView.locationManager.apply {
+                    cameraMode = CameraMode.TRACKING_COMPASS
+                    renderMode = RenderMode.COMPASS
+                }
             }, {
                 Snackbar.make(mapView, "Failed to start navigation with error - $it", Snackbar.LENGTH_LONG)
                     .multiline().show()
@@ -180,18 +193,18 @@ class NavigationFragment : MapFragment() {
     }
 
     private fun setupNavigationManagerListener() {
-        navigationManager.addNavigationManagerListener(NavigationManagerListener(
+        navigationManager.addListener(NavigationManagerListener(
             onInfoChanged = { info ->
                 val nextStepInstructions = info.nextStep?.getNavigationInstructions(requireContext())?.instructions
                 textView.text = info.shortDescription + "\nNext - $nextStepInstructions"
                 textView.visibility = View.VISIBLE
             },
-            onStarted = { itinerary ->
+            onStarted = { navigation ->
                 textView.visibility = View.VISIBLE
                 Snackbar.make(mapView, "Navigation started", Snackbar.LENGTH_LONG).multiline().show()
                 buttonStopNavigation.isEnabled = true
 
-                itinerary.legs.flatMap { it.steps }.forEach {
+                navigation.itinerary.legsSteps.forEach {
                     println(it.getNavigationInstructions(requireContext()))
                 }
             },
@@ -256,6 +269,6 @@ class NavigationFragment : MapFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        disposeBag.dispose()
+        _binding = null
     }
 }

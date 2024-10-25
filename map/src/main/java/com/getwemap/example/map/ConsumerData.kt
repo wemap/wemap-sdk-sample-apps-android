@@ -1,15 +1,15 @@
 package com.getwemap.example.map
 
-import com.getwemap.sdk.map.internal.model.serializers.LatLngSerializer
+import com.getwemap.sdk.core.internal.model.serializers.PointSerializer
 import kotlinx.serialization.Serializable
-import org.maplibre.android.geometry.LatLng
+import org.maplibre.geojson.Point
 
 @Serializable
 data class ConsumerData(
     val level: Float,
     val externalID: String,
 
-    @Serializable(with = LatLngSerializer::class)
-    val coordinate: LatLng,
+    @Serializable(with = PointSerializer::class)
+    val coordinate: Point,
     val name: String
 )

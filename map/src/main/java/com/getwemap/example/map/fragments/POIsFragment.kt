@@ -5,17 +5,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
+import com.getwemap.example.common.multiline
 import com.getwemap.example.map.Config
-import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentPOIsBinding
-import com.getwemap.example.map.multiline
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.PointOfInterest
-import com.getwemap.sdk.map.navigation.NavigationManagerListener
-import com.getwemap.sdk.map.poi.PointOfInterestManagerListener
+import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
+import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
 import org.maplibre.android.MapLibre
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.plugins.annotation.Circle
 import org.maplibre.android.plugins.annotation.CircleManager
 import org.maplibre.android.plugins.annotation.CircleOptions
@@ -23,7 +24,7 @@ import org.maplibre.android.plugins.annotation.CircleOptions
 class POIsFragment : MapFragment() {
 
     override val mapView get() = binding.mapView
-    override val levelToggle get() = binding.levelToggle
+    override val levelsSwitcher get() = binding.levelsSwitcher
     private val textView get() = binding.textView
 
     private val buttonApplyFilter get() = binding.applyFilter
@@ -36,33 +37,34 @@ class POIsFragment : MapFragment() {
 
     private val navigationManager get() = mapView.navigationManager
 
-    private lateinit var binding: FragmentPOIsBinding
-    private lateinit var circleManager: CircleManager
+    private var _binding: FragmentPOIsBinding? = null
+    private val binding get() = _binding!!
 
-    private var selectedPOI: PointOfInterest? = null
+    private var _circleManager: CircleManager? = null
+    private val circleManager get() = _circleManager!!
+
+    private val selectedPOI: PointOfInterest?
+        get() = pointOfInterestManager.getSelectedPOI()
+
     private var simulatedUserPosition: Circle? = null
+
     private val viewModel: PoisViewModel by activityViewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
-        binding = FragmentPOIsBinding.inflate(inflater, container, false)
+        _binding = FragmentPOIsBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mapView.getWemapMapAsync { mapView, map, _ ->
-            pointOfInterestManager.addPointOfInterestManagerListener(PointOfInterestManagerListener(
+        mapView.getMapViewAsync { mapView, map, style, mapData ->
+            pointOfInterestManager.addListener(PointOfInterestManagerListener(
                 onSelected = {
-                    val poi = selectedPOI
-                    if (poi != null)
-                        pointOfInterestManager.unselectPOI(poi)
-                    selectedPOI = it
                     updateUI()
                 },
                 onUnselected = {
-                    selectedPOI = null
                     updateUI()
                 },
                 onClicked = {
@@ -72,13 +74,12 @@ class POIsFragment : MapFragment() {
             ))
 
             map.addOnMapClickListener {
-                if (selectedPOI != null) {
+                if (selectedPOI != null)
                     pointOfInterestManager.unselectPOI(selectedPOI!!)
-                }
                 true
             }
 
-            circleManager = CircleManager(mapView, map, map.style!!)
+            _circleManager = CircleManager(mapView, map, style)
             setupNavigationManagerListener()
 
             map.addOnMapLongClickListener {
@@ -99,7 +100,7 @@ class POIsFragment : MapFragment() {
                 return@addOnMapLongClickListener true
             }
 
-            viewModel.mapData = mapView.mapData!!
+            viewModel.mapData = mapData
             viewModel.poiManager = mapView.pointOfInterestManager
         }
 
@@ -139,10 +140,14 @@ class POIsFragment : MapFragment() {
             overlay.show(parentFragmentManager, null)
         }
 
-        binding.toggleSelectionButton.setOnClickListener {
-            pointOfInterestManager.isSelectionEnabled = !pointOfInterestManager.isSelectionEnabled
-            val text = if (pointOfInterestManager.isSelectionEnabled) R.string.disable_selection else R.string.enable_selection
-            binding.toggleSelectionButton.setText(text)
+        binding.userSelectionSwitch.setOnClickListener {
+            pointOfInterestManager.isUserSelectionEnabled = !pointOfInterestManager.isUserSelectionEnabled
+        }
+
+        binding.toggleSelectionModeButton.setOnClickListener {
+            val nextMode = pointOfInterestManager.selectionMode.next()
+            pointOfInterestManager.selectionMode = nextMode
+            binding.toggleSelectionModeButton.text = "Selection: $nextMode"
         }
     }
 
@@ -158,7 +163,7 @@ class POIsFragment : MapFragment() {
 
     override fun locationManagerReady() {
         super.locationManagerReady()
-        val coordinateUpdate = mapView.locationManager.coordinateUpdated.subscribe {
+        val coordinateUpdate = mapView.locationManager.rxCoordinate.subscribe {
             userLocationTextView.text = "$it"
         }
         disposeBag.add(coordinateUpdate)
@@ -203,11 +208,19 @@ class POIsFragment : MapFragment() {
         val destination = selectedPOI!!.coordinate
 
         val disposable = navigationManager
-            .startNavigation(origin, destination, options = Config.globalNavigationOptions(requireContext()))
+            .startNavigation(
+                origin, destination,
+                options = Config.globalNavigationOptions(requireContext()),
+                itineraryOptions = Config.globalItineraryOptions
+            )
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
-                simulator.setItinerary(it)
+                simulator.setItinerary(it.itinerary)
                 buttonStopNavigation.isEnabled = true
+                mapView.locationManager.apply {
+                    cameraMode = CameraMode.TRACKING_COMPASS
+                    renderMode = RenderMode.COMPASS
+                }
             }, {
                 Snackbar.make(mapView, "Failed to start navigation with error - $it", Snackbar.LENGTH_LONG)
                     .multiline().show()
@@ -218,7 +231,7 @@ class POIsFragment : MapFragment() {
     }
 
     private fun setupNavigationManagerListener() {
-        navigationManager.addNavigationManagerListener(NavigationManagerListener(
+        navigationManager.addListener(NavigationManagerListener(
             onInfoChanged = { info ->
                 textView.text = info.shortDescription
                 textView.visibility = View.VISIBLE
@@ -271,6 +284,7 @@ class POIsFragment : MapFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        disposeBag.dispose()
+        _binding = null
+        _circleManager = null
     }
 }

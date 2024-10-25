@@ -22,5 +22,8 @@ dependencyResolutionManagement {
 }
 rootProject.name = "WemapSDKSampleApps"
 
+// Examples
+include ':common'
+include ':common-map'
 include ':map'
 include ':map-positioning'

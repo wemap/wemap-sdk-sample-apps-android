@@ -1,7 +1,8 @@
-package com.getwemap.example.map.positioning
+package com.getwemap.example.map.positioning.fragments
 
 import android.os.Bundle
 import androidx.preference.PreferenceFragmentCompat
+import com.getwemap.example.map.positioning.R
 
 class SettingsFragment : PreferenceFragmentCompat() {
 

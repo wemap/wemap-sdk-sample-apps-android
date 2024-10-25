@@ -1,4 +1,4 @@
-package com.getwemap.example.map.positioning
+package com.getwemap.example.common
 
 object Constants {
 

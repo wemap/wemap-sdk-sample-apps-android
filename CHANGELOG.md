@@ -2,6 +2,130 @@
 
 ---
 
+## [0.18.0]
+
+### Breaking changes
+
+* MapSDK
+  * By default it is possible to select only one POI at a time. To enable multiple POIs selection, you have to change `selectionMode` to `MULTIPLE` in `PointOfInterestManager`.
+  * `PointOfInterestManager.isSelectionEnabled` changed to `isUserSelectionEnabled`
+    * Now this option applies only to the user actions on the map. Programmatically you're still able to select/unselect POIs
+  * `MapConstants` properties moved to `CoreConstants`:
+    * `ITINERARY_RECALCULATION_ENABLED`
+    * `USER_LOCATION_PROJECTION_ON_ITINERARY_ENABLED`
+  * `OnActiveLevelChangeListener` and `OnBuildingFocusChangeListener` merged into one `BuildingManagerListener`:
+    * `OnActiveLevelChangeListener.onActiveLevelChange(building: Building, level: Level)` changed to `BuildingManagerListener.onActiveLevelChanged(building: Building, level: Level)`
+    * `OnBuildingFocusChangeListener.onBuildingFocusChange(building: Building?)` changed to `BuildingManagerListener.onFocusedBuildingChanged(building: Building?)`
+  * `WemapMapView` changed:
+    * `fun getWemapMapAsync(callback: (mapView: WemapMapView, map: MapLibreMap, data: MapData) -> Unit)` changed to `fun getMapViewAsync(callback: (mapView: WemapMapView, map: MapLibreMap, style: Style, data: MapData) -> Unit)`
+    * `val pointOfInterestManager` changed type from `PointOfInterestManager` to `MapPointOfInterestManager`
+    * `val navigationManager` changed type from `NavigationManager` to `MapNavigationManager`
+      * `isSelectionEnabled` changed to `isUserSelectionEnabled`. Also changed its logic. Previously this property was used to disable all ways to selecting POIs - programmatically and by user clicking on POI on the map.
+        Now this property applies only to user actions - if `isUserSelectionEnabled = false` - user will not be able to select POI, but POI can still be selected programmatically.
+      * `func startNavigation(origin: Coordinate?, destination: Coordinate, travelMode: TravelMode, options: NavigationOptions, searchOptions: ItinerarySearchOptions, timeout: DispatchTimeInterval) -> Single<Itinerary>` changed to `func startNavigation(origin: Coordinate?, destination: Coordinate, travelMode: TravelMode, options: NavigationOptions, searchOptions: ItinerarySearchOptions, timeout: DispatchTimeInterval) -> Single<Navigation>`
+      * `func startNavigation(_ itinerary: Itinerary, options: NavigationOptions, searchOptions: ItinerarySearchOptions) -> Single<Itinerary>` changed to `func startNavigation(_ itinerary: Itinerary, options: NavigationOptions, searchOptions: ItinerarySearchOptions) -> Single<Navigation>`
+      * `func stopNavigation() -> Result<Itinerary, NavigationError>` changed to `func stopNavigation() -> Result<Navigation, Error>`
+  * `OnWemapMapReadyCallback.onMapLoaded(mapView: WemapMapView, map: MapLibreMap, data: MapData)` changed to `OnWemapMapReadyCallback.onMapViewReady(mapView: WemapMapView, map: MapLibreMap, style: Style, data: MapData)`
+  * `BuildingManager` changed:
+    * removed:
+      * `fun addOnBuildingFocusChangeListener(listener: OnBuildingFocusChangeListener)`
+      * `fun removeOnBuildingFocusChangeListener(listener: OnBuildingFocusChangeListener)`
+      * `fun addOnActiveLevelChangeListener(listener: OnActiveLevelChangeListener)`
+      * `fun removeOnActiveLevelChangeListener(listener: OnActiveLevelChangeListener)`
+    * added:
+      `fun addListener(listener: BuildingManagerListener): Boolean`
+      `fun removeListener(listener: BuildingManagerListener): Boolean`
+  * `LocationManager` renamed to `UserLocationManager`
+    * `var source: LocationSource` renamed to `var locationSource: LocationSource`
+  * Removed `BuildingData`
+  * Moved from `WemapMapSDK` to `WemapCoreSDK`:
+    * `Category`
+    * `Tag`
+    * `UseTags`
+    * `SimulatorLocationSource`
+    * `SimulationOptions`
+    * `Extras` moved to `MapData.Extras`
+    * `PointOfInterestManager` class changed to interface `IPointOfInterestManager`
+      * `fun addPointOfInterestManagerListener(listener: PointOfInterestManagerListener)` changed to `fun addListener(listener: PointOfInterestManagerListener): Boolean`
+      * `fun removePointOfInterestManagerListener(listener: PointOfInterestManagerListener)` changed to `fun removeListener(listener: PointOfInterestManagerListener): Boolean`
+    * `PointOfInterestManagerListener`
+    * `PointOfInterestWithInfo` changed from `Pair<PointOfInterest, ItineraryInfo>` to `Pair<PointOfInterest, ItineraryInfo?>`
+    * `NavigationManager` class changed to interface `INavigationManager`
+      * `fun addNavigationManagerListener(listener: NavigationManagerListener)` changed to `fun addListener(listener: NavigationManagerListener): Boolean`
+      * `fun removeNavigationManagerListener(listener: NavigationManagerListener)` changed to `fun removeListener(listener: NavigationManagerListener): Boolean`
+    * `NavigationManagerListener`
+      * `fun onArrivedAtDestination(itinerary: Itinerary)` changed to `fun onArrivedAtDestination(navigation: Navigation)`
+      * `fun onNavigationRecalculated(itinerary: Itinerary)` changed to `fun onNavigationRecalculated(navigation: Navigation)`
+      * `fun onNavigationStarted(itinerary: Itinerary)` changed to `fun onNavigationStarted(navigation: Navigation)`
+      * `fun onNavigationStopped(itinerary: Itinerary)` changed to `fun onNavigationStopped(navigation: Navigation)`
+    * `NavigationError`
+      * `failedToAddItineraryToMap` removed
+      * `failedToRemoveItineraryFromMap` renamed to `failedToRemoveNavigation`
+    * `NavigationOptions`
+      * `val cameraMode: Int?` removed. You can use `mapView.locationManager.cameraMode` instead
+      * `val itineraryOptions: ItineraryOptions` removed. Now it should be provided as independent parameter to `MapNavigationManager.startNavigation()`
+      * `val renderMode: Int?` removed. You can use `mapView.locationManager.renderMode` instead
+      * `val zoomWhileTracking: Double?` removed. You can use `mapView.zoomWhileTracking` instead
+* CoreSDK
+  * `ServiceFactory`
+    * To obtain an instance implementing `IItineraryService` use `ServiceFactory.getItineraryService()` instead of `ServiceFactory.createService(IItineraryService::class.java)`
+    * To obtain an instance implementing `IPointOfInterestService` use `ServiceFactory.getPointOfInterestService()` instead of `ServiceFactory.createService(IPointOfInterestService::class.java)`
+  * `LocationSourceListener`
+    * `fun onLocationChanged(location: Coordinate)` renamed to `fun onCoordinateChanged(coordinate: Coordinate)`
+    * `fun onError(error: Error?)` changed to `fun onError(error: Error)`
+* PosSDK(VPS)
+  * `WemapVPSARCoreLocationSource` changed:
+    * `val listeners: MutableSet<WemapVPSARCoreLocationSourceListener>` renamed to `val vpsListeners: MutableSet<WemapVPSARCoreLocationSourceListener>`
+    * `fun bind(surfaceView: SurfaceView)` changed to `fun bind(context: Context, surfaceView: SurfaceView)`
+    * `ScanReason` renamed to `NotPositioningReason`
+    * `State` cases changed accordingly:
+      * `SCAN_REQUIRED` renamed to `NOT_POSITIONING`
+      * added `DEGRADED_POSITIONING`
+      * `NORMAL` renamed to `ACCURATE_POSITIONING`
+      * removed `NO_TRACKING`
+
+### Added
+
+* PosSDK(VPS): Enhancement of lifecycle
+* CoreSDK: add single PoI selection mode and it is used by default (instead of multiple PoIs selection)
+* MapSDK: make camera mode and render mode accessible directly from LocationManager
+* MapSDK: make PoIs loaded before returning Map async
+* MapSDK: Make the camera zoom when user tracking mode is changed to follow/tracking
+* MapSDK: Set userTrackingMode to None when BuildingManager.setLevel is called
+* PosSDK(VPS): Trigger the reason of rescan necessary. Ex.: because of conveying detected
+
+### Changed
+
+* CoreSDK: Remove maths duplicates in favour of dev.romainguy.kotlin.math
+
+### Fixed
+
+* CoreSDK: handle sorting by graph distance/duration error in BE response
+* MapSDK: getting navigation failed error twice after disposing map view
+* Samples: sometimes levels switcher doesn't show levels at startup
+* Samples: memory leaks
+
+### Dependencies
+
+* Android SDK 34 -> 35
+* Gradle-Wrapper 8.6 -> 8.9
+* Plugins
+  * Kotlin 1.9.0 -> 2.0.0
+  * Gradle 8.4.1 -> 8.7.1
+  * Serialization 1.8.20 -> 2.0.0
+* Core
+  * RxJava 3.1.8 -> 3.1.9
+  * Turf 6.0.0 -> 6.0.1
+  * Serialization 1.6.3 -> 1.7.3
+  * GeoJSON 6.0.0 -> 6.0.1
+  * KotlinMath 1.5.3
+* Map
+  * MapLibre 11.0.0 -> 11.5.2
+* Fused-GMS
+  * GMS 21.2.0 -> 21.3.0
+* VPS
+  * ARCore 1.43.0 -> 1.46.0
+
 ## [0.17.0]
 
 ### Breaking changes

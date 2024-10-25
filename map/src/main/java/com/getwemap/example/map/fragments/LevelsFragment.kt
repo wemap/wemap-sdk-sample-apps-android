@@ -4,21 +4,23 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.getwemap.example.common.onDismissed
 import com.getwemap.example.map.ConsumerData
 import com.getwemap.example.map.databinding.FragmentLevelsBinding
-import com.getwemap.example.map.onDismissed
 import com.getwemap.sdk.core.model.ServiceFactory
 import com.google.android.material.snackbar.Snackbar
 import org.maplibre.android.MapLibre
 
 class LevelsFragment : MapFragment() {
+
     override val mapView get() = binding.mapView
-    override val levelToggle get() = binding.levelToggle
+    override val levelsSwitcher get() = binding.levelsSwitcher
 
     private val buttonFirstPOI get() = binding.firstPOI
     private val buttonSecondPOI get() = binding.secondPOI
 
-    private lateinit var binding: FragmentLevelsBinding
+    private var _binding: FragmentLevelsBinding? = null
+    private val binding get() = _binding!!
 
     private val consumerData by lazy {
         val json = requireContext().assets.open("consumer_data.json").bufferedReader().use { it.readText() }
@@ -28,7 +30,7 @@ class LevelsFragment : MapFragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
-        binding = FragmentLevelsBinding.inflate(inflater, container, false)
+        _binding = FragmentLevelsBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -71,5 +73,10 @@ class LevelsFragment : MapFragment() {
             .make(mapView, "POI selected with id $id", Snackbar.LENGTH_LONG)
             .onDismissed(onDismissed)
             .show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

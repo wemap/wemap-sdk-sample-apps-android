@@ -34,8 +34,7 @@ class InitialActivity : AppCompatActivity(), MenuProvider {
 
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_initial)
-        return navController.navigateUp(appBarConfiguration)
-                || super.onSupportNavigateUp()
+        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {

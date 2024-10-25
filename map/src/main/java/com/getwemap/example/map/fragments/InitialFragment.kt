@@ -8,30 +8,33 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.getwemap.example.common.Constants
+import com.getwemap.example.common.multiline
 import com.getwemap.example.map.Config
-import com.getwemap.example.map.Constants
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentInitialBinding
+import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.map.WemapMapSDK
-import com.getwemap.sdk.map.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
+import com.google.android.material.snackbar.Snackbar
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class InitialFragment : Fragment() {
 
-    private val disposeBag by lazy { CompositeDisposable() }
+    private var request: Disposable? = null
 
-    private lateinit var binding: FragmentInitialBinding
+    private var _binding: FragmentInitialBinding? = null
+    private val binding get() = _binding!!
 
     private val spinner get() = binding.spinner
     private val mapIdTextView get() = binding.mapIdTextView
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        binding = FragmentInitialBinding.inflate(inflater, container, false)
+        _binding = FragmentInitialBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -56,11 +59,8 @@ class InitialFragment : Fragment() {
         }
 
         // if you need to retrieve all points of interest for some map in advance
-//        val service = ServiceFactory.createService(
-//            IPointOfInterestService::class.java,
-//            CoreConstants.API_BASE_URL
-//        )
-//        val disp = service
+//        val disp = ServiceFactory
+//            .getPointOfInterestService()
 //            .pointsOfInterestById(Constants.mapId)
 //            .subscribe({
 //                println("received pois - $it")
@@ -101,7 +101,10 @@ class InitialFragment : Fragment() {
             return
         }
 
-        val disposable = WemapMapSDK.instance
+        if (request?.isDisposed == false)
+            return
+
+        request = WemapMapSDK.instance
             .mapData(id, Constants.token)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
@@ -114,8 +117,14 @@ class InitialFragment : Fragment() {
                 Config.applyGlobalOptions(requireContext())
                 findNavController().navigate(R.id.action_InitialFragment_to_SamplesListFragment, bundle)
             }, {
-                println("Failed to receive map data with error - ${it.message}")
+                val str = "Failed to receive map data with error - ${it.message}"
+                Snackbar.make(binding.root, str, Snackbar.LENGTH_LONG).multiline().show()
             })
-        disposeBag.add(disposable)
+    }
+
+    override fun onDestroyView() {
+        request?.dispose()
+        super.onDestroyView()
+        _binding = null
     }
 }

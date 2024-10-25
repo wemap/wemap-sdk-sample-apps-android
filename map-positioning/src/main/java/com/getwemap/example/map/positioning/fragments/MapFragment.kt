@@ -1,4 +1,4 @@
-package com.getwemap.example.map.positioning
+package com.getwemap.example.map.positioning.fragments
 
 import android.Manifest.permission
 import android.annotation.SuppressLint
@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import com.getwemap.example.common.Constants
 import com.getwemap.example.map.positioning.databinding.FragmentMapBinding
 import com.getwemap.sdk.core.location.LocationSource
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
@@ -20,15 +21,16 @@ import org.maplibre.android.location.modes.RenderMode
 class MapFragment : BaseFragment() {
 
     override val mapView get() = binding.mapView
-    override val levelToggle get() = binding.levelToggle
+    override val levelsSwitcher get() = binding.levelsSwitcher
 
     private var locationSourceId: Int = -1
 
-    private lateinit var binding: FragmentMapBinding
+    private var _binding: FragmentMapBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
-        binding = FragmentMapBinding.inflate(inflater, container, false)
+        _binding = FragmentMapBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -71,12 +73,21 @@ class MapFragment : BaseFragment() {
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         mapView.locationManager.apply {
-            source = locationSource
+            this.locationSource = locationSource
             isEnabled = true
-        }
-        mapView.map.locationComponent.apply {
             cameraMode = CameraMode.TRACKING_COMPASS
             renderMode = RenderMode.COMPASS
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        disposeBag.clear()
+        _binding = null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        disposeBag.dispose()
     }
 }

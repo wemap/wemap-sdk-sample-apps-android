@@ -11,7 +11,7 @@
 
     <fragment
         android:id="@+id/InitialFragment"
-        android:name="com.getwemap.example.map.positioning.InitialFragment"
+        android:name="com.getwemap.example.map.positioning.fragments.InitialFragment"
         android:label="@string/initial_fragment_label"
         tools:layout="@layout/fragment_initial">
 
@@ -26,19 +26,19 @@
 
     <fragment
         android:id="@+id/MapFragment"
-        android:name="com.getwemap.example.map.positioning.MapFragment"
+        android:name="com.getwemap.example.map.positioning.fragments.MapFragment"
         android:label="@string/map_fragment_label"
         tools:layout="@layout/fragment_map">
     </fragment>
 
     <fragment
         android:id="@+id/MapVPSFragment"
-        android:name="com.getwemap.example.map.positioning.MapVPSFragment"
+        android:name="com.getwemap.example.map.positioning.fragments.MapVPSFragment"
         android:label="@string/map_vps_fragment_label"
         tools:layout="@layout/fragment_map_vps"/>
 
     <fragment
         android:id="@+id/SettingsFragment"
-        android:name="com.getwemap.example.map.positioning.SettingsFragment"
+        android:name="com.getwemap.example.map.positioning.fragments.SettingsFragment"
         android:label="@string/settings_fragment_label" />
 </navigation>
