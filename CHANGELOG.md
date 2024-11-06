@@ -2,6 +2,12 @@
 
 ---
 
+## [0.15.7]
+
+### Fixed
+
+* CoreSDK: handle level change type - incline plane
+
 ## [0.15.4]
 
 ### Fixed
