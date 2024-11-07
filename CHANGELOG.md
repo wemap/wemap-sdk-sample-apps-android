@@ -194,6 +194,12 @@
 * VPS
   * ARCore 1.42.0 -> 1.43.0
 
+## [0.15.7]
+
+### Fixed
+
+* CoreSDK: handle level change type - incline plane
+
 ## [0.15.4]
 
 ### Fixed
