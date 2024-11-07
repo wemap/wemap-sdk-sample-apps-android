@@ -12,7 +12,7 @@ plugins {
 }
 
 ext {
-    commonVersionCode = 265
+    commonVersionCode = 320
 }
 
 allprojects {
