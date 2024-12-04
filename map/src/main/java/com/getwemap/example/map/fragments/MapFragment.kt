@@ -15,6 +15,7 @@ import com.getwemap.example.common.map.MapLevelsSwitcher
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.GareDeLyonSimulatorsLocationSource
 import com.getwemap.sdk.core.location.LocationSource
+import com.getwemap.sdk.core.location.simulation.SimulationOptions
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.WemapMapView
@@ -34,7 +35,7 @@ abstract class MapFragment : Fragment() {
     protected val disposeBag = CompositeDisposable()
 
     // also you can use simulator to generate locations along the itinerary
-    protected val simulator by lazy { SimulatorLocationSource() }
+    protected val simulator by lazy { SimulatorLocationSource(SimulationOptions(deviationRange = -20.0..20.0)) }
 
     protected var locationSourceId: Int = -1
 

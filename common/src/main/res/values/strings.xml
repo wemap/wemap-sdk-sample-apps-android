@@ -38,10 +38,12 @@
 
     <!-- Global Preferences -->
     <string name="switch_levels_title" translatable="false">Switch levels automatically on user movements</string>
+    <string name="recalculate_itinerary_title" translatable="false">Recalculate itinerary if user is far from itinerary</string>
+    <string name="user_location_projection_title" translatable="false">Project user location on itinerary</string>
 
     <!-- Navigation Preferences -->
-    <string name="stop_distance_threshold_title" translatable="false">Stop distance threshold</string>
-    <string name="stop_distance_threshold_summary" translatable="false">The distance measured in meters, indicating when the navigation manager considers that the user has arrived at the final destination. Default is 5 meters</string>
+    <string name="arrived_distance_threshold_title" translatable="false">Arrived distance threshold</string>
+    <string name="arrived_distance_threshold_summary" translatable="false">The distance measured in meters, indicating when the navigation manager considers that the user has arrived at the final destination. Default is 5 meters</string>
 
     <string name="user_position_threshold_title" translatable="false">User position threshold</string>
     <string name="user_position_threshold_summary" translatable="false">The distance measured in meters indicates when the user\'s location will no longer be projected onto the itinerary and navigation will be recalculated. Default is 5 meters</string>

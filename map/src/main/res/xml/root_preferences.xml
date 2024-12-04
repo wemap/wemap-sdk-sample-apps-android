@@ -7,15 +7,25 @@
             app:key="SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS"
             app:title="@string/switch_levels_title" />
 
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="USER_LOCATION_PROJECTION_ON_ITINERARY_ENABLED"
+            app:title="@string/user_location_projection_title" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="ITINERARY_RECALCULATION_ENABLED"
+            app:title="@string/recalculate_itinerary_title" />
+
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/navigation_preferences">
 
         <EditTextPreference
             app:defaultValue="5"
-            app:dialogMessage="@string/stop_distance_threshold_summary"
-            app:key="STOP_DISTANCE_THRESHOLD"
-            app:title="@string/stop_distance_threshold_title"
+            app:dialogMessage="@string/arrived_distance_threshold_summary"
+            app:key="ARRIVED_DISTANCE_THRESHOLD"
+            app:title="@string/arrived_distance_threshold_title"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference

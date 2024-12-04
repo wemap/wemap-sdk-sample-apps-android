@@ -212,6 +212,7 @@ class NavigationFragment : MapFragment() {
                 textView.visibility = View.GONE
                 Snackbar.make(mapView, "Navigation stopped", Snackbar.LENGTH_LONG).multiline().show()
                 buttonStopNavigation.isEnabled = false
+                updateUI()
             },
             onArrived = {
                 Snackbar.make(mapView, "Navigation arrived at destination", Snackbar.LENGTH_LONG).multiline().show()

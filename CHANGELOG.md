@@ -2,6 +2,34 @@
 
 ---
 
+## [0.19.0]
+
+### Breaking changes
+
+* CoreSDK
+  * Removed `NavigationOptions.StopOptions` data class
+    * `NavigationOptions.StopOptions.stopWhenArrivedAtDestination: Boolean` moved to `NavigationOptions.stopWhenArrivedAtDestination: Boolean`
+    * `NavigationOptions.StopOptions.stopDistanceThreshold: Float` moved to `NavigationOptions.arrivedDistanceThreshold: Float`
+  * `NavigationOptions(stopNavigationOptions: StopOptions, userPositionThreshold: Float, navigationRecalculationTimeInterval: Long)` changed to `NavigationOptions(stopWhenArrivedAtDestination: Boolean, arrivedDistanceThreshold: Float, userPositionThreshold: Float, navigationRecalculationTimeInterval: Long)`
+
+### Added
+
+* CoreSDK: remaining/traveled distance is calculated according to the user's projection constant
+
+### Changed
+
+* PosSDK(VPS): Use jpg images for VPS by default
+* PosSDK(VPS): minInclinationAngle default is 65 degrees
+
+### Dependencies
+
+* Plugins
+  * Gradle 8.7.1 -> 8.7.3
+* Core
+  * RxJava 3.1.9 -> 3.1.10
+* Map
+  * MapLibre 11.5.2 -> 11.6.1
+
 ## [0.18.1]
 
 ### Fixed

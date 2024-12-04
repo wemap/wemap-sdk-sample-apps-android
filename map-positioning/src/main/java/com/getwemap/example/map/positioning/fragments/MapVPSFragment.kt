@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -294,7 +295,7 @@ class MapVPSFragment : BaseFragment() {
             }
 
             override fun onStateChanged(state: State) {
-                println("state -> $state")
+                Log.d(TAG, "state -> $state")
                 when(state) {
                     State.ACCURATE_POSITIONING, State.DEGRADED_POSITIONING -> {
                         if (rescanRequested) return
@@ -324,7 +325,6 @@ class MapVPSFragment : BaseFragment() {
     private val vpsObserver by lazy {
         object : WemapVPSARCoreLocationSourceObserver {
             override fun onImageSend(bitmap: Bitmap) {
-                println("onImageSend")
                 binding.imageview.setImageBitmap(bitmap)
             }
 
@@ -336,5 +336,9 @@ class MapVPSFragment : BaseFragment() {
                 binding.debugTextMessage2.text = "-> Conveying state changed: $state"
             }
         }
+    }
+
+    companion object {
+        private val TAG = this::class.java.simpleName
     }
 }

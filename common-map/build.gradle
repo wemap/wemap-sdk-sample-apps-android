@@ -27,6 +27,6 @@ android {
 dependencies {
     implementation "com.getwemap.sdk:map:$version_name"
 
-    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.core:core-ktx:1.15.0'
     implementation 'com.google.android.material:material:1.12.0'
 }
