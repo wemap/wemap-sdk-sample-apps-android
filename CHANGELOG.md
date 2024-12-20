@@ -228,6 +228,12 @@
 * VPS
   * ARCore 1.42.0 -> 1.43.0
 
+## [0.15.8]
+
+### Added
+
+* CoreSDK: navigation instruction translations to Dutch, German, Portuguese and Russian
+
 ## [0.15.7]
 
 ### Fixed
