@@ -2,6 +2,24 @@
 
 ---
 
+## [0.19.1]
+
+### Added
+
+* CoreSDK: add availability to specify the language for navigation instructions
+* CoreSDK: add navigation instruction translations to Dutch, German, Portuguese and Russian
+
+### Changed
+
+* SDKs: improve logger and add category, type
+
+### Dependencies
+
+* Plugins
+  * Kotlin 2.0.0 -> 2.0.20
+* Map
+  * MapLibre 11.6.1 -> 11.7.1
+
 ## [0.19.0]
 
 ### Breaking changes

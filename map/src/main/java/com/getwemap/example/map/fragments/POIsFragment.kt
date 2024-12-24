@@ -8,6 +8,7 @@ import androidx.fragment.app.activityViewModels
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.Config
 import com.getwemap.example.map.databinding.FragmentPOIsBinding
+import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.PointOfInterest
 import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
@@ -163,10 +164,11 @@ class POIsFragment : MapFragment() {
 
     override fun locationManagerReady() {
         super.locationManagerReady()
-        val coordinateUpdate = mapView.locationManager.rxCoordinate.subscribe {
-            userLocationTextView.text = "$it"
-        }
-        disposeBag.add(coordinateUpdate)
+        mapView.locationManager
+            .coordinate
+            .subscribe {
+                userLocationTextView.text = "$it"
+            }.disposedBy(disposeBag)
     }
 
     private fun getLastCoordinate(): Coordinate {
@@ -207,7 +209,7 @@ class POIsFragment : MapFragment() {
 
         val destination = selectedPOI!!.coordinate
 
-        val disposable = navigationManager
+        navigationManager
             .startNavigation(
                 origin, destination,
                 options = Config.globalNavigationOptions(requireContext()),
@@ -226,8 +228,7 @@ class POIsFragment : MapFragment() {
                     .multiline().show()
                 updateUI()
             })
-
-        disposeBag.add(disposable)
+            .disposedBy(disposeBag)
     }
 
     private fun setupNavigationManagerListener() {

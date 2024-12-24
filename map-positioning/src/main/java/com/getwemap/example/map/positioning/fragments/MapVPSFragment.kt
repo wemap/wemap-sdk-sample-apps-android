@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import com.getwemap.example.common.Constants
 import com.getwemap.example.map.positioning.databinding.FragmentMapVpsBinding
+import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.map.WemapMapView
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
@@ -150,7 +151,7 @@ class MapVPSFragment : BaseFragment() {
     private fun startNavigation(origin: Coordinate?, destination: Coordinate) {
         disableStartButtons()
 
-        val disposable = navigationManager
+        navigationManager
             .startNavigation(origin, destination)
             .subscribe({
                 buttonStopNavigation.isEnabled = true
@@ -158,8 +159,7 @@ class MapVPSFragment : BaseFragment() {
                 Snackbar.make(mapView, "Failed to start navigation with error - $it", Snackbar.LENGTH_LONG).show()
                 updateUI()
             })
-
-        disposeBag.add(disposable)
+            .disposedBy(disposeBag)
     }
 
     private fun removeUserCreatedAnnotations() {

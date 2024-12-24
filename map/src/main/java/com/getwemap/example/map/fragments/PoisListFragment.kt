@@ -11,8 +11,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentItemBinding
+import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.MapData
+import com.getwemap.sdk.core.model.services.responses.ItineraryInfo
 import com.getwemap.sdk.core.poi.PointOfInterestWithInfo
 import com.getwemap.sdk.map.poi.IMapPointOfInterestManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -57,7 +59,7 @@ class PoisListFragment : BottomSheetDialogFragment() {
     @SuppressLint("NotifyDataSetChanged")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val disposable = viewModel.poiManager
+        viewModel.poiManager
             .sortPOIsByGraphDistance(viewModel.userCoordinate)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
@@ -66,7 +68,7 @@ class PoisListFragment : BottomSheetDialogFragment() {
             }, {
                 println("Failed to sort POIs with error - $it")
             })
-        disposeBag.add(disposable)
+            .disposedBy(disposeBag)
     }
 
     override fun onDestroyView() {

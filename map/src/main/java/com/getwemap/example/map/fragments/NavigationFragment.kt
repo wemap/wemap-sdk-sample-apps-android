@@ -8,6 +8,7 @@ import com.getwemap.example.common.multiline
 import com.getwemap.example.common.onDismissed
 import com.getwemap.example.map.Config
 import com.getwemap.example.map.databinding.FragmentNavigationBinding
+import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
 import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
@@ -105,10 +106,11 @@ class NavigationFragment : MapFragment() {
 
     override fun locationManagerReady() {
         super.locationManagerReady()
-        val coordinateUpdate = mapView.locationManager.rxCoordinate.subscribe {
-            userLocationTextView.text = "$it"
-        }
-        disposeBag.add(coordinateUpdate)
+        mapView.locationManager
+            .coordinate
+            .subscribe {
+                userLocationTextView.text = "$it"
+            }.disposedBy(disposeBag)
     }
 
     private fun startNavigation() {
@@ -168,7 +170,7 @@ class NavigationFragment : MapFragment() {
 
         val navOptions = Config.globalNavigationOptions(requireContext())
 
-        val disposable = navigationManager
+        navigationManager
             .startNavigation(
                 origin, destination,
                 options = navOptions,
@@ -187,9 +189,7 @@ class NavigationFragment : MapFragment() {
                 Snackbar.make(mapView, "Failed to start navigation with error - $it", Snackbar.LENGTH_LONG)
                     .multiline().show()
                 updateUI()
-            })
-
-        disposeBag.add(disposable)
+            }).disposedBy(disposeBag)
     }
 
     private fun setupNavigationManagerListener() {

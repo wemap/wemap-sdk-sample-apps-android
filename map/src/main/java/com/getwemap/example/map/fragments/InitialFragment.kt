@@ -13,6 +13,7 @@ import com.getwemap.example.common.multiline
 import com.getwemap.example.map.Config
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentInitialBinding
+import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.map.WemapMapSDK
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
@@ -59,7 +60,7 @@ class InitialFragment : Fragment() {
         }
 
         // if you need to retrieve all points of interest for some map in advance
-//        val disp = ServiceFactory
+//        ServiceFactory
 //            .getPointOfInterestService()
 //            .pointsOfInterestById(Constants.mapId)
 //            .subscribe({
@@ -67,7 +68,7 @@ class InitialFragment : Fragment() {
 //            }, {
 //                println("failed to receive pois with error - $it")
 //            })
-//        disposeBag.add(disp)
+//            .disposedBy(disposeBag)
     }
 
     private fun checkAvailability() {
