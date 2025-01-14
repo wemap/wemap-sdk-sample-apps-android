@@ -326,6 +326,12 @@
 * VPS
   * ARCore 1.41.0 -> 1.42.0
 
+## [0.14.4]
+
+### Fixed
+
+* CoreSDK: handle sorting by graph distance/duration error
+
 ## [0.14.2]
 
 ### Fixed
