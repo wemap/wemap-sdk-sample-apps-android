@@ -2,6 +2,12 @@
 
 ---
 
+## [0.15.9]
+
+### Fixed
+
+* CoreSDK: sortPOIsByGraphDistance/Duration doesn't work in some cases
+
 ## [0.15.8]
 
 ### Added

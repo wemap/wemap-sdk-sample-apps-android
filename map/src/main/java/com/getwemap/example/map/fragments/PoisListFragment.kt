@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentItemBinding
 import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.core.model.services.responses.ItineraryInfo
 import com.getwemap.sdk.map.model.entities.MapData
 import com.getwemap.sdk.map.poi.PointOfInterestManager
 import com.getwemap.sdk.map.poi.PointOfInterestWithInfo
@@ -44,7 +43,7 @@ class PoisListFragment : BottomSheetDialogFragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.fragment_item_list, container, false) as RecyclerView
-        val poisWithDistance = viewModel.poiManager.getPOIs().map { PointOfInterestWithInfo(it, ItineraryInfo.unknown()) }
+        val poisWithDistance = viewModel.poiManager.getPOIs().map { PointOfInterestWithInfo(it, null) }
         poisAdapter = PoisRecyclerViewAdapter(listener, poisWithDistance)
         with(view) {
             layoutManager = LinearLayoutManager(context)
@@ -86,7 +85,8 @@ class PoisRecyclerViewAdapter(
             SamplesItem(
                 poi.name,
                 "id - ${poi.id}\nlevel - ${poi.coordinate.levels.firstOrNull() ?: "ground"}\n" +
-                        "address - ${poi.address}\ndistance - ${info.distance}\nduration - ${info.duration}"
+                        "address - ${poi.address}\ndistance - ${info?.distance ?: Double.MAX_VALUE}\n" +
+                        "duration - ${info?.duration ?: Float.MAX_VALUE}"
             )
         }
     }
