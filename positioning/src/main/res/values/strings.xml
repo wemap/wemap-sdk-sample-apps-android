@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name" translatable="false">Pos</string>
+    <string name="vps_fragment_label" translatable="false">VPS Fragment</string>
+</resources>

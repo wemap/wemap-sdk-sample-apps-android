@@ -1,0 +1,10 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+apply from: '../base.gradle'
+
+dependencies {
+    implementation "com.getwemap.sdk.positioning:wemap-vps-arcore:$version_name"
+}

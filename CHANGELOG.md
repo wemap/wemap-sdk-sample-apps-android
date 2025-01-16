@@ -2,6 +2,10 @@
 
 ---
 
+### Added
+
+* Examples: add new sample app to demonstrate VPS LS without Map
+
 ## [0.19.1]
 
 ### Added
