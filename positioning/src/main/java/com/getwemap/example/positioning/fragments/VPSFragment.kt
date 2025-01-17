@@ -121,13 +121,15 @@ class VPSFragment : Fragment() {
     // Lifecycle
 
     override fun onStart() {
-        vpsLocationSource.start()
+        if (permissionsAccepted)
+            vpsLocationSource.start()
         super.onStart()
     }
 
     override fun onStop() {
         super.onStop()
-        vpsLocationSource.stop()
+        if (permissionsAccepted)
+            vpsLocationSource.stop()
     }
 
     override fun onDestroyView() {
@@ -227,9 +229,12 @@ class VPSFragment : Fragment() {
     }
 
     private fun checkPermissionsAndStartLocationSource() {
-        val permissionsAccepted = checkCameraPermission() && checkActivityPermission()
         if (!permissionsAccepted) return
         startLocationSource()
+    }
+
+    private val permissionsAccepted: Boolean get() {
+        return checkCameraPermission() && checkActivityPermission()
     }
 
     private fun checkCameraPermission(): Boolean {
