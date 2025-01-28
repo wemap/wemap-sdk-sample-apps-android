@@ -2,9 +2,15 @@
 
 ---
 
+## [0.19.2]
+
 ### Added
 
 * Examples: add new sample app to demonstrate VPS LS without Map
+
+### Fixed
+
+* PosSDK(VPS): VPS scan doesn't work on some Xiaomi devices
 
 ## [0.19.1]
 

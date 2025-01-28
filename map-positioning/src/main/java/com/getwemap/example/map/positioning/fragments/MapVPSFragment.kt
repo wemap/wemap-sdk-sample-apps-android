@@ -14,6 +14,7 @@ import com.getwemap.example.common.Constants
 import com.getwemap.example.map.positioning.databinding.FragmentMapVpsBinding
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
+import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.WemapMapView
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.ScanStatus
@@ -24,6 +25,7 @@ import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceO
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.TrackingFailureReason
 import com.google.gson.JsonArray
+import kotlinx.serialization.json.Json
 import org.maplibre.android.MapLibre
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
@@ -55,20 +57,23 @@ class MapVPSFragment : BaseFragment() {
     private val binding get() = _binding!!
 
     private lateinit var circleManager: CircleManager
-
-    private val vpsLocationSource by lazy {
-        WemapVPSARCoreLocationSource(requireContext(), Constants.vpsEndpoint)
-    }
+    private lateinit var vpsLocationSource: WemapVPSARCoreLocationSource
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
         _binding = FragmentMapVpsBinding.inflate(inflater, container, false)
-        vpsLocationSource.bind(requireContext(), surfaceView)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val mapDataString = requireArguments().getString("mapData")!!
+        val mapData: MapData = Json.decodeFromString(mapDataString)
+        vpsLocationSource = WemapVPSARCoreLocationSource(
+            requireContext(), mapData.extras?.vpsEndpoint ?: Constants.vpsEndpoint
+        )
+        vpsLocationSource.bind(requireContext(), surfaceView)
 
         mapView.getMapViewAsync { mapView, map, style, _ ->
             createCircleManager(mapView, map, style)
