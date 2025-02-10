@@ -2,6 +2,32 @@
 
 ---
 
+## [0.20.0]
+
+### Added
+
+* PosSDK(VPS): ability to check distance to VPS coverage
+  * [`WemapVPSARCoreLocationSource.distanceToVPSCoverageFrom(coordinate: Coordinate): Single<Double>`][1]
+* CoreSDK: ability to project user position on the graph
+  * Disabled by default. To enable use [`CoreConstants.USER_LOCATION_PROJECTION_ON_GRAPH_ENABLED = true`][2], before `WemapMapView` instance creation.
+
+### Deprecated
+
+* PosSDK(VPS)
+  * [`WemapVPSARCoreLocationSource.checkVPSAvailability(location: Location)`][3] changed to [`WemapVPSARCoreLocationSource.isVPSAvailableAt(coordinate: Coordinate)`][4]
+
+### Dependencies
+
+* Plugins
+  * Gradle 8.7.3 -> 8.8.0
+* Core
+  * Serialization 1.7.3 -> 1.8.0
+  * KotlinMath 1.5.3 -> 1.6.0
+* Map
+  * MapLibre 11.7.1 -> 11.8.0
+* VPS
+  * ARCore 1.46.0 -> 1.47.0
+
 ## [0.19.2]
 
 ### Added
@@ -11,6 +37,10 @@
 ### Fixed
 
 * PosSDK(VPS): VPS scan doesn't work on some Xiaomi devices
+
+### Removed
+
+* CoreSDK: unused `ItineraryError` class
 
 ## [0.19.1]
 
@@ -661,3 +691,7 @@ mapView.locationManager.apply {
 * Gradle 7.4.2 -> 8.0.2
 
 [0]: https://github.com/maplibre/maplibre-native/releases/tag/android-v11.0.0
+[1]: https://developers.getwemap.com/android-native-sdk/positioning/wemap-vps-arcore/com.getwemap.sdk.positioning.wemapvpsarcore/-wemap-v-p-s-a-r-core-location-source/distance-to-v-p-s-coverage-from
+[2]: https://developers.getwemap.com/android-native-sdk/core/com.getwemap.sdk.core/-core-constants/-u-s-e-r_-l-o-c-a-t-i-o-n_-p-r-o-j-e-c-t-i-o-n_-o-n_-g-r-a-p-h_-e-n-a-b-l-e-d
+[3]: https://developers.getwemap.com/android-native-sdk/positioning/wemap-vps-arcore/com.getwemap.sdk.positioning.wemapvpsarcore/-wemap-v-p-s-a-r-core-location-source/check-v-p-s-availability
+[4]: https://developers.getwemap.com/android-native-sdk/positioning/wemap-vps-arcore/com.getwemap.sdk.positioning.wemapvpsarcore/-wemap-v-p-s-a-r-core-location-source/is-v-p-s-available-at

@@ -10,7 +10,12 @@
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="USER_LOCATION_PROJECTION_ON_ITINERARY_ENABLED"
-            app:title="@string/user_location_projection_title" />
+            app:title="@string/user_location_projection_on_itinerary_title" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="USER_LOCATION_PROJECTION_ON_GRAPH_ENABLED"
+            app:title="@string/user_location_projection_on_graph_title" />
 
         <SwitchPreferenceCompat
             app:defaultValue="true"

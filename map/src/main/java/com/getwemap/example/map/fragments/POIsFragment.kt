@@ -5,8 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
+import com.getwemap.example.common.map.GlobalOptions
 import com.getwemap.example.common.multiline
-import com.getwemap.example.map.Config
 import com.getwemap.example.map.databinding.FragmentPOIsBinding
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
@@ -75,8 +75,10 @@ class POIsFragment : MapFragment() {
             ))
 
             map.addOnMapClickListener {
-                if (selectedPOI != null)
-                    pointOfInterestManager.unselectPOI(selectedPOI!!)
+                if (pointOfInterestManager.selectionMode.isSingle)
+                    pointOfInterestManager.unselectPOI()
+                else
+                    pointOfInterestManager.unselectAllPOIs()
                 true
             }
 
@@ -212,8 +214,8 @@ class POIsFragment : MapFragment() {
         navigationManager
             .startNavigation(
                 origin, destination,
-                options = Config.globalNavigationOptions(requireContext()),
-                itineraryOptions = Config.globalItineraryOptions
+                options = GlobalOptions.navigationOptions(requireContext()),
+                itineraryOptions = GlobalOptions.itineraryOptions
             )
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary

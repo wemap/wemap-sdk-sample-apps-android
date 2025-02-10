@@ -13,7 +13,6 @@ import com.getwemap.example.common.multiline
 import com.getwemap.example.map.Config
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentInitialBinding
-import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.map.WemapMapSDK
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
@@ -21,7 +20,6 @@ import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class InitialFragment : Fragment() {

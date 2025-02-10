@@ -14,7 +14,6 @@ import com.getwemap.example.map.databinding.FragmentItemBinding
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.MapData
-import com.getwemap.sdk.core.model.services.responses.ItineraryInfo
 import com.getwemap.sdk.core.poi.PointOfInterestWithInfo
 import com.getwemap.sdk.map.poi.IMapPointOfInterestManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment

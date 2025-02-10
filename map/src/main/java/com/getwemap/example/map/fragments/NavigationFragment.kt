@@ -4,14 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.getwemap.example.common.map.GlobalOptions
 import com.getwemap.example.common.multiline
 import com.getwemap.example.common.onDismissed
-import com.getwemap.example.map.Config
 import com.getwemap.example.map.databinding.FragmentNavigationBinding
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
-import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
 import org.maplibre.android.MapLibre
@@ -52,13 +51,6 @@ class NavigationFragment : MapFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         mapView.getMapViewAsync { mapView, map, style, _ ->
-            pointOfInterestManager.addListener(PointOfInterestManagerListener(
-                onSelected = {
-                    showSnackbar(it.id) {
-                        pointOfInterestManager.unselectPOI(it.id)
-                    }
-                }
-            ))
 
             circleManager = CircleManager(mapView, map, style)
             setupNavigationManagerListener()
@@ -168,14 +160,14 @@ class NavigationFragment : MapFragment() {
     private fun startNavigation(origin: Coordinate?, destination: Coordinate) {
         disableStartButtons()
 
-        val navOptions = Config.globalNavigationOptions(requireContext())
+        val navOptions = GlobalOptions.navigationOptions(requireContext())
 
         navigationManager
             .startNavigation(
                 origin, destination,
                 options = navOptions,
 //                ItinerarySearchOptions(avoidStairs = true),
-                itineraryOptions = Config.globalItineraryOptions
+                itineraryOptions = GlobalOptions.itineraryOptions
             )
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
