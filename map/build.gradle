@@ -17,5 +17,5 @@ dependencies {
     implementation 'org.maplibre.gl:android-plugin-annotation-v9:3.0.2'
 
     implementation 'androidx.preference:preference-ktx:1.2.1'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.8.5'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.8.6'
 }

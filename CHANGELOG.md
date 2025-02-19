@@ -2,6 +2,23 @@
 
 ---
 
+## [0.20.1]
+
+### Fixed
+
+* CoreSDK: arrived callback is triggered even if user is on another level
+
+### Deprecated
+
+* CoreSDK
+  * `WemapCoreSDK.setEnvironment(environment: IEnvironment): Boolean` will be changed to `WemapCoreSDK.setEnvironment(environment: IEnvironment)`
+  * `WemapCoreSDK.setItinerariesEnvironment(environment: IEnvironment): Boolean` will be changed to `WemapCoreSDK.setItinerariesEnvironment(environment: IEnvironment)`
+
+### Dependencies
+
+* Map
+  * MapLibre 11.8.0 -> 11.8.1
+
 ## [0.20.0]
 
 ### Added
