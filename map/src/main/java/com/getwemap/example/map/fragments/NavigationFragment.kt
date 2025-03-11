@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import com.getwemap.example.common.map.GlobalOptions
 import com.getwemap.example.common.multiline
-import com.getwemap.example.common.onDismissed
 import com.getwemap.example.map.databinding.FragmentNavigationBinding
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
@@ -234,13 +233,6 @@ class NavigationFragment : MapFragment() {
         circleManager.delete(userCreatedAnnotations)
         userCreatedAnnotations.clear()
         updateUI()
-    }
-
-    private fun showSnackbar(id: Int, onDismissed: () -> Unit) {
-        Snackbar
-            .make(mapView, "POI clicked with id $id", Snackbar.LENGTH_LONG)
-            .onDismissed(onDismissed)
-            .show()
     }
 
     private fun getLevelFromAnnotation(annotation: Circle): List<Float> {

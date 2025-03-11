@@ -4,11 +4,13 @@ import android.Manifest.permission
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import com.getwemap.example.common.Constants
 import com.getwemap.example.map.positioning.databinding.FragmentMapVpsBinding
@@ -84,7 +86,7 @@ class MapVPSFragment : BaseFragment() {
 
         binding.rescanButton.setOnClickListener {
             rescanRequested = true
-            hideMapShowCamera()
+            makeCameraVisible(true)
         }
 
         buttonStartNavigation.setOnClickListener { startNavigation() }
@@ -98,7 +100,7 @@ class MapVPSFragment : BaseFragment() {
             removeUserCreatedAnnotations()
         }
 
-        hideMapShowCamera()
+        makeCameraVisible(true)
     }
 
     private fun createCircleManager(mapView: WemapMapView, map: MapLibreMap, style: Style) {
@@ -202,7 +204,8 @@ class MapVPSFragment : BaseFragment() {
     }
 
     override fun checkPermissionsAndSetupLocationSource() {
-        val permissionsAccepted = checkGPSPermission() && checkCameraPermission() && checkActivityPermission()
+        val permissionsAccepted = checkGPSPermission() && checkCameraPermission()
+                && if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) checkActivityPermission() else true
         if (!permissionsAccepted) return
         setupLocationSource()
     }
@@ -213,20 +216,19 @@ class MapVPSFragment : BaseFragment() {
                 permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             activityResultLauncher.launch(permission.CAMERA)
             false
-        } else {
+        } else
             true
-        }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun checkActivityPermission(): Boolean {
         return if (ContextCompat.checkSelfPermission(
                 requireContext(),
                 permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
             activityResultLauncher.launch(permission.ACTIVITY_RECOGNITION)
             false
-        } else {
+        } else
             true
-        }
     }
 
     @SuppressLint("MissingPermission")
@@ -244,11 +246,29 @@ class MapVPSFragment : BaseFragment() {
         }
     }
 
-    private fun hideMapShowCamera() {
-        binding.apply {
-            mapLayout.visibility = View.INVISIBLE
-            cameraLayout.visibility = View.VISIBLE
-            scanButtons.isEnabled = true
+    private fun makeCameraVisible(cameraVisible: Boolean) {
+        if (cameraVisible) {
+            binding.apply {
+                mapLayout.visibility = View.INVISIBLE
+                // to avoid map view overlapping by surface view. required for old devices like Android 9
+                surfaceView.translationX = 0f
+                surfaceView.translationY = 0f
+                cameraLayout.visibility = View.VISIBLE
+                scanButtons.isEnabled = true
+            }
+        } else {
+            binding.apply {
+                mapLayout.visibility = View.VISIBLE
+                cameraLayout.visibility = View.INVISIBLE
+                // to avoid map view overlapping by surface view. required for old devices like Android 9
+                surfaceView.translationX = 5000f
+                surfaceView.translationY = 5000f
+                scanButtons.isEnabled = true
+            }
+            mapView.locationManager.apply {
+                cameraMode = CameraMode.TRACKING_COMPASS
+                renderMode = RenderMode.COMPASS
+            }
         }
     }
 
@@ -275,19 +295,6 @@ class MapVPSFragment : BaseFragment() {
         }
     }
 
-    private fun showMapHideCamera() {
-        binding.apply {
-            mapLayout.visibility = View.VISIBLE
-            cameraLayout.visibility = View.INVISIBLE
-            scanButtons.isEnabled = true
-        }
-
-        mapView.locationManager.apply {
-            cameraMode = CameraMode.TRACKING_COMPASS
-            renderMode = RenderMode.COMPASS
-        }
-    }
-
     private val vpsListener by lazy {
         object : WemapVPSARCoreLocationSourceListener {
 
@@ -295,7 +302,7 @@ class MapVPSFragment : BaseFragment() {
                 binding.debugTextTitle.text = "Scan status - $status"
                 updateScanButtonsState(status)
                 if (status == ScanStatus.STOPPED && vpsLocationSource.state == State.ACCURATE_POSITIONING) {
-                    showMapHideCamera()
+                    makeCameraVisible(false)
                 }
             }
 
@@ -304,11 +311,11 @@ class MapVPSFragment : BaseFragment() {
                 when(state) {
                     State.ACCURATE_POSITIONING, State.DEGRADED_POSITIONING -> {
                         if (rescanRequested) return
-                        showMapHideCamera()
+                        makeCameraVisible(false)
                     }
                     State.NOT_POSITIONING -> {
                         rescanRequested = false
-                        hideMapShowCamera()
+                        makeCameraVisible(true)
                     }
                 }
             }

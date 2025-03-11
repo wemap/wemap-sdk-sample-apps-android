@@ -79,8 +79,9 @@ abstract class MapFragment : Fragment() {
 
     private fun checkPermissionsAndSetupLocationSource() {
         val permissionsAccepted = when (locationSourceId) {
+            0 -> true
             1, 3 -> checkGPSPermission() && checkBluetoothPermission()
-            0, 2, 4, 5 -> checkGPSPermission()
+            2, 4, 5 -> checkGPSPermission()
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         if (!permissionsAccepted) return

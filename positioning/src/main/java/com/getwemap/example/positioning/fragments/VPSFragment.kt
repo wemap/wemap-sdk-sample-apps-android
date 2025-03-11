@@ -2,11 +2,13 @@ package com.getwemap.example.positioning.fragments
 
 import android.Manifest.permission
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.getwemap.example.common.Constants
@@ -234,7 +236,7 @@ class VPSFragment : Fragment() {
     }
 
     private val permissionsAccepted: Boolean get() {
-        return checkCameraPermission() && checkActivityPermission()
+        return checkCameraPermission() && if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) checkActivityPermission() else true
     }
 
     private fun checkCameraPermission(): Boolean {
@@ -248,6 +250,7 @@ class VPSFragment : Fragment() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun checkActivityPermission(): Boolean {
         return if (ContextCompat.checkSelfPermission(
                 requireContext(),

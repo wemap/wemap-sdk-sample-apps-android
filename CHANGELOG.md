@@ -2,6 +2,29 @@
 
 ---
 
+## [0.20.2]
+
+### Changed
+
+* PosSDK(VPS): send images in color by default for VPS
+
+### Fixed
+
+* MapSDK: sometimes level switches too early
+* MapSDK: crash on destroy mapView before loading is finished
+* Examples(VPS): map view overlapped by surface view even if visibility == INVISIBLE on some devices
+* Examples(VPS): ARCore related crash on Samsung S8
+* MapSDK: crash on attempt to add the same itinerary twice (as navigation and as itinerary)
+
+### Dependencies
+
+* Plugins
+  * Gradle 8.8.0 -> 8.9.0
+* Map
+  * MapLibre 11.8.1 -> 11.8.2
+* VPS
+  * ARCore 1.47.0 -> 1.48.0
+
 ## [0.20.1]
 
 ### Fixed

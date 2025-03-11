@@ -10,15 +10,20 @@ object Config {
     fun applyGlobalOptions(context: Context) {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         with(CoreConstants) {
-            USER_LOCATION_PROJECTION_ON_ITINERARY_ENABLED = prefs
-                .getBoolean(PreferenceKey.USER_LOCATION_PROJECTION_ON_ITINERARY_ENABLED.name, true)
-            USER_LOCATION_PROJECTION_ON_GRAPH_ENABLED = prefs
-                .getBoolean(PreferenceKey.USER_LOCATION_PROJECTION_ON_GRAPH_ENABLED.name, true)
+            USER_LOCATION_PROJECTION_ON_ITINERARY_ENABLED = prefs.getBoolean(
+                PreferenceKey.USER_LOCATION_PROJECTION_ON_ITINERARY_ENABLED.name,
+                USER_LOCATION_PROJECTION_ON_ITINERARY_ENABLED
+            )
+            USER_LOCATION_PROJECTION_ON_GRAPH_ENABLED = prefs.getBoolean(
+                PreferenceKey.USER_LOCATION_PROJECTION_ON_GRAPH_ENABLED.name, USER_LOCATION_PROJECTION_ON_GRAPH_ENABLED)
             ITINERARY_RECALCULATION_ENABLED = prefs
-                .getBoolean(PreferenceKey.ITINERARY_RECALCULATION_ENABLED.name, true)
+                .getBoolean(PreferenceKey.ITINERARY_RECALCULATION_ENABLED.name, ITINERARY_RECALCULATION_ENABLED)
         }
         with(MapConstants) {
-            SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS = prefs.getBoolean(PreferenceKey.SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS.name, true)
+            SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS = prefs.getBoolean(
+                PreferenceKey.SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS.name,
+                SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS
+            )
         }
     }
 }
