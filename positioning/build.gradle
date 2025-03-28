@@ -7,4 +7,6 @@ apply from: '../base.gradle'
 
 dependencies {
     implementation "com.getwemap.sdk.positioning:wemap-vps-arcore:$version_name"
+
+    implementation 'androidx.preference:preference-ktx:1.2.1'
 }

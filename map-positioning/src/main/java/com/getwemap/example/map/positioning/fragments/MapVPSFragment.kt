@@ -6,22 +6,19 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import com.getwemap.example.common.Constants
 import com.getwemap.example.map.positioning.databinding.FragmentMapVpsBinding
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.WemapMapView
+import com.getwemap.sdk.map.location.UserLocationManagerListener
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.ScanStatus
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.State
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceError
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceObserver
 import com.google.android.material.snackbar.Snackbar
@@ -71,10 +68,8 @@ class MapVPSFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val mapDataString = requireArguments().getString("mapData")!!
-        val mapData: MapData = Json.decodeFromString(mapDataString)
-        vpsLocationSource = WemapVPSARCoreLocationSource(
-            requireContext(), mapData.extras?.vpsEndpoint ?: Constants.vpsEndpoint
-        )
+        mapData = Json.decodeFromString(mapDataString)
+        vpsLocationSource = WemapVPSARCoreLocationSource(requireContext(), mapData)
         vpsLocationSource.bind(requireContext(), surfaceView)
 
         mapView.getMapViewAsync { mapView, map, style, _ ->
@@ -237,7 +232,7 @@ class MapVPSFragment : BaseFragment() {
             vpsListeners.add(vpsListener)
             observers.add(vpsObserver)
         }
-
+        mapView.locationManager.addListener(locationManagerListener)
         mapView.locationManager.apply {
             locationSource = vpsLocationSource
             isEnabled = true
@@ -278,6 +273,7 @@ class MapVPSFragment : BaseFragment() {
     }
 
     override fun onDestroyView() {
+        mapView.locationManager.removeListener(locationManagerListener)
         super.onDestroyView()
         vpsLocationSource.apply {
             vpsListeners.remove(vpsListener)
@@ -307,7 +303,7 @@ class MapVPSFragment : BaseFragment() {
             }
 
             override fun onStateChanged(state: State) {
-                Log.d(TAG, "state -> $state")
+                println("state -> $state")
                 when(state) {
                     State.ACCURATE_POSITIONING, State.DEGRADED_POSITIONING -> {
                         if (rescanRequested) return
@@ -327,10 +323,6 @@ class MapVPSFragment : BaseFragment() {
             override fun onTrackingFailureReasonChanged(reason: TrackingFailureReason) {
                 binding.debugTextMessage.text = "Tracking failure reason - $reason"
             }
-
-            override fun onError(error: WemapVPSARCoreLocationSourceError) {
-                binding.debugTextMessage.text = "Error occurred - $error"
-            }
         }
     }
 
@@ -341,16 +333,20 @@ class MapVPSFragment : BaseFragment() {
             }
 
             override fun onMovementStateChanged(state: String) {
-                binding.debugTextTitle.text = "-> Movement state changed: $state"
+                binding.debugTextTitle.text = "Movement state changed: $state"
             }
 
             override fun onConveyingStateChanged(state: String) {
-                binding.debugTextMessage2.text = "-> Conveying state changed: $state"
+                binding.debugTextMessage2.text = "Conveying state changed: $state"
             }
         }
     }
 
-    companion object {
-        private val TAG = this::class.java.simpleName
+    private val locationManagerListener by lazy {
+        object : UserLocationManagerListener {
+            override fun onError(error: Throwable) {
+                binding.debugTextMessage2.text = "Error: ${error.message}"
+            }
+        }
     }
 }

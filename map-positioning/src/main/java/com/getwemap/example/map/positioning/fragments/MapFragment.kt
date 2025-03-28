@@ -67,9 +67,9 @@ class MapFragment : BaseFragment() {
     @SuppressLint("MissingPermission")
     override fun setupLocationSource() {
         val locationSource: LocationSource = when (locationSourceId) {
-            0 -> GmsFusedLocationSource(requireContext())
-            1 -> PolestarLocationSource(requireContext(), "emulator")
-            2 -> PolestarLocationSource(requireContext(), Constants.polestarApiKey)
+            0 -> GmsFusedLocationSource(requireContext(), mapData)
+            1 -> PolestarLocationSource(requireContext(), mapData, "emulator")
+            2 -> PolestarLocationSource(requireContext(), mapData, Constants.polestarApiKey)
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         mapView.locationManager.apply {

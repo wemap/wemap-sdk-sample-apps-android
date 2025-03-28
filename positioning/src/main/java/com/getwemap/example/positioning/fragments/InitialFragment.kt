@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.Constants
 import com.getwemap.example.common.multiline
+import com.getwemap.example.positioning.Config
 import com.getwemap.example.positioning.R
 import com.getwemap.example.positioning.databinding.FragmentInitialBinding
 import com.getwemap.sdk.core.model.ServiceFactory
@@ -111,6 +112,7 @@ class InitialFragment : Fragment() {
                 val bundle = Bundle()
                 bundle.putString("mapData", Json.encodeToString(it))
 
+                Config.applyGlobalOptions(requireContext())
                 findNavController().navigate(R.id.action_InitialFragment_to_VPSFragment, bundle)
             }, {
                 val str = "Failed to receive map data with error - ${it.message}"

@@ -14,6 +14,7 @@ import com.getwemap.example.common.Constants
 import com.getwemap.example.common.map.MapLevelsSwitcher
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.GareDeLyonSimulatorsLocationSource
+import com.getwemap.sdk.core.internal.extensions.runOnMainThread
 import com.getwemap.sdk.core.location.LocationSource
 import com.getwemap.sdk.core.location.simulation.SimulationOptions
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
@@ -32,10 +33,14 @@ abstract class MapFragment : Fragment() {
     protected abstract val mapView: WemapMapView
     protected abstract val levelsSwitcher: MapLevelsSwitcher
 
+    protected lateinit var mapData: MapData
+
     protected val disposeBag = CompositeDisposable()
 
     // also you can use simulator to generate locations along the itinerary
-    protected val simulator by lazy { SimulatorLocationSource(SimulationOptions(deviationRange = -20.0..20.0)) }
+    protected val simulator by lazy {
+        SimulatorLocationSource(mapData, SimulationOptions(deviationRange = -20.0..20.0))
+    }
 
     protected var locationSourceId: Int = -1
 
@@ -64,7 +69,7 @@ abstract class MapFragment : Fragment() {
         locationSourceId = args.getInt("locationSourceId")
 
         val mapDataString = args.getString("mapData")!!
-        val mapData: MapData = Json.decodeFromString(mapDataString)
+        mapData = Json.decodeFromString(mapDataString)
 
         mapView.mapData = mapData
         // camera bounds can be specified even if they don't exist in MapData
@@ -113,11 +118,11 @@ abstract class MapFragment : Fragment() {
     private fun setupLocationSource() {
         val locationSource: LocationSource? = when (locationSourceId) {
             0 -> simulator
-            1 -> PolestarLocationSource(requireContext(), Constants.polestarApiKey)
+            1 -> PolestarLocationSource(requireContext(), mapData, Constants.polestarApiKey)
             2 -> null
-            3 -> PolestarLocationSource(requireContext(), "emulator")
-            4 -> GmsFusedLocationSource(requireContext())
-            5 -> GareDeLyonSimulatorsLocationSource.FromIndoorToOutdoor
+            3 -> PolestarLocationSource(requireContext(), mapData, "emulator")
+            4 -> GmsFusedLocationSource(requireContext(), mapData)
+            5 -> GareDeLyonSimulatorsLocationSource.fromIndoorToOutdoor(mapData)
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         mapView.locationManager.apply {

@@ -1,11 +1,12 @@
 package com.getwemap.example.map
 
-import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
+import com.getwemap.sdk.core.model.entities.Coordinate
+import com.getwemap.sdk.core.model.entities.MapData
 
 object GareDeLyonSimulatorsLocationSource {
 
-    val DefaultPath = SimulatorLocationSource().apply {
+    fun defaultPath(mapData: MapData) = SimulatorLocationSource(mapData).apply {
         setCoordinates(
             listOf(
                 Coordinate(48.84487592, 2.37362684, -1f),
@@ -37,7 +38,7 @@ object GareDeLyonSimulatorsLocationSource {
     // Should use itinerary
     //  from: Coordinate(48.84458308799957, 2.3731548097070134, 0f)
     //  to: Coordinate(48.84511200990592, 2.3738383127780676, 0f)
-    val LessThan3Meters = SimulatorLocationSource().apply {
+    fun lessThan3Meters(mapData: MapData) = SimulatorLocationSource(mapData).apply {
         setCoordinates(
             listOf(
                 Coordinate(48.84458308799957, 2.373154809707013, 0f),
@@ -54,7 +55,7 @@ object GareDeLyonSimulatorsLocationSource {
     // Should use itinerary
     //  from: Coordinate(48.84458308799957, 2.3731548097070134, 0f)
     //  to: Coordinate(48.84511200990592, 2.3738383127780676, 0f)
-    val LessThan3MetersAndRouteRecalculation = SimulatorLocationSource().apply {
+    fun lessThan3MetersAndRouteRecalculation(mapData: MapData) = SimulatorLocationSource(mapData).apply {
         setCoordinates(
             listOf(
                 Coordinate(48.84455641179023, 2.373191151383594, 0f),
@@ -78,7 +79,7 @@ object GareDeLyonSimulatorsLocationSource {
     // Should use itinerary
     //  from: Coordinate(48.84445563, 2.37319782, -1f)
     //  to: Coordinate(48.84502948, 2.37451864, 0f)
-    val FromLevelMinus1To0AndRouteRecalculation = SimulatorLocationSource().apply {
+    fun fromLevelMinus1To0AndRouteRecalculation(mapData: MapData) = SimulatorLocationSource(mapData).apply {
         setCoordinates(
             listOf(
                 Coordinate(48.84448534647855, 2.373249728368882, -1f),
@@ -113,7 +114,7 @@ object GareDeLyonSimulatorsLocationSource {
     // Should use itinerary
     //  from: Coordinate(48.84445563, 2.37319782, -1f)
     //  to: Coordinate(48.84502213, 2.37393831, -1f)
-    val FullPathLevelMinus1AndUserGoesLevel0 = SimulatorLocationSource().apply {
+    fun fullPathLevelMinus1AndUserGoesLevel0(mapData: MapData) = SimulatorLocationSource(mapData).apply {
         setCoordinates(
             listOf(
                 Coordinate(48.84448534647855, 2.373249728368882, -1f),
@@ -143,11 +144,10 @@ object GareDeLyonSimulatorsLocationSource {
         )
     }
 
-
     // Should use itinerary
     //  from: Coordinate(48.84482873, 2.37378956, 0f)
     //  to: Coordinate(48.8455159, 2.37305333)
-    val FromIndoorToOutdoor = SimulatorLocationSource().apply {
+    fun fromIndoorToOutdoor(mapData: MapData) = SimulatorLocationSource(mapData).apply {
         setCoordinates(
             listOf(
                 Coordinate(48.84482873000000, 2.373789560000000, 0f),

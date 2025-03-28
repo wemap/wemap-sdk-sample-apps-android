@@ -2,6 +2,39 @@
 
 ---
 
+## [0.21.0]
+
+### Added
+
+* SDKs: any LocationSource can project user coordinate on the graph or itinerary
+* PosSDK(VPS): Add ability to set itinerary from outside of SDK to VPSLocationSource
+* MapSDK: accept already drawn itinerary as a new navigation
+
+### Fixed
+
+* PosSDK(VPS): level is changed few times in a row when scanned image from another level
+* PosSDK(VPS): stability improvements
+
+### Deprecated
+
+* CoreSDK
+  * `SimulatorLocationSource.constructor(options: SimulationOptions)` is replaced by `SimulatorLocationSource.constructor(mapData: MapData, options: SimulationOptions)`. If you continue to use deprecated method, user location projection on the graph will not work.
+  * `LocationSourceListener.onError(error: Error)` is replaced by `LocationSourceListener.onError(error: Throwable)`.
+* PosSDK(VPS)
+  * `WemapVPSARCoreLocationSource.constructor(context: Context, serviceUrl: String)` is replaced by `VPSARKitLocationSource.constructor(context: Context, mapData: MapData)`. If you continue to use deprecated method, user location projection on the graph will not work.
+  * `WemapVPSARCoreLocationSourceListener.onError(error: WemapVPSARCoreLocationSourceError)` will be removed. VPS Location Source errors are now forwarded to `LocationSourceListener.onError(error: Throwable)` if VPS is used on its own, or to `UserLocationManagerListener.onError(error: Throwable)` when used with the `MapSDK`.
+* PosSDK(Polestar)
+  * `PolestarLocationSource.constructor(context: Context, polestarApiKey: String)` is replaced by `PolestarLocationSource.constructor(context: Context, mapData: MapData, polestarApiKey: String)`. If you continue to use deprecated method, user location projection on the graph will not work.
+* PosSDK(Fused-GMS)
+  * `GmsFusedLocationSource.constructor(context: Context)` is replaced by `GmsFusedLocationSource.constructor(context: Context, mapData: MapData)`. If you continue to use deprecated method, user location projection on the graph will not work.
+
+### Dependencies
+
+* Plugins
+  * Gradle 8.9.0 -> 8.9.1
+* Map
+  * MapLibre 11.8.2 -> 11.8.4
+
 ## [0.20.2]
 
 ### Changed

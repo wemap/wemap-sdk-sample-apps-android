@@ -20,6 +20,8 @@ abstract class BaseFragment : Fragment() {
     protected abstract val mapView: WemapMapView
     protected abstract val levelsSwitcher: MapLevelsSwitcher
 
+    protected lateinit var mapData: MapData
+
     protected val focusedBuilding get() = buildingManager.focusedBuilding
 
     private val buildingManager get() = mapView.buildingManager
@@ -39,7 +41,7 @@ abstract class BaseFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val mapDataString = requireArguments().getString("mapData")!!
-        val mapData: MapData = Json.decodeFromString(mapDataString)
+        mapData = Json.decodeFromString(mapDataString)
         mapView.mapData = mapData
 
         mapView.onCreate(savedInstanceState)
