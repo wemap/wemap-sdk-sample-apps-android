@@ -2,6 +2,12 @@
 
 ---
 
+## [0.20.3]
+
+### Added
+
+* MapSDK: write to logs and throw exception if map property accessed when map is destroyed or not yet loaded
+
 ## [0.20.2]
 
 ### Changed
