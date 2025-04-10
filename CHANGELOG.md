@@ -2,6 +2,18 @@
 
 ---
 
+## [0.22.0]
+
+### Added
+
+* CoreSDK: Enhance offline graph calculation with more considerations
+  * Added new option [`ItinerarySearchOption.isWheelchair`][5]
+
+### Dependencies
+
+* Map
+  * MapLibre 11.8.4 -> 11.8.6
+
 ## [0.21.0]
 
 ### Added
@@ -768,3 +780,4 @@ mapView.locationManager.apply {
 [2]: https://developers.getwemap.com/android-native-sdk/core/com.getwemap.sdk.core/-core-constants/-u-s-e-r_-l-o-c-a-t-i-o-n_-p-r-o-j-e-c-t-i-o-n_-o-n_-g-r-a-p-h_-e-n-a-b-l-e-d
 [3]: https://developers.getwemap.com/android-native-sdk/positioning/wemap-vps-arcore/com.getwemap.sdk.positioning.wemapvpsarcore/-wemap-v-p-s-a-r-core-location-source/check-v-p-s-availability
 [4]: https://developers.getwemap.com/android-native-sdk/positioning/wemap-vps-arcore/com.getwemap.sdk.positioning.wemapvpsarcore/-wemap-v-p-s-a-r-core-location-source/is-v-p-s-available-at
+[5]: https://developers.getwemap.com/android-native-sdk/core/com.getwemap.sdk.core.model.services.parameters/-itinerary-search-options/is-wheelchair
