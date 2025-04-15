@@ -38,7 +38,8 @@ class NavigationFragment : MapFragment() {
     private var _binding: FragmentNavigationBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var circleManager: CircleManager
+    private var _circleManager: CircleManager? = null
+    private val circleManager get() = _circleManager!!
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
@@ -51,7 +52,7 @@ class NavigationFragment : MapFragment() {
 
         mapView.getMapViewAsync { mapView, map, style, _ ->
 
-            circleManager = CircleManager(mapView, map, style)
+            _circleManager = CircleManager(mapView, map, style)
             setupNavigationManagerListener()
 
             map.addOnMapLongClickListener {
@@ -253,6 +254,7 @@ class NavigationFragment : MapFragment() {
     }
 
     override fun onDestroyView() {
+        _circleManager?.onDestroy()
         super.onDestroyView()
         _binding = null
     }

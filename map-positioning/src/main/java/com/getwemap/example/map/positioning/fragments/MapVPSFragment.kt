@@ -55,7 +55,9 @@ class MapVPSFragment : BaseFragment() {
     private var _binding: FragmentMapVpsBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var circleManager: CircleManager
+    private var _circleManager: CircleManager? = null
+    private val circleManager get() = _circleManager!!
+
     private lateinit var vpsLocationSource: WemapVPSARCoreLocationSource
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -99,9 +101,9 @@ class MapVPSFragment : BaseFragment() {
     }
 
     private fun createCircleManager(mapView: WemapMapView, map: MapLibreMap, style: Style) {
-        circleManager = CircleManager(mapView, map, style)
+        _circleManager = CircleManager(mapView, map, style)
 
-        map.addOnMapLongClickListener {
+        map.addOnMapLongClickListener { position ->
             if (userCreatedAnnotations.size >= 2) {
                 Snackbar.make(mapView,
                     "You already created 2 annotations. Remove old ones to be able to add new",
@@ -110,11 +112,11 @@ class MapVPSFragment : BaseFragment() {
             }
 
             val array = JsonArray()
-            if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(it))
+            if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(position))
                 array.add(focusedBuilding!!.activeLevel.id)
 
             val options = CircleOptions()
-                .withLatLng(it)
+                .withLatLng(position)
                 .withData(array)
 
             val point = circleManager.create(options)
@@ -273,6 +275,7 @@ class MapVPSFragment : BaseFragment() {
     }
 
     override fun onDestroyView() {
+        _circleManager?.onDestroy()
         mapView.locationManager.removeListener(locationManagerListener)
         super.onDestroyView()
         vpsLocationSource.apply {

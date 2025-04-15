@@ -286,8 +286,8 @@ class POIsFragment : MapFragment() {
     }
 
     override fun onDestroyView() {
+        _circleManager?.onDestroy()
         super.onDestroyView()
         _binding = null
-        _circleManager = null
     }
 }

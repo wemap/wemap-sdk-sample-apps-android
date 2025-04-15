@@ -2,6 +2,23 @@
 
 ---
 
+## [0.22.1]
+
+### Added
+
+* MapSDK: write to logs and throw exception if map property accessed when map is destroyed or not yet loaded
+
+### Fixed
+
+* SDKs: Kotlin incompatibility with versions 1.9.x
+
+### Dependencies
+
+* All
+  * Core-ktx 1.15.0 -> 1.16.0
+* Core
+  * Serialization 1.8.0 -> 1.6.3 (to be backward compatible with Kotlin 1.9.23)
+
 ## [0.22.0]
 
 ### Added
