@@ -20,7 +20,12 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 
+enum class SortingType {
+    DISTANCE, TIME
+}
+
 class PoisViewModel: ViewModel() {
+    lateinit var sortingType: SortingType
     lateinit var poiManager: IMapPointOfInterestManager
     lateinit var userCoordinate: Coordinate
     lateinit var mapData: MapData
@@ -33,6 +38,7 @@ class PoisListFragment : BottomSheetDialogFragment() {
 
     private var _poisAdapter: PoisRecyclerViewAdapter? = null
     private val poisAdapter get() = _poisAdapter!!
+    private val poiManager get() = viewModel.poiManager
 
     private val listener by lazy {
         object : OnRecyclerViewClickListener {
@@ -58,9 +64,13 @@ class PoisListFragment : BottomSheetDialogFragment() {
     @SuppressLint("NotifyDataSetChanged")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.poiManager
-            .sortPOIsByGraphDistance(viewModel.userCoordinate)
-            .observeOn(AndroidSchedulers.mainThread())
+
+        val sort = when (viewModel.sortingType) {
+            SortingType.DISTANCE -> poiManager.sortPOIsByGraphDistance(viewModel.userCoordinate)
+            SortingType.TIME -> poiManager.sortPOIsByDuration(viewModel.userCoordinate)
+        }
+
+        sort.observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 poisAdapter.pois = it
                 poisAdapter.notifyDataSetChanged()

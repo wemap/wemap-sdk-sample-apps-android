@@ -5,19 +5,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
-import com.getwemap.example.common.map.GlobalOptions
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.databinding.FragmentPOIsBinding
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.PointOfInterest
-import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
 import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
 import org.maplibre.android.MapLibre
-import org.maplibre.android.location.modes.CameraMode
-import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.plugins.annotation.Circle
 import org.maplibre.android.plugins.annotation.CircleManager
 import org.maplibre.android.plugins.annotation.CircleOptions
@@ -26,17 +22,17 @@ class POIsFragment : MapFragment() {
 
     override val mapView get() = binding.mapView
     override val levelsSwitcher get() = binding.levelsSwitcher
-    private val textView get() = binding.textView
 
     private val buttonApplyFilter get() = binding.applyFilter
     private val buttonRemoveFilters get() = binding.removeFilters
-    private val buttonStartNavigation get() = binding.startNavigation
-    private val buttonStopNavigation get() = binding.stopNavigation
-    private val buttonStartNavigationFromSimulatedUserPosition get() = binding.startNavigationFromSimulatedUserPosition
-    private val buttonRemoveSimulatedUserPosition get() = binding.removeSimulatedUserPosition
+    private val buttonShowHiddenPOI get() = binding.showHiddenPOI
+    private val buttonHideRandomPOI get() = binding.hideRandomPOI
+    private val buttonShowAllPOIs get() = binding.showAllPOIs
+    private val buttonHideAllPOIs get() = binding.hideAllPOIs
     private val userLocationTextView get() = binding.userLocationTextView
-
-    private val navigationManager get() = mapView.navigationManager
+    private val poisSortedByDistance get() = binding.poisSortedByDistance
+    private val poisSortedByTime get() = binding.poisSortedByTime
+    private val toggleSelectionModeButton get() = binding.toggleSelectionModeButton
 
     private var _binding: FragmentPOIsBinding? = null
     private val binding get() = _binding!!
@@ -44,12 +40,10 @@ class POIsFragment : MapFragment() {
     private var _circleManager: CircleManager? = null
     private val circleManager get() = _circleManager!!
 
-    private val selectedPOI: PointOfInterest?
-        get() = pointOfInterestManager.getSelectedPOI()
-
-    private var simulatedUserPosition: Circle? = null
-
     private val viewModel: PoisViewModel by activityViewModels()
+
+    private var hiddenPOI: PointOfInterest? = null
+    private var simulatedUserPosition: Circle? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
@@ -62,12 +56,6 @@ class POIsFragment : MapFragment() {
 
         mapView.getMapViewAsync { mapView, map, style, mapData ->
             pointOfInterestManager.addListener(PointOfInterestManagerListener(
-                onSelected = {
-                    updateUI()
-                },
-                onUnselected = {
-                    updateUI()
-                },
                 onClicked = {
                     Snackbar.make(mapView, "onPointOfInterestClick - $it", Snackbar.LENGTH_LONG)
                         .multiline().show()
@@ -83,7 +71,6 @@ class POIsFragment : MapFragment() {
             }
 
             _circleManager = CircleManager(mapView, map, style)
-            setupNavigationManagerListener()
 
             map.addOnMapLongClickListener {
                 if (simulatedUserPosition != null)
@@ -98,7 +85,7 @@ class POIsFragment : MapFragment() {
                     .withData(array)
 
                 simulatedUserPosition = circleManager.create(options)
-                updateUI()
+                enableSortButtons()
 
                 return@addOnMapLongClickListener true
             }
@@ -120,48 +107,31 @@ class POIsFragment : MapFragment() {
             buttonRemoveFilters.isEnabled = false
         }
 
-        buttonStartNavigation.setOnClickListener {
-            startNavigation()
-        }
+        buttonShowHiddenPOI.setOnClickListener { showHiddenPOI() }
+        buttonHideRandomPOI.setOnClickListener { hideRandomPOI() }
 
-        buttonStopNavigation.setOnClickListener {
-            stopNavigation()
-        }
+        buttonShowAllPOIs.setOnClickListener { showAllPOIs() }
+        buttonHideAllPOIs.setOnClickListener { hideAllPOIs() }
 
-        buttonStartNavigationFromSimulatedUserPosition.setOnClickListener {
-            startNavigationFromSimulatedUserPosition()
-        }
-
-        buttonRemoveSimulatedUserPosition.setOnClickListener {
-            removeSimulatedUserPosition()
-        }
-
-        binding.poisButton.setOnClickListener {
-            viewModel.userCoordinate = getLastCoordinate()
-            val overlay = PoisListFragment()
-
-            overlay.show(parentFragmentManager, null)
-        }
+        poisSortedByDistance.setOnClickListener { showSortedPOIsFragment(SortingType.DISTANCE) }
+        poisSortedByTime.setOnClickListener { showSortedPOIsFragment(SortingType.TIME) }
 
         binding.userSelectionSwitch.setOnClickListener {
             pointOfInterestManager.isUserSelectionEnabled = !pointOfInterestManager.isUserSelectionEnabled
         }
 
-        binding.toggleSelectionModeButton.setOnClickListener {
+        toggleSelectionModeButton.setOnClickListener {
             val nextMode = pointOfInterestManager.selectionMode.next()
             pointOfInterestManager.selectionMode = nextMode
-            binding.toggleSelectionModeButton.text = "Selection: $nextMode"
+            toggleSelectionModeButton.text = "Selection: $nextMode"
         }
     }
 
     override fun onStart() {
         super.onStart()
-        Snackbar.make(
-            mapView, "Select one POI on the map and after click on start navigation button. " +
-                    "If you use simulator - perform long tap at any place on the map and then select at least one POI " +
-                    "to start navigation", Snackbar.LENGTH_LONG
-        )
-            .multiline().show()
+        val text = "If you use simulator, long tap at any place on the map to simulate user location. " +
+                "After you'll be able to sort POIs by time/distance"
+        Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
     }
 
     override fun locationManagerReady() {
@@ -169,8 +139,22 @@ class POIsFragment : MapFragment() {
         mapView.locationManager
             .coordinate
             .subscribe {
-                userLocationTextView.text = "$it"
+                enableSortButtons()
+                userLocationTextView.text = it.toStringCompact()
             }.disposedBy(disposeBag)
+    }
+
+    override fun onDestroyView() {
+        _circleManager?.onDestroy()
+        super.onDestroyView()
+        _binding = null
+    }
+
+    // Private
+
+    private fun enableSortButtons() {
+        poisSortedByDistance.isEnabled = true
+        poisSortedByTime.isEnabled = true
     }
 
     private fun getLastCoordinate(): Coordinate {
@@ -183,111 +167,66 @@ class POIsFragment : MapFragment() {
         return Coordinate(latLng.latitude, latLng.longitude, getLevelFromAnnotation(simulated))
     }
 
-    private fun startNavigation() {
-        startNavigationToSelectedPOI()
+    private fun showSortedPOIsFragment(type: SortingType) {
+        viewModel.apply {
+            userCoordinate = getLastCoordinate()
+            sortingType = type
+        }
+        val overlay = PoisListFragment()
+        overlay.show(parentFragmentManager, null)
     }
 
-    private fun stopNavigation() {
-        navigationManager
-            .stopNavigation()
-            .fold(
-                {
-                    simulator.reset()
-                    buttonStopNavigation.isEnabled = false
-                    updateUI()
-                }, {
-                    Snackbar.make(mapView, "Failed to stop navigation with error - $it", Snackbar.LENGTH_LONG)
-                        .multiline().show()
-                }
-            )
+    private fun showHiddenPOI() {
+        val hiddenPOI = hiddenPOI
+            ?: throw IllegalStateException("Hidden POI is null")
+
+        Snackbar.make(mapView, "Showing POI - ${hiddenPOI.name}", Snackbar.LENGTH_LONG).multiline().show()
+        pointOfInterestManager.centerToPOI(hiddenPOI)
+        if (pointOfInterestManager.showPOI(hiddenPOI)) {
+            this.hiddenPOI = null
+            updateShowHidePOIButtons()
+        } else {
+            Snackbar.make(mapView, "Failed to show POI - ${hiddenPOI!!.name}", Snackbar.LENGTH_LONG)
+                .multiline().show()
+        }
     }
 
-    private fun startNavigationFromSimulatedUserPosition() {
-        startNavigationToSelectedPOI(getSimulatedCoordinate())
+    private fun hideRandomPOI() {
+        val randomPOI = pointOfInterestManager.getPOIs().random()
+        Snackbar.make(mapView, "Hiding POI - ${randomPOI.name}", Snackbar.LENGTH_LONG).multiline().show()
+        pointOfInterestManager.centerToPOI(randomPOI)
+        if (pointOfInterestManager.hidePOI(randomPOI)) {
+            hiddenPOI = randomPOI
+            updateShowHidePOIButtons()
+        } else {
+            Snackbar.make(mapView, "Failed to hide POI - ${randomPOI.name}", Snackbar.LENGTH_LONG)
+                .multiline().show()
+        }
     }
 
-    private fun startNavigationToSelectedPOI(origin: Coordinate? = null) {
-        disableStartButtons()
-
-        val destination = selectedPOI!!.coordinate
-
-        navigationManager
-            .startNavigation(
-                origin, destination,
-                options = GlobalOptions.navigationOptions(requireContext()),
-                itineraryOptions = GlobalOptions.itineraryOptions
-            )
-            .subscribe({
-                // also you can use simulator to generate locations along the itinerary
-                simulator.setItinerary(it.itinerary)
-                buttonStopNavigation.isEnabled = true
-                mapView.locationManager.apply {
-                    cameraMode = CameraMode.TRACKING_COMPASS
-                    renderMode = RenderMode.COMPASS
-                }
-            }, {
-                Snackbar.make(mapView, "Failed to start navigation with error - $it", Snackbar.LENGTH_LONG)
-                    .multiline().show()
-                updateUI()
-            })
-            .disposedBy(disposeBag)
+    private fun showAllPOIs() {
+        val shown = pointOfInterestManager.showAllPOIs()
+        buttonHideAllPOIs.isEnabled = shown
+        buttonShowAllPOIs.isEnabled = !shown
     }
 
-    private fun setupNavigationManagerListener() {
-        navigationManager.addListener(NavigationManagerListener(
-            onInfoChanged = { info ->
-                textView.text = info.shortDescription
-                textView.visibility = View.VISIBLE
-            },
-            onStarted = {
-                textView.visibility = View.VISIBLE
-                Snackbar.make(mapView, "Navigation started", Snackbar.LENGTH_LONG).multiline().show()
-                buttonStopNavigation.isEnabled = true
-            },
-            onStopped = {
-                textView.visibility = View.GONE
-                Snackbar.make(mapView, "Navigation stopped", Snackbar.LENGTH_LONG).multiline().show()
-                buttonStopNavigation.isEnabled = false
-            },
-            onArrived = {
-                Snackbar.make(mapView, "Navigation arrived at destination", Snackbar.LENGTH_LONG).multiline().show()
-            },
-            onFailed = { error ->
-                textView.visibility = View.GONE
-                Snackbar.make(mapView, "Navigation failed with error - $error", Snackbar.LENGTH_LONG).multiline().show()
-            },
-            onRecalculated = {
-                Snackbar.make(mapView, "Navigation recalculated", Snackbar.LENGTH_LONG).multiline().show()
-            }
-        ))
+    private fun hideAllPOIs() {
+        val hidden = pointOfInterestManager.hideAllPOIs()
+        buttonHideAllPOIs.isEnabled = !hidden
+        buttonShowAllPOIs.isEnabled = hidden
+        if (hidden) {
+            hiddenPOI = null
+            updateShowHidePOIButtons()
+        }
     }
 
-    private fun updateUI() {
-        buttonStartNavigation.isEnabled = selectedPOI != null && !buttonStopNavigation.isEnabled
-        buttonStartNavigationFromSimulatedUserPosition.isEnabled =
-            selectedPOI != null && simulatedUserPosition != null && !buttonStopNavigation.isEnabled
-        buttonRemoveSimulatedUserPosition.isEnabled = simulatedUserPosition != null
-        binding.poisButton.isEnabled = (mapView.locationManager.lastCoordinate ?: simulatedUserPosition) != null
-    }
-
-    private fun disableStartButtons() {
-        buttonStartNavigation.isEnabled = false
-        buttonStartNavigationFromSimulatedUserPosition.isEnabled = false
-    }
-
-    private fun removeSimulatedUserPosition() {
-        circleManager.delete(simulatedUserPosition!!)
-        simulatedUserPosition = null
-        updateUI()
+    private fun updateShowHidePOIButtons() {
+        val hiddenPOIExists = hiddenPOI != null
+        buttonShowHiddenPOI.isEnabled = hiddenPOIExists
+        buttonHideRandomPOI.isEnabled = !hiddenPOIExists
     }
 
     private fun getLevelFromAnnotation(annotation: Circle): List<Float> {
         return annotation.data!!.asJsonArray.map { it.asFloat }
-    }
-
-    override fun onDestroyView() {
-        _circleManager?.onDestroy()
-        super.onDestroyView()
-        _binding = null
     }
 }

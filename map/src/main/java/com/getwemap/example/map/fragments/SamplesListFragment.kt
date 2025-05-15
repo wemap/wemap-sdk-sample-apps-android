@@ -49,8 +49,8 @@ class SamplesRecyclerViewAdapter(
                 "Shows how to switch between levels and perform POI selection on different levels"
             ),
             Pair(
-                "Points of interests",
-                "Shows how to perform selection of POIs on the map and create navigation to POIs"
+                "Points of interest",
+                "Shows how to hide/show and select/unselect POIs"
             ),
             Pair(
                 "Navigation",

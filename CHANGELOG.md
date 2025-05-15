@@ -2,6 +2,19 @@
 
 ---
 
+## [0.22.2]
+
+### Changed
+
+* MapExample: rework Points of Interest sample
+
+### Fixed
+
+* MapSDK: filtered or hidden POIs are still clickable
+* MapSDK: showAllPOIs method is not working as expected
+* MapSDK: crash on unselect many POIs at the same time
+* Samples: fix UI overlapping on Pixel 8 and devices with similar config
+
 ## [0.22.1]
 
 ### Added
