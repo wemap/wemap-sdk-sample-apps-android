@@ -2,6 +2,12 @@
 
 ---
 
+## [0.22.3]
+
+### Fixed
+
+* PosSDK(VPS): fix unnecessary request for rescan on exit from conveyor
+
 ## [0.22.2]
 
 ### Changed
