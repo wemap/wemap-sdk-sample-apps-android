@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="location_sources">
-        <item>Fused</item>
-        <item>Polestar Emulator</item>
-        <item>Polestar</item>
         <item>VPS</item>
+        <item>Fused</item>
+        <item>Polestar</item>
+        <item>Polestar Emulator</item>
     </string-array>
 </resources>

@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/gray"
     tools:context="fragments.MapVPSFragment">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <FrameLayout
         android:id="@+id/mapLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="invisible"
-        tools:visibility="visible">
+        android:layout_height="match_parent">
 
         <com.getwemap.sdk.map.WemapMapView
             android:id="@+id/mapView"
@@ -23,90 +21,165 @@
             android:id="@+id/levelsSwitcher"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
             android:layout_margin="16dp"
             android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             app:selectionRequired="true"
             app:singleSelection="true"
             tools:visibility="visible" />
 
-        <Button
-            android:id="@+id/rescanButton"
-            android:layout_width="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Rescan"
-            android:visibility="visible"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:visibility="visible" />
+            android:layout_gravity="bottom"
+            android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/buttons"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="48dp"
-            android:gravity="center_vertical"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <LinearLayout
+            <FrameLayout
+                android:id="@+id/containers"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent">
 
-                <Button
-                    android:id="@+id/startNavigationFromUserCreatedAnnotations"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/poi_container"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
-                    android:enabled="false"
-                    android:text="@string/start_navigation_user_created_annotations" />
+                    android:background="#DDDDDDDD"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone">
 
-                <Button
-                    android:id="@+id/removeUserCreatedAnnotations"
-                    android:layout_width="wrap_content"
+                    <TextView
+                        android:id="@+id/poi_info"
+                        style="@style/TextAppearance.AppCompat.Title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="16dp" />
+
+                    <Button
+                        android:id="@+id/itinerary_calculate_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="Calculate Itinerary to PoI" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/itinerary_container"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
-                    android:enabled="false"
-                    android:text="@string/remove_user_created_annotations" />
-            </LinearLayout>
+                    android:background="#DDDDDDDD"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone">
 
-            <LinearLayout
+                    <TextView
+                        android:id="@+id/itinerary_info"
+                        style="@style/TextAppearance.AppCompat.Title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal" />
+
+                    <LinearLayout
+                        style="?android:attr/buttonBarStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/navigation_start_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Start Navigation" />
+
+                        <View
+                            android:layout_width="16dp"
+                            android:layout_height="match_parent" />
+
+                        <Button
+                            android:id="@+id/itinerary_close_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Close Itinerary" />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/navigation_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#DDDDDDDD"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/navigation_info"
+                        style="@style/TextAppearance.AppCompat.Title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal" />
+
+                    <Button
+                        android:id="@+id/navigation_stop_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="Stop Navigation" />
+
+                </LinearLayout>
+            </FrameLayout>
+
+            <ImageButton
+                android:id="@+id/camera"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_circle"
+                android:contentDescription="@string/camera"
+                android:scaleType="center"
+                android:src="@drawable/photo_camera_24px"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="@id/locate_me"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:tint="@color/black" />
+
+            <ImageView
+                android:id="@+id/degradedIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="horizontal">
+                android:contentDescription="Camera warning"
+                android:src="@drawable/warning_24px"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="@id/camera"
+                app:layout_constraintTop_toTopOf="@id/camera"
+                app:tint="@color/orange" />
 
-                <Button
-                    android:id="@+id/startNavigation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:enabled="false"
-                    android:gravity="center"
-                    android:text="@string/start_navigation" />
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/locate_me"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:contentDescription="@string/locate_me"
+                android:src="@drawable/location_searching_24px"
+                app:backgroundTint="@color/white"
+                app:backgroundTintMode="add"
+                app:layout_constraintBottom_toTopOf="@id/containers"
+                app:layout_constraintEnd_toEndOf="parent" />
 
-                <Button
-                    android:id="@+id/stopNavigation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:enabled="false"
-                    android:gravity="center"
-                    android:text="@string/stop_navigation" />
-            </LinearLayout>
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <FrameLayout
         android:id="@+id/cameraLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -122,96 +195,38 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/imageview"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:layout_marginTop="20dp"
-            android:scaleType="centerInside"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            style="@style/TextAppearance.AppCompat.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|top"
+            android:layout_margin="16dp"
+            android:background="#DDDDDD"
+            android:gravity="center"
+            android:padding="16dp"
+            android:text="Scan your surroundings by pointing camera to shops or signs around you." />
 
-        <LinearLayout
-            android:id="@+id/scan_buttons"
+        <Button
+            android:id="@+id/stop_scan_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="48dp"
-            android:orientation="horizontal"
-            android:visibility="visible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent">
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="20dp"
+            android:text="Cancel" />
 
-            <Button
-                android:id="@+id/start_scan_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Start Scan" />
+        <TextView
+            android:id="@+id/camera_debug_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="92dp"
+            android:background="#DDDDDDDD"
+            android:visibility="invisible">
 
-            <Space
-                android:layout_width="16dp"
-                android:layout_height="match_parent"
-                android:layout_weight="16" />
+        </TextView>
 
-            <Button
-                android:id="@+id/stop_scan_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:enabled="false"
-                android:text="Stop Scan" />
-
-        </LinearLayout>
-
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <TextView
-        android:id="@+id/debugTextTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#DDDDDDDD"
-        android:text="Info will be here"
-        app:layout_constraintBottom_toTopOf="@id/debugTextMessage"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintVertical_bias="0.5" />
-
-    <TextView
-        android:id="@+id/debugTextMessage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:background="#DDDDDDDD"
-        android:text=""
-        app:layout_constraintBottom_toTopOf="@id/debugTextMessage2"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintVertical_bias="0.5" />
-
-    <TextView
-        android:id="@+id/debugTextMessage2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:background="#DDDDDDDD"
-        android:text=""
-        app:layout_constraintBottom_toTopOf="@id/invisibleView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintVertical_bias="0.5" />
-
-    <View
-        android:id="@+id/invisibleView"
-        android:layout_width="wrap_content"
-        android:layout_height="100dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:visibility="invisible"/>
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

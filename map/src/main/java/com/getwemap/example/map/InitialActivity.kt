@@ -6,6 +6,8 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.MenuProvider
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -26,6 +28,12 @@ class InitialActivity : AppCompatActivity(), MenuProvider {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         navController = findNavController(R.id.nav_host_fragment_content_initial)
         appBarConfiguration = AppBarConfiguration(navController.graph)

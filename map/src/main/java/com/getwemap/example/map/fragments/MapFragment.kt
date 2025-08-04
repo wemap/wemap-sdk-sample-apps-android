@@ -3,18 +3,15 @@ package com.getwemap.example.map.fragments
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.BLUETOOTH_SCAN
 import android.annotation.SuppressLint
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.getwemap.example.common.Constants
+import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.map.MapLevelsSwitcher
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.GareDeLyonSimulatorsLocationSource
-import com.getwemap.sdk.core.internal.extensions.runOnMainThread
 import com.getwemap.sdk.core.location.LocationSource
 import com.getwemap.sdk.core.location.simulation.SimulationOptions
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
@@ -49,14 +46,7 @@ abstract class MapFragment : Fragment() {
 
     private val buildingManager get() = mapView.buildingManager
 
-    private val activityResultLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-        if (isGranted) {
-            checkPermissionsAndSetupLocationSource()
-        } else {
-            val text = "In order to make sample app work properly you have to accept required permission"
-            Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
-        }
-    }
+    private lateinit var permissionHelper: PermissionHelper
 
 //    private val maxBounds = LatLngBounds
 //        .from(48.84811619854466, 2.377353558713054,
@@ -68,6 +58,8 @@ abstract class MapFragment : Fragment() {
         val args = requireArguments()
         locationSourceId = args.getInt("locationSourceId")
 
+        createPermissionsHelper()
+
         val mapDataString = args.getString("mapData")!!
         mapData = Json.decodeFromString(mapDataString)
 
@@ -75,42 +67,10 @@ abstract class MapFragment : Fragment() {
         // camera bounds can be specified even if they don't exist in MapData
 //        mapView.cameraBounds = maxBounds
         mapView.onCreate(savedInstanceState)
-        levelsSwitcher.bind(mapView)
 
         mapView.getMapViewAsync { _, _, _, _ ->
             checkPermissionsAndSetupLocationSource()
-        }
-    }
-
-    private fun checkPermissionsAndSetupLocationSource() {
-        val permissionsAccepted = when (locationSourceId) {
-            0 -> true
-            1, 3 -> checkGPSPermission() && checkBluetoothPermission()
-            2, 4, 5 -> checkGPSPermission()
-            else -> throw Exception("Location source id should be passed in Bundle")
-        }
-        if (!permissionsAccepted) return
-
-        setupLocationSource()
-    }
-
-    private fun checkGPSPermission(): Boolean {
-        return if (ContextCompat.checkSelfPermission(requireContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            activityResultLauncher.launch(ACCESS_FINE_LOCATION)
-            false
-        } else {
-            true
-        }
-    }
-
-    private fun checkBluetoothPermission(): Boolean {
-        return if (
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            ContextCompat.checkSelfPermission(requireContext(), BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-            activityResultLauncher.launch(BLUETOOTH_SCAN)
-            false
-        } else {
-            true
+            levelsSwitcher.bind(buildingManager)
         }
     }
 
@@ -188,4 +148,34 @@ abstract class MapFragment : Fragment() {
         super.onDestroy()
         disposeBag.dispose()
     }
+
+    // region ------ Permissions ------
+    private fun createPermissionsHelper() {
+        val requiredPermissions = when (locationSourceId) {
+            0, 5 -> listOf() // Simulator
+            1, 3 -> { // Polestar
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                    listOf(ACCESS_FINE_LOCATION, BLUETOOTH_SCAN)
+                else
+                    listOf(ACCESS_FINE_LOCATION)
+            }
+            2, 4 -> listOf(ACCESS_FINE_LOCATION) // GMS and default
+            else -> throw Exception("Location source id should be passed in Bundle")
+        }
+
+        permissionHelper = PermissionHelper(this, requiredPermissions)
+    }
+
+    private fun checkPermissionsAndSetupLocationSource() {
+        permissionHelper
+            .request { granted, denied ->
+                if (denied.isEmpty()) {
+                    setupLocationSource()
+                } else {
+                    val text = "In order to make sample app work properly you have to accept required permission"
+                    Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
+                }
+            }
+    }
+    // endregion ------ Permissions ------
 }

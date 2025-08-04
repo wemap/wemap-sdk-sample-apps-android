@@ -43,8 +43,8 @@ class MapFragment : BaseFragment() {
 
     override fun checkPermissionsAndSetupLocationSource() {
         val permissionsAccepted = when (locationSourceId) {
-            0 -> checkGPSPermission()
-            1, 2 -> checkGPSPermission() && checkBluetoothPermission()
+            1 -> checkGPSPermission()
+            2, 3 -> checkGPSPermission() && checkBluetoothPermission()
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         if (!permissionsAccepted) return
@@ -67,9 +67,9 @@ class MapFragment : BaseFragment() {
     @SuppressLint("MissingPermission")
     override fun setupLocationSource() {
         val locationSource: LocationSource = when (locationSourceId) {
-            0 -> GmsFusedLocationSource(requireContext(), mapData)
-            1 -> PolestarLocationSource(requireContext(), mapData, "emulator")
+            1 -> GmsFusedLocationSource(requireContext(), mapData)
             2 -> PolestarLocationSource(requireContext(), mapData, Constants.polestarApiKey)
+            3 -> PolestarLocationSource(requireContext(), mapData, "emulator")
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         mapView.locationManager.apply {

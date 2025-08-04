@@ -45,9 +45,10 @@ abstract class BaseFragment : Fragment() {
         mapView.mapData = mapData
 
         mapView.onCreate(savedInstanceState)
-        levelsSwitcher.bind(mapView)
+
         mapView.getMapViewAsync { _, _, _, _ ->
             checkPermissionsAndSetupLocationSource()
+            levelsSwitcher.bind(mapView.buildingManager)
         }
     }
 

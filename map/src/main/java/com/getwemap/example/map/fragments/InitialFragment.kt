@@ -89,7 +89,6 @@ class InitialFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setMessage("Desired location source is unavailable on this device")
             .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
-            .create()
             .show()
     }
 

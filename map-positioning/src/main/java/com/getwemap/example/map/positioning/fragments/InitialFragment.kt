@@ -19,6 +19,8 @@ import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.ArCoreApk
+import com.google.ar.core.ArCoreApk.Availability.SUPPORTED_INSTALLED
+import com.google.ar.core.ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -55,7 +57,6 @@ class InitialFragment : Fragment() {
             .also { adapter ->
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 spinner.adapter = adapter
-                spinner.setSelection(3)
             }
 
         binding.buttonLoadMap.setOnClickListener {
@@ -66,21 +67,22 @@ class InitialFragment : Fragment() {
     private fun checkAvailability() {
         when (spinner.selectedItemPosition) {
             0 ->
-                if (GmsFusedLocationSource.isAvailable) loadMap() else showUnavailableAlert()
-            1, 2 ->
-                if (PolestarLocationSource.isAvailable) loadMap() else showUnavailableAlert()
-            3 ->
                 WemapVPSARCoreLocationSource.checkAvailabilityAsync(requireContext()) { availability ->
                     when (availability) {
-                        ArCoreApk.Availability.SUPPORTED_INSTALLED ->
+                        SUPPORTED_INSTALLED ->
                             loadMap()
-                        ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED ->
+                        SUPPORTED_NOT_INSTALLED ->
                             installARCore()
                         else ->
                             showUnavailableAlert()
                     }
                 }
-            else -> throw RuntimeException("Unknown Location Source")
+            1 ->
+                if (GmsFusedLocationSource.isAvailable) loadMap() else showUnavailableAlert()
+            2, 3 ->
+                if (PolestarLocationSource.isAvailable) loadMap() else showUnavailableAlert()
+            else ->
+                throw RuntimeException("Unknown Location Source")
         }
     }
 
@@ -96,9 +98,9 @@ class InitialFragment : Fragment() {
                 ArCoreApk.InstallStatus.INSTALL_REQUESTED ->
                     userRequestedInstall = false
             }
-        } catch (error: UnavailableUserDeclinedInstallationException) {
+        } catch (_: UnavailableUserDeclinedInstallationException) {
             showUnavailableAlert("Failed to install ARCore because user declined installation")
-        } catch (error: UnavailableDeviceNotCompatibleException) {
+        } catch (_: UnavailableDeviceNotCompatibleException) {
             showUnavailableAlert()
         } catch (error: Exception) {
             showUnavailableAlert("Failed to install ARCore. Unknown error - $error")
@@ -109,7 +111,6 @@ class InitialFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setMessage(message)
             .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
-            .create()
             .show()
     }
 
@@ -130,14 +131,15 @@ class InitialFragment : Fragment() {
             .subscribe({
                 println("Received map data - $it")
                 val bundle = Bundle()
-                bundle.putInt("locationSourceId", spinner.selectedItemPosition)
                 bundle.putString("mapData", Json.encodeToString(it))
 
                 Config.applyGlobalOptions(requireContext())
-                if (spinner.selectedItemPosition == 3)
+                if (spinner.selectedItemPosition == 0) {
                     findNavController().navigate(R.id.action_InitialFragment_to_MapVPSFragment, bundle)
-                else
+                } else {
+                    bundle.putInt("locationSourceId", spinner.selectedItemPosition)
                     findNavController().navigate(R.id.action_InitialFragment_to_MapFragment, bundle)
+                }
             }, {
                 val str = "Failed to receive map data with error - ${it.message}"
                 Snackbar.make(binding.root, str, Snackbar.LENGTH_LONG).multiline().show()

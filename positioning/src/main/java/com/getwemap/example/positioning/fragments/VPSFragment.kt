@@ -1,23 +1,20 @@
 package com.getwemap.example.positioning.fragments
 
 import android.Manifest.permission
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.getwemap.example.common.PermissionHelper
+import com.getwemap.example.common.multiline
 import com.getwemap.example.positioning.databinding.FragmentVpsBinding
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.location.LocationSourceListener
 import com.getwemap.sdk.core.model.ServiceFactory
 import com.getwemap.sdk.core.model.entities.Attitude
 import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.core.model.entities.GeoJsonItinerarySerializer
 import com.getwemap.sdk.core.model.entities.Incline
 import com.getwemap.sdk.core.model.entities.Itinerary
 import com.getwemap.sdk.core.model.entities.LegSegment
@@ -61,7 +58,9 @@ class VPSFragment : Fragment() {
     private var rescanRequested = false
 
     private val disposeBag = CompositeDisposable()
+
     private lateinit var mapData: MapData
+    private lateinit var permissionHelper: PermissionHelper
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentVpsBinding.inflate(inflater, container, false)
@@ -70,6 +69,8 @@ class VPSFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        createPermissionsHelper()
 
         val mapDataString = requireArguments().getString("mapData")!!
         mapData = Json.decodeFromString(mapDataString)
@@ -113,7 +114,7 @@ class VPSFragment : Fragment() {
     }
 
     private fun updateScanButtons(status: ScanStatus) {
-        val isScanning = status == ScanStatus.STARTED
+        val isScanning = status.isStarted
         startScanButton.isEnabled = !isScanning
         stopScanButton.isEnabled = isScanning
     }
@@ -134,8 +135,7 @@ class VPSFragment : Fragment() {
         mapPlaceholder.visibility = View.VISIBLE
         cameraLayout.visibility = View.INVISIBLE
         if (itinerarySourceSwitch.isChecked) {
-//            loadItineraryFromGeoJSON()
-            hardcodedItinerary()
+            vpsLocationSource.itinerary = hardcodedItinerary() // ItineraryLoader.loadFromGeoJSON(requireContext())
         } else {
             calculateItinerary()
         }
@@ -157,7 +157,7 @@ class VPSFragment : Fragment() {
             .disposedBy(disposeBag)
     }
 
-    private fun hardcodedItinerary() {
+    private fun hardcodedItinerary(): Itinerary {
         val origin = Coordinate(48.88007462, 2.35591097, 0f)
         val destination = Coordinate(48.88141308, 2.35747255, -2f)
 
@@ -221,35 +221,20 @@ class VPSFragment : Fragment() {
         val segments = legSegmentsLevel0 + legSegmentsFrom0ToMinus1 + legSegmentsLevelMinus1 +
                 legSegmentsFromMinus1ToMinus2 + legSegmentsLevelMinus2
 
-        vpsLocationSource.itinerary = Itinerary.fromSegments(origin, destination, segments)
-    }
-
-    private fun loadItineraryFromGeoJSON() {
-        try {
-            val inputStream = requireContext().assets.open("geoJsonItinerary.json")
-            val jsonString = inputStream.bufferedReader().use { it.readText() }
-
-            val jsonConverter = Json { ignoreUnknownKeys = true }
-            val geoJsonItinerary = jsonConverter.decodeFromString(GeoJsonItinerarySerializer, jsonString)
-
-            vpsLocationSource.itinerary = geoJsonItinerary
-        } catch (e: Exception) {
-            e.printStackTrace()
-            println("Failed to load geo itinerary from file with error - ${e.message}")
-        }
+        return Itinerary.fromSegments(origin, destination, segments)
     }
 
     // Lifecycle
 
     override fun onStart() {
-        if (permissionsAccepted)
+        if (permissionHelper.allGranted())
             vpsLocationSource.start()
         super.onStart()
     }
 
     override fun onStop() {
         super.onStop()
-        if (permissionsAccepted)
+        if (permissionHelper.allGranted())
             vpsLocationSource.stop()
     }
 
@@ -277,8 +262,8 @@ class VPSFragment : Fragment() {
             override fun onAttitudeChanged(attitude: Attitude) {
                 runOnMainThread {
                     val q = attitude.quaternion
-                    debugTextAttitude.text = String.format("w: %.2f, x: %.2f, y: %.2f, z: %.2f", q.w, q.x, q.y, q.z)
-                    debugTextHeading.text = String.format("%.2f", attitude.headingDegrees)
+                    debugTextAttitude.text = String.format(null, "w: %.2f, x: %.2f, y: %.2f, z: %.2f", q.w, q.x, q.y, q.z)
+                    debugTextHeading.text = String.format(null, "%.2f", attitude.headingDegrees)
                 }.disposedBy(disposeBag)
             }
 
@@ -318,7 +303,7 @@ class VPSFragment : Fragment() {
                 updateScanButtons(status)
 
                 // rescan successful, reset rescanRequested and update UI
-                if (status == ScanStatus.STOPPED && vpsLocationSource.state == State.ACCURATE_POSITIONING) {
+                if (status == ScanStatus.STOPPED && vpsLocationSource.state.isAccurate) {
                     rescanRequested = false
                     showMapPlaceholder()
                 }
@@ -334,46 +319,26 @@ class VPSFragment : Fragment() {
         }
     }
 
-    // Permissions
+    // region ------ Permissions ------
+    private fun createPermissionsHelper() {
+        val requiredPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            listOf(permission.CAMERA, permission.ACTIVITY_RECOGNITION)
+        else
+            listOf(permission.CAMERA)
 
-    private val activityResultLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        if (isGranted) {
-            checkPermissionsAndStartLocationSource()
-        } else {
-            val text = "In order to make sample app work properly you have to accept required permission"
-            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show()
-        }
+        permissionHelper = PermissionHelper(this, requiredPermissions)
     }
 
     private fun checkPermissionsAndStartLocationSource() {
-        if (!permissionsAccepted) return
-        startLocationSource()
+        permissionHelper
+            .request { granted, denied ->
+                if (denied.isEmpty()) {
+                    startLocationSource()
+                } else {
+                    val text = "In order to make sample app work properly you have to accept required permission"
+                    Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+                }
+            }
     }
-
-    private val permissionsAccepted: Boolean get() {
-        return checkCameraPermission() && if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) checkActivityPermission() else true
-    }
-
-    private fun checkCameraPermission(): Boolean {
-        return if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            activityResultLauncher.launch(permission.CAMERA)
-            false
-        } else {
-            true
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun checkActivityPermission(): Boolean {
-        return if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
-            activityResultLauncher.launch(permission.ACTIVITY_RECOGNITION)
-            false
-        } else {
-            true
-        }
-    }
+    // endregion ------ Permissions ------
 }

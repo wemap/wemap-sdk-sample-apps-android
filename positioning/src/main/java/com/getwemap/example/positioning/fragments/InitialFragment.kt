@@ -89,7 +89,6 @@ class InitialFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setMessage(message)
             .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
-            .create()
             .show()
     }
 

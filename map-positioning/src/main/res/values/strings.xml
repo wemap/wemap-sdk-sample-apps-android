@@ -6,6 +6,8 @@
     <string name="map_vps_fragment_label" translatable="false">Map VPS Fragment</string>
     <string name="settings_fragment_label" translatable="false">Settings Fragment</string>
     <string name="load_map" translatable="false">Load Map</string>
+    <string name="locate_me" translatable="false">Locate Me</string>
+    <string name="camera" translatable="false">Camera</string>
 
     <string name="start_navigation" translatable="false">Start navigation</string>
     <string name="stop_navigation" translatable="false">Stop navigation</string>

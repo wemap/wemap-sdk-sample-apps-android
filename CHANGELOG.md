@@ -2,6 +2,35 @@
 
 ---
 
+## [0.23.0]
+
+### Added
+
+* PosSDK(VPS): Position extrapolation when conveyor is detected
+* MapSDK: expose drawn itineraries of ItineraryManager
+* Samples: new full-featured Map+Pos(VPS) sample app
+* SDKs: logging the use of public API. Enabled by default. To disable `Logger.level = Log.WARNING`
+
+### Changed
+
+* MapSDK: various resource usage optimizations
+* PosSDK(VPS): improve quality of VPS recognition and resource usage
+* MapSDK: change default color of itinerary and user location (`#2F7DE1`)
+
+### Fixed
+
+* MapSDK: crash on destroy map view which is not loaded yet
+* PosSDK(VPS): immediate startScan after LS.start() doesn't work
+* MapSDK: limit infinite navigation recalculation issue
+* Samples: fix UI overlapping on some devices
+
+### Dependencies
+
+* Map
+  * MapLibre 11.8.6 -> 11.8.8
+* Polestar
+  * NAOSDK 4.11.15 -> 4.11.16
+
 ## [0.22.3]
 
 ### Fixed

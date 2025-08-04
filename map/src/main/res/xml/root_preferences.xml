@@ -27,14 +27,14 @@
     <PreferenceCategory app:title="@string/navigation_preferences">
 
         <EditTextPreference
-            app:defaultValue="5"
+            app:defaultValue="15"
             app:dialogMessage="@string/arrived_distance_threshold_summary"
             app:key="ARRIVED_DISTANCE_THRESHOLD"
             app:title="@string/arrived_distance_threshold_title"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:defaultValue="5"
+            app:defaultValue="25"
             app:dialogMessage="@string/user_position_threshold_summary"
             app:key="USER_POSITION_THRESHOLD"
             app:title="@string/user_position_threshold_title"
