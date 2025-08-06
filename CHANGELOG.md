@@ -2,6 +2,12 @@
 
 ---
 
+## [0.23.1]
+
+### Fixed
+
+* MapSDK: remaining step distance is missing in NavigationInfo
+
 ## [0.23.0]
 
 ### Added
