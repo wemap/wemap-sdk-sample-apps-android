@@ -4,11 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.getwemap.example.common.onDismissed
-import com.getwemap.example.map.ConsumerData
 import com.getwemap.example.map.databinding.FragmentLevelsBinding
-import com.getwemap.sdk.core.model.ServiceFactory
-import com.google.android.material.snackbar.Snackbar
+import com.getwemap.sdk.core.internal.geo.LevelUtils
+import com.getwemap.sdk.core.internal.helpers.Logger
+import com.getwemap.sdk.core.model.entities.PointOfInterest
 import org.maplibre.android.MapLibre
 
 class LevelsFragment : MapFragment() {
@@ -22,11 +21,8 @@ class LevelsFragment : MapFragment() {
     private var _binding: FragmentLevelsBinding? = null
     private val binding get() = _binding!!
 
-    private val consumerData by lazy {
-        val json = requireContext().assets.open("consumer_data.json").bufferedReader().use { it.readText() }
-        val consumerData: List<ConsumerData> = ServiceFactory.jsonConverter.decodeFromString(json)
-        consumerData
-    }
+    private val pois: Set<PointOfInterest> get() = pointOfInterestManager.getPOIs()
+    private var uniqueLevels: Set<Float> = emptySet()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
@@ -37,42 +33,33 @@ class LevelsFragment : MapFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        buttonFirstPOI.setOnClickListener {
-            firstPOIClicked()
-        }
+        buttonFirstPOI.setOnClickListener { firstClicked() }
+        buttonSecondPOI.setOnClickListener { secondClicked() }
 
-        buttonSecondPOI.setOnClickListener {
-            secondPOIClicked()
-        }
-    }
-
-    private fun firstPOIClicked() {
-        selectPOI(consumerData.first())
-    }
-
-    private fun secondPOIClicked() {
-        selectPOI(consumerData[1])
-    }
-
-    private fun selectPOI(consumerData: ConsumerData) {
-        val desiredPOI = pointOfInterestManager.getPOIs().firstOrNull { it.customerID == consumerData.externalID }
-        if (desiredPOI == null) {
-            println("POI with id - ${consumerData.externalID} has not been found in POIs")
-            return
-        }
-
-        pointOfInterestManager.selectPOI(desiredPOI)
-
-        showSnackbar(desiredPOI.id) {
-            pointOfInterestManager.unselectPOI(desiredPOI)
+        mapView.getMapViewAsync { mapView, map, style, data ->
+            uniqueLevels = pois.mapNotNull { it.coordinate.levels.firstOrNull() }.toSet()
         }
     }
 
-    private fun showSnackbar(id: Int, onDismissed: () -> Unit) {
-        Snackbar
-            .make(mapView, "POI selected with id $id", Snackbar.LENGTH_LONG)
-            .onDismissed(onDismissed)
-            .show()
+    private fun firstClicked() {
+        val minLevel = uniqueLevels.minOrNull()
+            ?: return Logger.e("Failed to select POI on min level because there are no levels")
+
+        selectPOI(minLevel)
+    }
+
+    private fun secondClicked() {
+        val maxLevel = uniqueLevels.maxOrNull()
+            ?: return Logger.e("Failed to select POI on max level because there are no levels")
+
+        selectPOI(maxLevel)
+    }
+
+    private fun selectPOI(level: Float) {
+        val randomPOI = pois.filter { LevelUtils.intersects(it.coordinate.levels, listOf(level)) }.randomOrNull()
+            ?: return Logger.e("Failed to get random POI at level $level")
+
+        pointOfInterestManager.selectPOI(randomPOI)
     }
 
     override fun onDestroyView() {

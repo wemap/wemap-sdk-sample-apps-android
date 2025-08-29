@@ -1,0 +1,48 @@
+[versions]
+wemap = "0.24.0"
+
+# plugins
+androidGradlePlugin = "8.12.0"
+kotlin = "2.0.20"
+
+# dependencies
+maplibreAnnotationV9 = "3.0.2"
+appcompat = "1.7.1"
+coreKtx = "1.16.0"
+fragmentKtx = "1.8.8"
+material = "1.12.0"
+navigationFragmentKtx = "2.9.3"
+preferenceKtx = "1.2.1"
+
+[libraries]
+# common
+androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
+
+# maplibre
+maplibre-annotation-v9 = { module = "org.maplibre.gl:android-plugin-annotation-v9", version.ref = "maplibreAnnotationV9" }
+
+# androidx
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
+androidx-navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigationFragmentKtx" }
+androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
+
+# wemap
+wemap-core = { group = "com.getwemap.sdk", name = "core", version.ref = "wemap" }
+wemap-map = { group = "com.getwemap.sdk", name = "map", version.ref = "wemap" }
+wemap-geoar = { group = "com.getwemap.sdk", name = "geo-ar", version.ref = "wemap" }
+
+# wemap positioning
+wemap-positioning-vps-arcore = { group = "com.getwemap.sdk.positioning", name = "wemap-vps-arcore", version.ref = "wemap" }
+wemap-positioning-android-fused-adaptive = { group = "com.getwemap.sdk.positioning", name = "android-fused-adaptive", version.ref = "wemap" }
+wemap-positioning-fused-gms = { group = "com.getwemap.sdk.positioning", name = "fused-gms", version.ref = "wemap" }
+wemap-positioning-gps = { group = "com.getwemap.sdk.positioning", name = "gps", version.ref = "wemap" }
+wemap-positioning-polestar = { group = "com.getwemap.sdk.positioning", name = "polestar", version.ref = "wemap" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+kotlin-android = { id = 'org.jetbrains.kotlin.android', version.ref = "kotlin" }
+kotlin-serialization = { id = 'org.jetbrains.kotlin.plugin.serialization', version.ref = "kotlin" }

@@ -1,0 +1,23 @@
+plugins {
+    alias libs.plugins.android.application
+    alias libs.plugins.kotlin.android
+}
+
+ext.namespace = "com.getwemap.example.positioning.ar"
+
+apply from: '../base.gradle'
+
+android {
+    defaultConfig {
+        minSdk 24
+    }
+}
+
+dependencies {
+    implementation libs.wemap.geoar
+
+    implementation libs.wemap.positioning.vps.arcore
+    implementation libs.wemap.positioning.android.fused.adaptive
+    implementation libs.wemap.positioning.gps
+    implementation libs.wemap.positioning.fused.gms
+}

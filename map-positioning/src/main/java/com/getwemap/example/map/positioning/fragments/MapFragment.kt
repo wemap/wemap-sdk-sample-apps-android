@@ -12,7 +12,10 @@ import androidx.core.content.ContextCompat
 import com.getwemap.example.common.Constants
 import com.getwemap.example.map.positioning.databinding.FragmentMapBinding
 import com.getwemap.sdk.core.location.LocationSource
+import com.getwemap.sdk.core.location.simulation.SimulationOptions
+import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
+import com.getwemap.sdk.positioning.gps.GPSLocationSource
 import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import org.maplibre.android.MapLibre
 import org.maplibre.android.location.modes.CameraMode
@@ -43,8 +46,9 @@ class MapFragment : BaseFragment() {
 
     override fun checkPermissionsAndSetupLocationSource() {
         val permissionsAccepted = when (locationSourceId) {
-            1 -> checkGPSPermission()
-            2, 3 -> checkGPSPermission() && checkBluetoothPermission()
+            1 -> true // no permissions needed for simulator
+            2, 3, 4 -> checkGPSPermission()
+            5, 6 -> checkGPSPermission() && checkBluetoothPermission()
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         if (!permissionsAccepted) return
@@ -66,10 +70,13 @@ class MapFragment : BaseFragment() {
 
     @SuppressLint("MissingPermission")
     override fun setupLocationSource() {
-        val locationSource: LocationSource = when (locationSourceId) {
-            1 -> GmsFusedLocationSource(requireContext(), mapData)
-            2 -> PolestarLocationSource(requireContext(), mapData, Constants.polestarApiKey)
-            3 -> PolestarLocationSource(requireContext(), mapData, "emulator")
+        val locationSource: LocationSource? = when (locationSourceId) {
+            1 -> SimulatorLocationSource(mapData, SimulationOptions(deviationRange = -20.0..20.0))
+            2 -> null
+            3 -> GPSLocationSource(requireContext(), mapData)
+            4 -> GmsFusedLocationSource(requireContext(), mapData)
+            5 -> PolestarLocationSource(requireContext(), mapData, Constants.polestarApiKey)
+            6 -> PolestarLocationSource(requireContext(), mapData, "emulator")
             else -> throw Exception("Location source id should be passed in Bundle")
         }
         mapView.locationManager.apply {

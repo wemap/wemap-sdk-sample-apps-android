@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/InitialFragment">
+
+    <fragment
+        android:id="@+id/InitialFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.InitialFragment"
+        android:label="@string/initial_fragment_label"
+        tools:layout="@layout/fragment_initial">
+
+        <action
+            android:id="@+id/action_InitialFragment_to_SamplesListFragment"
+            app:destination="@id/SamplesListFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/SamplesListFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.SamplesListFragment"
+        android:label="@string/samples_fragment_label"
+        tools:layout="@layout/fragment_item_list">
+
+        <action
+            android:id="@+id/action_SamplesListFragment_to_SimulatorLSFragment"
+            app:destination="@id/SimulatorLSFragment" />
+
+        <action
+            android:id="@+id/action_SamplesListFragment_to_VPSLSFragment"
+            app:destination="@id/VPSLSFragment" />
+
+        <action
+            android:id="@+id/action_SamplesListFragment_to_AndroidFusedAdaptiveLSFragment"
+            app:destination="@id/AndroidFusedAdaptiveLSFragment" />
+
+        <action
+            android:id="@+id/action_SamplesListFragment_to_FusedGMSLSFragment"
+            app:destination="@id/FusedGMSLSFragment" />
+
+        <action
+            android:id="@+id/action_SamplesListFragment_to_GPSLSFragment"
+            app:destination="@id/GPSLSFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/SimulatorLSFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.SimulatorLSFragment"
+        android:label="@string/simulator_fragment_label"
+        tools:layout="@layout/fragment_simulator_ls"/>
+
+    <fragment
+        android:id="@+id/VPSLSFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.VPSLSFragment"
+        android:label="@string/vps_fragment_label"
+        tools:layout="@layout/fragment_vps_ls"/>
+
+    <fragment
+        android:id="@+id/AndroidFusedAdaptiveLSFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.GenericLSFragment"
+        android:label="@string/android_fused_adaptive_fragment_label"
+        tools:layout="@layout/fragment_generic_ls"/>
+
+    <fragment
+        android:id="@+id/FusedGMSLSFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.GenericLSFragment"
+        android:label="@string/fused_gms_fragment_label"
+        tools:layout="@layout/fragment_generic_ls"/>
+
+    <fragment
+        android:id="@+id/GPSLSFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.GenericLSFragment"
+        android:label="@string/gps_fragment_label"
+        tools:layout="@layout/fragment_generic_ls"/>
+
+</navigation>

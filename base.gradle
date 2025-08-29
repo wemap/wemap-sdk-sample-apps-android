@@ -11,7 +11,7 @@ android {
         targetSdk 35
 
         versionCode commonVersionCode
-        versionName version_name
+        versionName version
     }
 
     compileOptions {
@@ -31,10 +31,10 @@ android {
 dependencies {
     implementation project(':common')
 
-    implementation 'androidx.core:core-ktx:1.16.0'
+    implementation libs.androidx.core.ktx
 
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.9.0'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.9.0'
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    implementation libs.androidx.navigation.fragment.ktx
+    implementation libs.androidx.navigation.ui.ktx
 }

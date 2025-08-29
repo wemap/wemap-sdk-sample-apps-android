@@ -9,6 +9,11 @@
     <string name="pois_list_fragment_label" translatable="false">Pois List Fragment</string>
     <string name="load_map" translatable="false">Load Map</string>
     <string name="navigation_placeholder" translatable="false">Navigation info will be here</string>
+    <string name="simulator_fragment_label" translatable="false">Simulator Fragment</string>
+    <string name="vps_fragment_label" translatable="false">VPS Fragment</string>
+    <string name="android_fused_adaptive_fragment_label" translatable="false">Android Fused Adaptive Fragment</string>
+    <string name="gps_fragment_label" translatable="false">GPS Fragment</string>
+    <string name="fused_gms_fragment_label" translatable="false">Fused GMS Fragment</string>
 
     <string name="apply_filter" translatable="false">Apply filter</string>
     <string name="remove_filters" translatable="false">Remove filters</string>
@@ -25,8 +30,8 @@
     <string name="start_navigation_user_created_annotations" translatable="false">Start navigation from user-created annotations</string>
     <string name="remove_user_created_annotations" translatable="false">Remove user-created annotations</string>
 
-    <string name="first_poi" translatable="false">Relay (shop)</string>
-    <string name="second_poi" translatable="false">Etam lingerie</string>
+    <string name="first_poi" translatable="false">Random POI at min level</string>
+    <string name="second_poi" translatable="false">Random POI at max level</string>
 
     <!-- VPS LS Fragment -->
     <string name="start_scanning" translatable="false">Start scanning</string>

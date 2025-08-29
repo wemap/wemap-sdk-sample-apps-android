@@ -1,6 +1,6 @@
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
+    alias libs.plugins.android.application
+    alias libs.plugins.kotlin.android
 }
 
 ext.namespace = "com.getwemap.example.map.positioning"
@@ -11,13 +11,14 @@ dependencies {
     implementation project(':common')
     implementation project(':common-map')
 
-    implementation "com.getwemap.sdk:map:$version_name"
+    implementation libs.wemap.map
 
-    implementation "com.getwemap.sdk.positioning:polestar:$version_name"
-    implementation "com.getwemap.sdk.positioning:fused-gms:$version_name"
-    implementation "com.getwemap.sdk.positioning:wemap-vps-arcore:$version_name"
+    implementation libs.wemap.positioning.vps.arcore
+    implementation libs.wemap.positioning.gps
+    implementation libs.wemap.positioning.fused.gms
+    implementation libs.wemap.positioning.polestar
 
-    implementation 'org.maplibre.gl:android-plugin-annotation-v9:3.0.2'
+    implementation libs.maplibre.annotation.v9
 
-    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation libs.androidx.preference.ktx
 }

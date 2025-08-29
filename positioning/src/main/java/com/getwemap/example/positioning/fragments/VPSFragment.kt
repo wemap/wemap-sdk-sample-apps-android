@@ -10,9 +10,9 @@ import androidx.fragment.app.Fragment
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.multiline
 import com.getwemap.example.positioning.databinding.FragmentVpsBinding
+import com.getwemap.sdk.core.internal.DependencyManager
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.location.LocationSourceListener
-import com.getwemap.sdk.core.model.ServiceFactory
 import com.getwemap.sdk.core.model.entities.Attitude
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.Incline
@@ -26,7 +26,6 @@ import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.State
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
 import com.google.android.material.snackbar.Snackbar
-import com.google.ar.core.TrackingFailureReason
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
@@ -146,7 +145,7 @@ class VPSFragment : Fragment() {
         val origin = Coordinate(48.88007462, 2.35591097, 0f)
         val destination = Coordinate(48.88141308, 2.35747255, -2f)
 
-        ServiceFactory
+        DependencyManager
             .getItineraryProvider()
             .itineraries(origin, destination, mapId = mapData.id)
             .subscribe({ itineraries ->
@@ -224,8 +223,11 @@ class VPSFragment : Fragment() {
         return Itinerary.fromSegments(origin, destination, segments)
     }
 
-    // Lifecycle
+    private fun runOnMainThread(closure: Runnable): Disposable {
+        return AndroidSchedulers.mainThread().scheduleDirect(closure)
+    }
 
+    // region ------ Lifecycle ------
     override fun onStart() {
         if (permissionHelper.allGranted())
             vpsLocationSource.start()
@@ -247,9 +249,9 @@ class VPSFragment : Fragment() {
         vpsLocationSource.unbind()
         _binding = null
     }
+    // endregion ------ Lifecycle ------
 
-    // Listeners
-
+    // region ------ Listeners ------
     private val locationListener by lazy {
         object : LocationSourceListener {
             override fun onCoordinateChanged(coordinate: Coordinate) {
@@ -275,20 +277,24 @@ class VPSFragment : Fragment() {
         }
     }
 
-    private fun runOnMainThread(closure: Runnable): Disposable {
-        return AndroidSchedulers.mainThread().scheduleDirect(closure)
-    }
-
     private val vpsListener by lazy {
+        WemapVPSARCoreLocationSourceListener(
+            onScanStatusChanged = { scanStatus ->
+                debugTextScanStatus.text = "$scanStatus"
+                updateScanButtons(scanStatus)
 
-        object : WemapVPSARCoreLocationSourceListener {
-
-            override fun onStateChanged(state: State) {
+                // rescan successful, reset rescanRequested and update UI
+                if (!scanStatus.isStarted && vpsLocationSource.state.isAccurate) {
+                    rescanRequested = false
+                    showMapPlaceholder()
+                }
+            },
+            onStateChanged = { state ->
                 debugTextState.text = "$state"
 
                 // if rescan requested - don't update UI on state changes. UI will be updated on scan status change
                 if (rescanRequested)
-                    return
+                    return@WemapVPSARCoreLocationSourceListener
 
                 when(state) {
                     State.ACCURATE_POSITIONING, State.DEGRADED_POSITIONING ->
@@ -296,28 +302,16 @@ class VPSFragment : Fragment() {
                     State.NOT_POSITIONING ->
                         showCamera()
                 }
-            }
-
-            override fun onScanStatusChanged(status: ScanStatus) {
-                debugTextScanStatus.text = "$status"
-                updateScanButtons(status)
-
-                // rescan successful, reset rescanRequested and update UI
-                if (status == ScanStatus.STOPPED && vpsLocationSource.state.isAccurate) {
-                    rescanRequested = false
-                    showMapPlaceholder()
-                }
-            }
-
-            override fun onNotPositioningReasonChanged(reason: WemapVPSARCoreLocationSource.NotPositioningReason) {
+            },
+            onNotPositioningReasonChanged = { reason ->
                 showError("Not positioning reason: $reason")
-            }
-
-            override fun onTrackingFailureReasonChanged(reason: TrackingFailureReason) {
+            },
+            onTrackingFailureReasonChanged = { reason ->
                 showError("Tracking failure reason: $reason")
             }
-        }
+        )
     }
+    // endregion ------ Listeners ------
 
     // region ------ Permissions ------
     private fun createPermissionsHelper() {

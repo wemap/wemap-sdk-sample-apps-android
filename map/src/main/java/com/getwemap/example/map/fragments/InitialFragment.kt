@@ -79,7 +79,7 @@ class InitialFragment : Fragment() {
             1, 3 ->
                 if (PolestarLocationSource.isAvailable) loadMap() else showUnavailableAlert()
             4 ->
-                if (GmsFusedLocationSource.isAvailable) loadMap() else showUnavailableAlert()
+                if (GmsFusedLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
             else ->
                 throw RuntimeException("Unknown Location Source")
         }

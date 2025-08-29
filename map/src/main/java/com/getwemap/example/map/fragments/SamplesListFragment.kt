@@ -14,16 +14,14 @@ import com.getwemap.example.map.databinding.FragmentItemBinding
 class SamplesListFragment : Fragment() {
 
     private val listener by lazy {
-        object : OnRecyclerViewClickListener {
-            override fun onClick(view: View, position: Int) {
-                val navId = when (position) {
-                    0 -> R.id.action_SamplesListFragment_to_LevelsFragment
-                    1 -> R.id.action_SamplesListFragment_to_POIsFragment
-                    2 -> R.id.action_SamplesListFragment_to_NavigationFragment
-                    else -> throw Exception("Unsupported transition")
-                }
-                findNavController().navigate(navId, requireArguments())
+        OnRecyclerViewClickListener { view, position ->
+            val navId = when (position) {
+                0 -> R.id.action_SamplesListFragment_to_LevelsFragment
+                1 -> R.id.action_SamplesListFragment_to_POIsFragment
+                2 -> R.id.action_SamplesListFragment_to_NavigationFragment
+                else -> throw Exception("Unsupported transition")
             }
+            findNavController().navigate(navId, requireArguments())
         }
     }
 
@@ -86,6 +84,6 @@ class SamplesRecyclerViewAdapter(
     data class SamplesItem(val content: String, val details: String)
 }
 
-interface OnRecyclerViewClickListener {
+fun interface OnRecyclerViewClickListener {
     fun onClick(view: View, position: Int)
 }

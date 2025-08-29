@@ -1,10 +1,10 @@
 plugins {
-    id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
+    alias libs.plugins.android.library
+    alias libs.plugins.kotlin.android
 }
 
 android {
-    namespace "com.getwemap.example.common.map"
+    namespace = "com.getwemap.example.common.map"
     compileSdk 35
 
     defaultConfig {
@@ -12,7 +12,7 @@ android {
         targetSdk 35
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        resValue "string", "version_name", "${version_name}"
+        resValue "string", "version_name", "$version"
     }
 
     buildTypes {
@@ -30,9 +30,10 @@ android {
 }
 
 dependencies {
-    implementation "com.getwemap.sdk:map:$version_name"
+    implementation libs.wemap.map
 
-    implementation 'androidx.core:core-ktx:1.16.0'
-    implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.preference.ktx
+
+    implementation libs.material
 }

@@ -12,6 +12,7 @@ import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import org.maplibre.android.MapLibre
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
@@ -23,6 +24,7 @@ class NavigationFragment : MapFragment() {
 
     override val mapView get() = binding.mapView
     override val levelsSwitcher get() = binding.levelsSwitcher
+
     private val textView get() = binding.textView
 
     private val buttonStartNavigation get() = binding.startNavigation
@@ -79,27 +81,17 @@ class NavigationFragment : MapFragment() {
             }
         }
 
-        buttonStartNavigation.setOnClickListener {
-            startNavigation()
-        }
-
-        buttonStopNavigation.setOnClickListener {
-            stopNavigation()
-        }
-
-        buttonStartNavigationFromUserCreatedAnnotations.setOnClickListener {
-            startNavigationFromUserCreatedAnnotations()
-        }
-
-        buttonRemoveUserCreatedAnnotations.setOnClickListener {
-            removeUserCreatedAnnotations()
-        }
+        buttonStartNavigation.setOnClickListener { startNavigation() }
+        buttonStopNavigation.setOnClickListener { stopNavigation() }
+        buttonStartNavigationFromUserCreatedAnnotations.setOnClickListener { startNavigationFromUserCreatedAnnotations() }
+        buttonRemoveUserCreatedAnnotations.setOnClickListener { removeUserCreatedAnnotations() }
     }
 
     override fun locationManagerReady() {
         super.locationManagerReady()
         mapView.locationManager
             .coordinate
+            .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
                 userLocationTextView.text = "$it"
             }.disposedBy(disposeBag)
@@ -114,7 +106,7 @@ class NavigationFragment : MapFragment() {
             .stopNavigation()
             .fold(
                 {
-                    simulator.reset()
+                    simulator?.reset()
                     buttonStopNavigation.isEnabled = false
                     updateUI()
                 }, {
@@ -171,7 +163,7 @@ class NavigationFragment : MapFragment() {
             )
             .subscribe({
                 // also you can use simulator to generate locations along the itinerary
-                simulator.setItinerary(it.itinerary)
+                simulator?.setItinerary(it.itinerary)
                 buttonStopNavigation.isEnabled = true
                 mapView.locationManager.apply {
                     cameraMode = CameraMode.TRACKING_COMPASS

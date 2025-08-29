@@ -41,12 +41,10 @@ class PoisListFragment : BottomSheetDialogFragment() {
     private val poiManager get() = viewModel.poiManager
 
     private val listener by lazy {
-        object : OnRecyclerViewClickListener {
-            override fun onClick(view: View, position: Int) {
-                val item = poisAdapter.pois[position]
-                viewModel.poiManager.selectPOI(item.first)
-                dismiss()
-            }
+        OnRecyclerViewClickListener { view, position ->
+            val item = poisAdapter.pois[position]
+            viewModel.poiManager.selectPOI(item.first)
+            dismiss()
         }
     }
 

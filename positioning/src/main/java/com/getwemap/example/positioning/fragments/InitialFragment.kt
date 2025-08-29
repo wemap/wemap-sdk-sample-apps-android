@@ -16,6 +16,10 @@ import com.getwemap.sdk.core.model.ServiceFactory
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.ArCoreApk
+import com.google.ar.core.ArCoreApk.Availability.SUPPORTED_INSTALLED
+import com.google.ar.core.ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED
+import com.google.ar.core.ArCoreApk.InstallStatus.INSTALLED
+import com.google.ar.core.ArCoreApk.InstallStatus.INSTALL_REQUESTED
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -54,12 +58,9 @@ class InitialFragment : Fragment() {
     private fun checkAvailability() {
         WemapVPSARCoreLocationSource.checkAvailabilityAsync(requireContext()) { availability ->
             when (availability) {
-                ArCoreApk.Availability.SUPPORTED_INSTALLED ->
-                    loadMap()
-                ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED ->
-                    installARCore()
-                else ->
-                    showUnavailableAlert()
+                SUPPORTED_INSTALLED -> loadMap()
+                SUPPORTED_NOT_INSTALLED ->  installARCore()
+                else -> showUnavailableAlert()
             }
         }
     }
@@ -71,14 +72,12 @@ class InitialFragment : Fragment() {
     private fun installARCore() {
         try {
             when (ArCoreApk.getInstance().requestInstall(activity, userRequestedInstall)) {
-                ArCoreApk.InstallStatus.INSTALLED ->
-                    loadMap()
-                ArCoreApk.InstallStatus.INSTALL_REQUESTED ->
-                    userRequestedInstall = false
+                INSTALLED -> loadMap()
+                INSTALL_REQUESTED -> userRequestedInstall = false
             }
-        } catch (error: UnavailableUserDeclinedInstallationException) {
+        } catch (_: UnavailableUserDeclinedInstallationException) {
             showUnavailableAlert("Failed to install ARCore because user declined installation")
-        } catch (error: UnavailableDeviceNotCompatibleException) {
+        } catch (_: UnavailableDeviceNotCompatibleException) {
             showUnavailableAlert()
         } catch (error: Exception) {
             showUnavailableAlert("Failed to install ARCore. Unknown error - $error")
@@ -95,10 +94,7 @@ class InitialFragment : Fragment() {
     private fun loadMap() {
         val text = mapIdTextView.text.toString()
         val id = text.toIntOrNull()
-        if (id == null) {
-            println("Failed to get int ID from - '$text'")
-            return
-        }
+            ?: return println("Failed to get int ID from - '$text'")
 
         if (request?.isDisposed == false)
             return

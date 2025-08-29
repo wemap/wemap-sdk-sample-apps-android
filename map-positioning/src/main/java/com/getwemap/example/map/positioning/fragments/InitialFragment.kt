@@ -15,12 +15,15 @@ import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.databinding.FragmentInitialBinding
 import com.getwemap.sdk.map.WemapMapSDK
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
+import com.getwemap.sdk.positioning.gps.GPSLocationSource
 import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.ArCoreApk.Availability.SUPPORTED_INSTALLED
 import com.google.ar.core.ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED
+import com.google.ar.core.ArCoreApk.InstallStatus.INSTALLED
+import com.google.ar.core.ArCoreApk.InstallStatus.INSTALL_REQUESTED
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -66,23 +69,19 @@ class InitialFragment : Fragment() {
 
     private fun checkAvailability() {
         when (spinner.selectedItemPosition) {
-            0 ->
+            0 -> // VPS
                 WemapVPSARCoreLocationSource.checkAvailabilityAsync(requireContext()) { availability ->
                     when (availability) {
-                        SUPPORTED_INSTALLED ->
-                            loadMap()
-                        SUPPORTED_NOT_INSTALLED ->
-                            installARCore()
-                        else ->
-                            showUnavailableAlert()
+                        SUPPORTED_INSTALLED -> loadMap()
+                        SUPPORTED_NOT_INSTALLED -> installARCore()
+                        else -> showUnavailableAlert()
                     }
                 }
-            1 ->
-                if (GmsFusedLocationSource.isAvailable) loadMap() else showUnavailableAlert()
-            2, 3 ->
-                if (PolestarLocationSource.isAvailable) loadMap() else showUnavailableAlert()
-            else ->
-                throw RuntimeException("Unknown Location Source")
+            1, 2 -> loadMap() // Simulator, System Default
+            3 -> if (GPSLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
+            4 -> if (GmsFusedLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
+            5, 6 -> if (PolestarLocationSource.isAvailable) loadMap() else showUnavailableAlert()
+            else ->  throw RuntimeException("Unknown Location Source")
         }
     }
 
@@ -93,10 +92,8 @@ class InitialFragment : Fragment() {
     private fun installARCore() {
         try {
             when (ArCoreApk.getInstance().requestInstall(activity, userRequestedInstall)) {
-                ArCoreApk.InstallStatus.INSTALLED ->
-                    loadMap()
-                ArCoreApk.InstallStatus.INSTALL_REQUESTED ->
-                    userRequestedInstall = false
+                INSTALLED -> loadMap()
+                INSTALL_REQUESTED -> userRequestedInstall = false
             }
         } catch (_: UnavailableUserDeclinedInstallationException) {
             showUnavailableAlert("Failed to install ARCore because user declined installation")
@@ -117,10 +114,7 @@ class InitialFragment : Fragment() {
     private fun loadMap() {
         val text = mapIdTextView.text.toString()
         val id = text.toIntOrNull()
-        if (id == null) {
-            println("Failed to get int ID from - '$text'")
-            return
-        }
+            ?: return println("Failed to get int ID from - '$text'")
 
         if (request?.isDisposed == false)
             return

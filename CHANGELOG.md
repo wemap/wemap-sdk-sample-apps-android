@@ -2,6 +2,34 @@
 
 ---
 
+## [0.24.0]
+
+### Added
+
+* Samples(Pos+AR): add sample application to demo PosSDK + GeoAR
+* Pos(Android-Fused-Adaptive): add Android-Fused-Adaptive GMS+GPS library
+* GeoAR: add GeoAR library
+
+### Changed
+
+* SDKs: migrate to common dependency file
+
+### Fixed
+
+* Pos(Fused-GMS): fused-gms not stopping
+
+### Dependencies
+
+* Plugins
+  * Gradle 8.9.1 -> 8.12.0
+* Core
+  * Retrofit 2.11.0 -> 3.0.0
+  * Adapter RxJava 2.11.0 -> 3.0.0
+* Map
+  * MapLibre 11.8.8 -> 11.13.0
+* VPS
+  * ARCore 1.48.0 -> 1.50.0
+
 ## [0.23.1]
 
 ### Fixed

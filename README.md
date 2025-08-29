@@ -30,12 +30,14 @@
 
 ## Examples
 
-* MapExample
+* Map
 
   * Levels - shows how to set custom indoor location provider and switch between levels
   * Points of interests - shows how to perform selection of POIs on the map
   * Navigation - shows how to start navigation to some user-created annotation
 
-* Map+PositioningExample. Shows how to connect different Location Sources to `WemapMapSDK`.
+* Map+Positioning. Shows how to connect different Location Sources to `WemapMapSDK`.
 
-* PosExample. Shows how to work VPS Location source without `WemapMapSDK`. For example if you want to connect `WemapPositioningSDK/VPSARCore` to your own map.
+* Positioning. Shows how to work VPS Location source without `WemapMapSDK`. For example if you want to connect `WemapPositioningSDK/VPSARCore` to your own map.
+
+* Positioning+AR. Shows how to connect different Location Sources to `WemapGeoARSDK`.

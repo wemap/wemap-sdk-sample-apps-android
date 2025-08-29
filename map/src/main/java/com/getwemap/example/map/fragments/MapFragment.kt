@@ -22,8 +22,6 @@ import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.serialization.json.Json
-import org.maplibre.android.location.modes.CameraMode
-import org.maplibre.android.location.modes.RenderMode
 
 abstract class MapFragment : Fragment() {
 
@@ -35,9 +33,8 @@ abstract class MapFragment : Fragment() {
     protected val disposeBag = CompositeDisposable()
 
     // also you can use simulator to generate locations along the itinerary
-    protected val simulator by lazy {
-        SimulatorLocationSource(mapData, SimulationOptions(deviationRange = -20.0..20.0))
-    }
+    protected val simulator: SimulatorLocationSource?
+        get() = mapView.locationManager.locationSource as? SimulatorLocationSource
 
     protected var locationSourceId: Int = -1
 
@@ -77,7 +74,7 @@ abstract class MapFragment : Fragment() {
     @SuppressLint("MissingPermission")
     private fun setupLocationSource() {
         val locationSource: LocationSource? = when (locationSourceId) {
-            0 -> simulator
+            0 -> SimulatorLocationSource(mapData, SimulationOptions(deviationRange = -20.0..20.0))
             1 -> PolestarLocationSource(requireContext(), mapData, Constants.polestarApiKey)
             2 -> null
             3 -> PolestarLocationSource(requireContext(), mapData, "emulator")
@@ -88,8 +85,6 @@ abstract class MapFragment : Fragment() {
         mapView.locationManager.apply {
             this.locationSource = locationSource
             isEnabled = true
-            cameraMode = CameraMode.TRACKING_COMPASS
-            renderMode = RenderMode.COMPASS
         }
 
         locationManagerReady()
