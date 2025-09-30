@@ -2,6 +2,32 @@
 
 ---
 
+## [0.24.2]
+
+### Behavioral changes
+
+* Pos(VPS): all `LocationSourceListener` methods as well as `WemapVPSARCoreLocationSourceListener` are now executed on a dedicated executor. On main executor if `listenerExecutor` is not specified.
+
+### Added
+
+* Pos(VPS): add ability to specify executor for location source listener updates and vps listener updates
+
+### Changed
+
+* Pos(VPS): rework VPS system threading
+  * this limits random divergencies and drift of VPS relative positioning
+
+### Dependencies
+
+* Plugins
+  * Gradle 8.12.0 -> 8.13.0
+* Map
+  * MapLibre 11.13.0 -> 11.13.1
+* AR
+  * Camera2 1.4.2 -> 1.5.0
+* Pos(Adaptive)
+  * PlayServices Base 18.7.2 -> 18.8.0
+
 ## [0.24.0]
 
 ### Added

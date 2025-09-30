@@ -26,9 +26,7 @@ import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.State
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
 import com.google.android.material.snackbar.Snackbar
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.serialization.json.Json
 
 class VPSFragment : Fragment() {
@@ -223,10 +221,6 @@ class VPSFragment : Fragment() {
         return Itinerary.fromSegments(origin, destination, segments)
     }
 
-    private fun runOnMainThread(closure: Runnable): Disposable {
-        return AndroidSchedulers.mainThread().scheduleDirect(closure)
-    }
-
     // region ------ Lifecycle ------
     override fun onStart() {
         if (permissionHelper.allGranted())
@@ -255,24 +249,18 @@ class VPSFragment : Fragment() {
     private val locationListener by lazy {
         object : LocationSourceListener {
             override fun onCoordinateChanged(coordinate: Coordinate) {
-                runOnMainThread {
-                    debugTextCoordinate.text = String
+                debugTextCoordinate.text = String
                         .format("lat: %.6f, lng: %.6f, lvl: ${coordinate.levels}", coordinate.latitude, coordinate.longitude)
-                }.disposedBy(disposeBag)
             }
 
             override fun onAttitudeChanged(attitude: Attitude) {
-                runOnMainThread {
-                    val q = attitude.quaternion
-                    debugTextAttitude.text = String.format(null, "w: %.2f, x: %.2f, y: %.2f, z: %.2f", q.w, q.x, q.y, q.z)
-                    debugTextHeading.text = String.format(null, "%.2f", attitude.headingDegrees)
-                }.disposedBy(disposeBag)
+                val q = attitude.quaternion
+                debugTextAttitude.text = String.format(null, "w: %.2f, x: %.2f, y: %.2f, z: %.2f", q.w, q.x, q.y, q.z)
+                debugTextHeading.text = String.format(null, "%.2f", attitude.headingDegrees)
             }
 
             override fun onError(error: Throwable) {
-                runOnMainThread {
-                    showError("LS: $error")
-                }.disposedBy(disposeBag)
+                showError("LS: $error")
             }
         }
     }

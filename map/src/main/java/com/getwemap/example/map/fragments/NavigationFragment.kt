@@ -12,7 +12,6 @@ import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import org.maplibre.android.MapLibre
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
@@ -91,7 +90,6 @@ class NavigationFragment : MapFragment() {
         super.locationManagerReady()
         mapView.locationManager
             .coordinate
-            .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
                 userLocationTextView.text = "$it"
             }.disposedBy(disposeBag)

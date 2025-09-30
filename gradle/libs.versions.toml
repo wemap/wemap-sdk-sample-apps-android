@@ -1,8 +1,8 @@
 [versions]
-wemap = "0.24.0"
+wemap = "0.24.2"
 
 # plugins
-androidGradlePlugin = "8.12.0"
+androidGradlePlugin = "8.13.0"
 kotlin = "2.0.20"
 
 # dependencies
