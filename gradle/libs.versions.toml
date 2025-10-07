@@ -1,5 +1,5 @@
 [versions]
-wemap = "0.24.2"
+wemap = "0.25.0"
 
 # plugins
 androidGradlePlugin = "8.13.0"
@@ -9,9 +9,9 @@ kotlin = "2.0.20"
 maplibreAnnotationV9 = "3.0.2"
 appcompat = "1.7.1"
 coreKtx = "1.16.0"
-fragmentKtx = "1.8.8"
-material = "1.12.0"
-navigationFragmentKtx = "2.9.3"
+fragmentKtx = "1.8.9"
+material = "1.13.0"
+navigationFragmentKtx = "2.9.5"
 preferenceKtx = "1.2.1"
 
 [libraries]

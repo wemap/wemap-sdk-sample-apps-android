@@ -8,8 +8,14 @@ import android.view.ViewGroup
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.multiline
 import com.getwemap.example.positioning.ar.databinding.FragmentGenericLsBinding
+import com.getwemap.sdk.core.extensions.toLocation
 import com.getwemap.sdk.core.internal.extensions.disposedBy
+import com.getwemap.sdk.core.location.simulation.SimulationOptions
+import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
+import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.MapData
+import com.getwemap.sdk.core.model.entities.PointOfInterest
+import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
 import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
 import com.getwemap.sdk.geoar.GeoARView
 import com.getwemap.sdk.geoar.managers.IARPointOfInterestManager
@@ -28,13 +34,17 @@ class GenericLSFragment: ARFragment() {
     private val startNavigationButton get() = binding.startNavigation
     private val stopNavigationButton get() = binding.stopNavigation
 
+    private val pointOfInterestManager: IARPointOfInterestManager get() = geoARView.pointOfInterestManager
+
+    private val simulator: SimulatorLocationSource?
+        get() = locationManager.locationSource as? SimulatorLocationSource
+
     private lateinit var permissionHelper: PermissionHelper
     private var snackbar: Snackbar? = null
 
-    private val pointOfInterestManager: IARPointOfInterestManager
-        get() = geoARView.pointOfInterestManager
-
     private var locationSourceId: Int = -1
+    private var direction: Float = -90f
+    private var customPOIs: MutableSet<PointOfInterest> = mutableSetOf()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentGenericLsBinding.inflate(inflater, container, false)
@@ -50,15 +60,25 @@ class GenericLSFragment: ARFragment() {
 
         startNavigationButton.setOnClickListener { startNavigation() }
         stopNavigationButton.setOnClickListener { stopNavigation() }
+
+        binding.addPOI.setOnClickListener { addPOI() }
+        binding.removePOI.setOnClickListener { removePOI() }
+        binding.addPOIs.setOnClickListener { addPOIs() }
+        binding.removePOIs.setOnClickListener { removePOIs() }
     }
 
     override fun onARViewLoaded(arView: GeoARView, mapData: MapData) {
         checkPermissionsAndSetupLocationSource()
         pointOfInterestManager.addListener(poiListener)
+        navigationManager.addListener(navListener)
     }
 
     private fun setupLocationSource() {
         locationManager.locationSource = when (locationSourceId) {
+            0 -> // Simulator
+                SimulatorLocationSource(mapData, SimulationOptions(altitude = 1.6)).apply {
+                    setCoordinates(listOf(Coordinate(mapData.center.toLocation())), sample = false)
+                }
             2 -> // Adaptive
                 AndroidFusedAdaptiveLocationSource(requireContext(), mapData)
             3 -> // Fused GMS
@@ -85,7 +105,9 @@ class GenericLSFragment: ARFragment() {
         val selectedPOI = pointOfInterestManager.getSelectedPOI()
         if (selectedPOI == null) {
             updateNavButtons()
-            return println("Failed to start navigation because selected poi is null")
+            val text = "Failed to start navigation because selected poi is null"
+            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+            return
         }
 
         startNavigationButton.isEnabled = false
@@ -93,9 +115,9 @@ class GenericLSFragment: ARFragment() {
         navigationManager
             .startNavigation(destination = selectedPOI.coordinate)
             .subscribe({
+                simulator?.setItinerary(it.itinerary)
                 updateNavButtons()
             }, {
-                println("failed to start navigation with error - $it")
                 updateNavButtons()
             })
             .disposedBy(disposeBag)
@@ -104,10 +126,91 @@ class GenericLSFragment: ARFragment() {
     private fun stopNavigation() {
         navigationManager.stopNavigation().fold({
             updateNavButtons()
+            simulator?.reset()
         }, {
-            println("failed to stop navigation with error - $it")
             updateNavButtons()
         })
+    }
+
+    private fun addPOI() {
+        val poi = generatePOI()
+        if (poi == null) {
+            val text = "Failed to generate POI"
+            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+            return
+        }
+        if (!pointOfInterestManager.addPOI(poi)) {
+            val text = "Failed to add POI - $poi"
+            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+        } else {
+            customPOIs.add(poi)
+        }
+    }
+
+    private fun removePOI() {
+        val poi = customPOIs.randomOrNull()
+        if (poi == null) {
+            val text = "There is no POI to remove"
+            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+            return
+        }
+        if (!pointOfInterestManager.removePOI(poi)) {
+            val text = "Failed to remove POI - $poi"
+            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+        } else {
+            customPOIs.remove(poi)
+        }
+    }
+
+    private fun addPOIs() {
+        val pois = (0 until 3).mapNotNull {
+            generatePOI()
+        }
+        if (pois.isEmpty()) {
+            val text = "Failed to generate POIs"
+            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+            return
+        }
+
+        if (!pointOfInterestManager.addPOIs(pois.toSet())) {
+            val text = "Failed to add POIs"
+            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+        } else {
+            customPOIs.addAll(pois)
+        }
+    }
+
+    private fun removePOIs() {
+        if (customPOIs.isEmpty()) {
+            val text = "There are no POIs to remove"
+            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+            return
+        }
+        if (!pointOfInterestManager.removePOIs(customPOIs)) {
+            val text = "Failed to remove POIs"
+            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+        } else {
+            customPOIs.clear()
+        }
+    }
+
+    private fun generatePOI(): PointOfInterest? {
+
+        val userCoordinate = geoARView.locationManager.lastCoordinate
+        if (userCoordinate == null) {
+            val text = "Failed to get user location"
+            Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).multiline().show()
+            return null
+        }
+
+        val target = userCoordinate.destination(50.0, direction)
+        direction += 15
+
+        return PointOfInterest(
+            "Custom POI",
+            target,
+            imageURL = "https://api.getwemap.com/images/pps-categories/icon_circle_maaap.png"
+        )
     }
 
     private fun updateNavButtons() {
@@ -122,16 +225,29 @@ class GenericLSFragment: ARFragment() {
         )
     }
 
+    private val navListener by lazy {
+        NavigationManagerListener(
+            onStopped = {
+                updateNavButtons()
+                simulator?.reset()
+            }
+        )
+    }
+
     // region ------ Lifecycle ------
     override fun onStart() {
         super.onStart()
-        if (geoARView.isLoaded)
+        if (geoARView.isLoaded) {
             pointOfInterestManager.addListener(poiListener)
+            navigationManager.addListener(navListener)
+        }
     }
 
     override fun onStop() {
-        if (geoARView.isLoaded)
+        if (geoARView.isLoaded) {
             pointOfInterestManager.removeListener(poiListener)
+            navigationManager.removeListener(navListener)
+        }
         super.onStop()
     }
 
@@ -143,11 +259,10 @@ class GenericLSFragment: ARFragment() {
 
     // region ------ Permissions ------
     private fun createPermissionsHelper() {
-        val requiredPermissions = listOf(
-            permission.ACCESS_FINE_LOCATION,
-            permission.ACCESS_COARSE_LOCATION,
-            permission.CAMERA
-        )
+        val requiredPermissions = when (locationSourceId) {
+            0 -> listOf(permission.CAMERA)
+            else -> listOf(permission.CAMERA, permission.ACCESS_FINE_LOCATION, permission.ACCESS_COARSE_LOCATION)
+        }
         permissionHelper = PermissionHelper(this, requiredPermissions)
     }
 

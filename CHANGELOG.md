@@ -2,6 +2,21 @@
 
 ---
 
+## [0.25.0]
+
+### Added
+
+* GeoAR: add functionality for dynamically adding/removing PoIs
+
+### Dependencies
+
+* Map
+  * MapLibre 11.13.1 -> 11.13.5
+* Pos(Adaptive)
+  * PlayServices Base 18.8.0 -> 18.9.0
+* Pos(Polestar)
+  * NAOSDK 4.11.16 -> 4.11.16.1
+
 ## [0.24.2]
 
 ### Behavioral changes

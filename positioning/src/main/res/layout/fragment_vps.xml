@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="invisible"
-        tools:visibility="invisible">
+        tools:visibility="visible">
 
         <TextView
             android:layout_width="wrap_content"
@@ -45,7 +45,7 @@
         android:visibility="visible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="visible">
+        tools:visibility="invisible">
 
         <android.opengl.GLSurfaceView
             android:id="@+id/surfaceView"
@@ -203,5 +203,15 @@
         android:text="Use manually created Itinerary"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/debug_info_layer" />
+
+    <Button
+        android:id="@+id/forceUserPosition"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Force user position"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/itinerarySourceSwitch" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

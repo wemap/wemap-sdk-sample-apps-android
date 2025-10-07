@@ -10,8 +10,10 @@ import androidx.fragment.app.Fragment
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.multiline
 import com.getwemap.example.positioning.databinding.FragmentVpsBinding
+import com.getwemap.sdk.core.extensions.Location
 import com.getwemap.sdk.core.internal.DependencyManager
 import com.getwemap.sdk.core.internal.extensions.disposedBy
+import com.getwemap.sdk.core.internal.helpers.Logger
 import com.getwemap.sdk.core.location.LocationSourceListener
 import com.getwemap.sdk.core.model.entities.Attitude
 import com.getwemap.sdk.core.model.entities.Coordinate
@@ -84,6 +86,8 @@ class VPSFragment : Fragment() {
             rescanRequested = true
             showCamera()
         }
+
+        binding.forceUserPosition.setOnClickListener { forceUserPosition() }
     }
 
     private fun setupLocationSource(mapData: MapData) {
@@ -120,6 +124,17 @@ class VPSFragment : Fragment() {
         currentSnackbar?.dismiss()
         currentSnackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
         currentSnackbar!!.show()
+    }
+
+    /** This method is temporary and may be removed in any future release. */
+    private fun forceUserPosition() {
+        // Let consider levels mapping (level 0 => 0m, -1 => level -3.5m, level -2 => -7m) // From Wemap BO
+        // We want to set position to the end of escalators at level -1
+        val locationAfterEscalators = Coordinate(Location(48.88018539374073, 2.3567438682277952, -3.5))
+        val locationUpdated = vpsLocationSource.forceUpdatePosition(locationAfterEscalators)
+        if (!locationUpdated) {
+            Logger.e("Failed to force user position.")
+        }
     }
 
     /**

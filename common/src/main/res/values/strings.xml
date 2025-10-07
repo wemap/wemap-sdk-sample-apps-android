@@ -22,6 +22,10 @@
     <string name="show_all_pois" translatable="false">Show all POIs</string>
     <string name="hide_all_pois" translatable="false">Hide all POIs</string>
 
+    <string name="add_poi" translatable="false">Add POI</string>
+    <string name="remove_poi" translatable="false">Remove random POI</string>
+    <string name="add_pois" translatable="false">Add POIs</string>
+    <string name="remove_pois" translatable="false">Remove all POIs</string>
     <string name="start_navigation" translatable="false">Start navigation</string>
     <string name="stop_navigation" translatable="false">Stop navigation</string>
     <string name="enable_selection" translatable="false">Enable selection</string>

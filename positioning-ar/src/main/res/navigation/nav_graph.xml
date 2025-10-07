@@ -46,9 +46,9 @@
 
     <fragment
         android:id="@+id/SimulatorLSFragment"
-        android:name="com.getwemap.example.positioning.ar.fragments.SimulatorLSFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.GenericLSFragment"
         android:label="@string/simulator_fragment_label"
-        tools:layout="@layout/fragment_simulator_ls"/>
+        tools:layout="@layout/fragment_generic_ls"/>
 
     <fragment
         android:id="@+id/VPSLSFragment"
