@@ -13,6 +13,7 @@ import com.getwemap.example.positioning.Config
 import com.getwemap.example.positioning.R
 import com.getwemap.example.positioning.databinding.FragmentInitialBinding
 import com.getwemap.sdk.core.model.ServiceFactory
+import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.ArCoreApk
@@ -104,16 +105,27 @@ class InitialFragment : Fragment() {
             .mapById(id, Constants.token)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
-                println("Received map data - $it")
-                val bundle = Bundle()
-                bundle.putString("mapData", Json.encodeToString(it))
-
-                Config.applyGlobalOptions(requireContext())
-                findNavController().navigate(R.id.action_InitialFragment_to_VPSFragment, bundle)
+                showMap(it)
             }, {
                 val str = "Failed to receive map data with error - ${it.message}"
                 Snackbar.make(binding.root, str, Snackbar.LENGTH_LONG).multiline().show()
             })
+    }
+
+    private fun showMap(mapData: MapData) {
+        Config.applyGlobalOptions(requireContext())
+
+        if (mapData.extras?.vpsEndpoint == null) {
+            val text = "This map(${mapData.id}) is not compatible with VPS Location Source"
+            Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).show()
+            return
+        }
+
+        val bundle = Bundle().apply {
+            putString("mapData", Json.encodeToString(mapData))
+        }
+
+        findNavController().navigate(R.id.action_InitialFragment_to_VPSFragment, bundle)
     }
 
     override fun onDestroyView() {

@@ -10,9 +10,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.getwemap.example.positioning.ar.R
 import com.getwemap.example.positioning.ar.databinding.FragmentItemBinding
+import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.serialization.json.Json
 
 class SamplesListFragment : Fragment() {
 
@@ -28,7 +30,7 @@ class SamplesListFragment : Fragment() {
 
     private val listener by lazy {
         OnRecyclerViewClickListener { view, position ->
-            if (!isLocationSourceAvailable(position))
+            if (!isLocationSourceAvailable(position, requireArguments()))
                 return@OnRecyclerViewClickListener
 
             val navId = when (position) {
@@ -39,26 +41,39 @@ class SamplesListFragment : Fragment() {
                 4 -> R.id.action_SamplesListFragment_to_GPSLSFragment
                 else -> throw Exception("Unsupported transition")
             }
-            arguments?.putInt("locationSourceId", position)
+            requireArguments().putInt("locationSourceId", position)
             findNavController().navigate(navId, arguments)
         }
     }
 
-    private fun isLocationSourceAvailable(position: Int): Boolean {
-        when (position) {
-            1 -> if (WemapVPSARCoreLocationSource.checkAvailability(requireContext()).isUnsupported) {
-                val text = "VPS location source is not supported on this device"
-                Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show()
-                return false
+    private fun isLocationSourceAvailable(position: Int, bundle: Bundle): Boolean {
+        return when (position) {
+            1 -> {
+                if (WemapVPSARCoreLocationSource.checkAvailability(requireContext()).isUnsupported) {
+                    val text = "VPS location source is not supported on this device"
+                    Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show()
+                    return false
+                }
+                val mapDataString = bundle.getString("mapData")!!
+                val mapData: MapData = Json.decodeFromString(mapDataString)
+                if (mapData.extras?.vpsEndpoint == null) {
+                    val text = "This map(${mapData.id}) is not compatible with VPS Location Source"
+                    Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show()
+                    return false
+                }
+                return true
             }
-            3 -> if (!GmsFusedLocationSource.isAvailable(requireContext())) {
-                val text = "Fused GMS location source is not supported on this device"
-                Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show()
-                return false
+            3 -> {
+                if (!GmsFusedLocationSource.isAvailable(requireContext())) {
+                    val text = "Fused GMS location source is not supported on this device"
+                    Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show()
+                    return false
+                }
+                return true
             }
-            // else -> all other LocationSources are always available
+            // all other LocationSources are always available
+            else -> true
         }
-        return true
     }
 }
 

@@ -10,13 +10,13 @@ import android.view.ViewGroup
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.multiline
 import com.getwemap.example.positioning.ar.databinding.FragmentVpsLsBinding
-import com.getwemap.sdk.geoar.GeoARView
-import com.getwemap.sdk.geoar.managers.ARLocationManagerListener
-import com.getwemap.sdk.geoar.managers.IARPointOfInterestManager
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
 import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
+import com.getwemap.sdk.geoar.GeoARView
+import com.getwemap.sdk.geoar.managers.ARLocationManagerListener
+import com.getwemap.sdk.geoar.managers.IARPointOfInterestManager
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.ScanStatus
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
@@ -121,7 +121,7 @@ class VPSLSFragment : ARFragment() {
                         startNavigationButton.isEnabled = false
                     }
                     ScanStatus.STOPPED -> {
-                        startScanningButton.isEnabled = vpsLocationSource.state == WemapVPSARCoreLocationSource.State.NOT_POSITIONING
+                        startScanningButton.isEnabled = !vpsLocationSource.state.isAccurate
                         stopScanningButton.isEnabled = false
                     }
                 }
@@ -160,6 +160,14 @@ class VPSLSFragment : ARFragment() {
     }
 
     // region ------ Lifecycle ------
+    override fun onResume() {
+        super.onResume()
+        if (geoARView.isLoaded) {
+            startScanningButton.isEnabled = !vpsLocationSource.state.isAccurate
+            stopScanningButton.isEnabled = false
+        }
+    }
+
     override fun onStart() {
         super.onStart()
         if (geoARView.isLoaded) {

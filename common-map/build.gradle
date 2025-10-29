@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace = "com.getwemap.example.common.map"
-    compileSdk 35
+    compileSdk = 36
 
     defaultConfig {
-        minSdk 21
-        targetSdk 35
+        minSdk 23
+        targetSdk 36
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         resValue "string", "version_name", "$version"

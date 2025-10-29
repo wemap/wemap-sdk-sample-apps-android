@@ -2,6 +2,32 @@
 
 ---
 
+## [0.26.0]
+
+### Breaking changes
+
+* SDKs: minimum Android SDK increased from 21 to 23
+
+### Changed
+
+* All: compile and target SDKs changed from 35 to 36
+
+### Fixed
+
+* Pos(VPS): fix orientation/position jump when location source is paused/resumed (i.e. when app is back from background)
+* Samples(VPS): attempt to load the map without VPS will crash the app
+
+### Removed
+
+* support for android minimum SDKs 21 and 22
+
+### Dependencies
+
+* Core
+  * RxJava 3.1.11 -> 3.1.12
+* Map
+  * MapLibre 11.13.5 -> 12.0.1
+
 ## [0.25.0]
 
 ### Added

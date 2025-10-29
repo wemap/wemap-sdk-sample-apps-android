@@ -13,6 +13,7 @@ import com.getwemap.example.common.multiline
 import com.getwemap.example.map.positioning.Config
 import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.databinding.FragmentInitialBinding
+import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.WemapMapSDK
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.getwemap.sdk.positioning.gps.GPSLocationSource
@@ -123,21 +124,34 @@ class InitialFragment : Fragment() {
             .mapData(id, Constants.token)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
-                println("Received map data - $it")
-                val bundle = Bundle()
-                bundle.putString("mapData", Json.encodeToString(it))
-
-                Config.applyGlobalOptions(requireContext())
-                if (spinner.selectedItemPosition == 0) {
-                    findNavController().navigate(R.id.action_InitialFragment_to_MapVPSFragment, bundle)
-                } else {
-                    bundle.putInt("locationSourceId", spinner.selectedItemPosition)
-                    findNavController().navigate(R.id.action_InitialFragment_to_MapFragment, bundle)
-                }
+                showMap(it)
             }, {
                 val str = "Failed to receive map data with error - ${it.message}"
                 Snackbar.make(binding.root, str, Snackbar.LENGTH_LONG).multiline().show()
             })
+    }
+
+    private fun showMap(mapData: MapData) {
+        Config.applyGlobalOptions(requireContext())
+
+        if (spinner.selectedItemPosition == 0 && mapData.extras?.vpsEndpoint == null) { // VPS
+            val text = "This map(${mapData.id}) is not compatible with VPS Location Source"
+            Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).show()
+            return
+        }
+
+        val bundle = Bundle().apply {
+            putInt("locationSourceId", spinner.selectedItemPosition)
+            putString("mapData", Json.encodeToString(mapData))
+        }
+
+        val destination = if (spinner.selectedItemPosition == 0) {
+            R.id.action_InitialFragment_to_MapVPSFragment
+        } else {
+            R.id.action_InitialFragment_to_MapFragment
+        }
+
+        findNavController().navigate(destination, bundle)
     }
 
     override fun onDestroyView() {
