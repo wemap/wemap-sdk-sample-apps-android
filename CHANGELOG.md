@@ -2,6 +2,12 @@
 
 ---
 
+## [0.26.1]
+
+### Fixed
+
+* Map: levels on some styles are not well handled
+
 ## [0.26.0]
 
 ### Breaking changes
