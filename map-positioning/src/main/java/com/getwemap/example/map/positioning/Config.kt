@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.preference.PreferenceManager
 import com.getwemap.sdk.core.CoreConstants
 import com.getwemap.sdk.map.helpers.MapConstants
+import com.getwemap.sdk.positioning.wemapvpsarcore.internal.WemapVPSARCoreConstants
 
 object Config {
 
@@ -25,6 +26,11 @@ object Config {
                 SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS
             )
         }
+        with(WemapVPSARCoreConstants) {
+            SLOW_CONNECTION_SECONDS = prefs.getString(
+                PreferenceKey.SLOW_CONNECTION_SECONDS.name, null
+            )?.toLong() ?: SLOW_CONNECTION_SECONDS
+        }
     }
 }
 
@@ -35,5 +41,8 @@ enum class PreferenceKey {
     ITINERARY_RECALCULATION_ENABLED,
 
     // Map
-    SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS
+    SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS,
+
+    // VPS
+    SLOW_CONNECTION_SECONDS
 }

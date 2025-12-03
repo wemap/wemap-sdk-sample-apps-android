@@ -47,12 +47,17 @@
     <!-- Preference Groups -->
     <string name="global_preferences" translatable="false">Global</string>
     <string name="navigation_preferences" translatable="false">Navigation</string>
+    <string name="vps_preferences" translatable="false">VPS</string>
 
     <!-- Global Preferences -->
     <string name="switch_levels_title" translatable="false">Switch levels automatically on user movements</string>
     <string name="recalculate_itinerary_title" translatable="false">Recalculate itinerary if user is far from itinerary</string>
     <string name="user_location_projection_on_itinerary_title" translatable="false">Project user location on itinerary</string>
     <string name="user_location_projection_on_graph_title" translatable="false">Project user location on graph</string>
+
+    <!-- VPS Preferences -->
+    <string name="slow_connection_seconds" translatable="false">Slow connection (in seconds)</string>
+    <string name="slow_connection_seconds_message" translatable="false">The maximum allowed time in seconds for a VPS request, at which the connection will be considered slow and the error slowConnectionDetected will be triggered. Default is 5 seconds</string>
 
     <!-- Navigation Preferences -->
     <string name="arrived_distance_threshold_title" translatable="false">Arrived distance threshold</string>

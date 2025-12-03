@@ -120,9 +120,14 @@ class InitialFragment : Fragment() {
         if (request?.isDisposed == false)
             return
 
+        binding.buttonLoadMap.isEnabled = false
+
         request = WemapMapSDK.instance
             .mapData(id, Constants.token)
             .observeOn(AndroidSchedulers.mainThread())
+            .doAfterTerminate {
+                binding.buttonLoadMap.isEnabled = true
+            }
             .subscribe({
                 showMap(it)
             }, {

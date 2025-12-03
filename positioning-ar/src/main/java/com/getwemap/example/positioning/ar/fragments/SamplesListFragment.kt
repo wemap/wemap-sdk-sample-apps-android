@@ -71,7 +71,7 @@ class SamplesListFragment : Fragment() {
                 }
                 return true
             }
-            // all other LocationSources are always available
+            // else -> all other LocationSources are always available
             else -> true
         }
     }

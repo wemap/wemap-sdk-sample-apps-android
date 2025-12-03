@@ -2,6 +2,22 @@
 
 ---
 
+## [0.26.3]
+
+### Added
+
+* SampleApp(Map+Pos[VPS]): add an example of slowConnectionDetected error
+* Pos(VPS): allow to change slowConnectionDetected time interval
+
+### Fixed
+
+* Pos(Polestar): 16 KB Google Play incompatibility (by update NAOSDK to 4.12.2)
+
+### Dependencies
+
+* Pos(Polestar)
+  * NAOSDK 4.11.16.1 -> 4.12.2
+
 ## [0.26.1]
 
 ### Fixed

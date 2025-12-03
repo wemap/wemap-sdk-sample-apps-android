@@ -34,6 +34,7 @@ import com.getwemap.sdk.map.poi.IMapPointOfInterestManager
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.ScanStatus
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.State
+import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceError
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -339,6 +340,12 @@ class MapVPSFragment : Fragment() {
     }
 
     private fun setErrorMessageAndStartTimer(error: Throwable) {
+
+        if (error == WemapVPSARCoreLocationSourceError.slowConnectionDetected) {
+            val text = "This is taking longer than expected. It looks like your internet connection is slow or unstable"
+            return Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).show()
+        }
+
         binding.cameraDebugText.apply {
             isVisible = true
             text = error.message

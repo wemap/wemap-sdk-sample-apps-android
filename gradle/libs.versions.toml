@@ -1,5 +1,5 @@
 [versions]
-wemap = "0.26.1"
+wemap = "0.26.3"
 
 # plugins
 androidGradlePlugin = "8.13.0"

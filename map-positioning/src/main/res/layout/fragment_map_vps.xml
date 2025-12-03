@@ -221,7 +221,7 @@
             android:layout_gravity="bottom"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="92dp"
+            android:layout_marginBottom="140dp"
             android:background="#DDDDDDDD"
             android:visibility="invisible">
 

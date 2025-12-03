@@ -7,12 +7,6 @@ ext.namespace = "com.getwemap.example.map.positioning"
 
 apply from: '../base.gradle'
 
-configurations.configureEach {
-    resolutionStrategy {
-        force "eu.polestar:naosdk:4.12.2" // to fix 16KB issue
-    }
-}
-
 dependencies {
     implementation project(':common')
     implementation project(':common-map')
