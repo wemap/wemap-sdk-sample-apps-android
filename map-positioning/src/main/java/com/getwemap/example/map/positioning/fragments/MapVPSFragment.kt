@@ -381,9 +381,13 @@ class MapVPSFragment : Fragment() {
             { state ->
                 Log.d("WEMAP", "onStateChanged. State: ${state.name}")
 
-                locationManager.isEnabled = !state.isLost
                 binding.camera.isVisible = !state.isLost
                 binding.degradedIcon.isVisible = state.isDegraded
+
+                // you can hide blue dot from the map on tracking lost by disabling LocationManager
+                // you may want to do it to avoid confusing user with blue dot which doesn't move anymore
+                // in the next major version we are going to handle it internally by adding stale state of the blue dot
+                locationManager.isEnabled = !state.isLost
 
                 if (state.isLost)
                     positioningLost()
