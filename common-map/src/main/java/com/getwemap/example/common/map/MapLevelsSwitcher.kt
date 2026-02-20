@@ -50,7 +50,7 @@ class MapLevelsSwitcher(context: Context, attrs: AttributeSet?) : MaterialButton
 
     // region ------ Private ------
     private val buildingFocusChangeListener = BuildingManagerListener(
-        onActiveLevelChanged = { building, level ->
+        onActiveLevelChanged = { _, level ->
             check(sortedLevels.indexOf(level))
         }, onFocusedBuildingChanged = { building ->
             populateLevels(building)

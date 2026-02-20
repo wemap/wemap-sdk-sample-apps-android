@@ -1,5 +1,14 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <PreferenceCategory app:title="@string/app_preferences">
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="ENABLE_HAPTIC_FEEDBACK"
+            app:title="@string/enable_haptic_feedback_title" />
+
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/global_preferences">
 
         <SwitchPreferenceCompat
@@ -22,6 +31,12 @@
             app:key="USER_LOCATION_PROJECTION_ON_GRAPH_ENABLED"
             app:title="@string/user_location_projection_on_graph_title" />
 
+        <EditTextPreference
+            app:defaultValue="5000"
+            app:key="STALE_TIMEOUT_MILLISECONDS"
+            app:title="@string/stale_timeout_milliseconds"
+            app:useSimpleSummaryProvider="true" />
+
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/vps_preferences">
@@ -37,6 +52,11 @@
 
     <PreferenceCategory app:title="@string/navigation_preferences">
 
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="USE_WHEELCHAIR"
+            app:title="@string/use_wheelchair" />
+
         <EditTextPreference
             app:defaultValue="15"
             app:dialogMessage="@string/arrived_distance_threshold_summary"
@@ -45,7 +65,7 @@
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:defaultValue="25"
+            app:defaultValue="15"
             app:dialogMessage="@string/user_position_threshold_summary"
             app:key="USER_POSITION_THRESHOLD"
             app:title="@string/user_position_threshold_title"

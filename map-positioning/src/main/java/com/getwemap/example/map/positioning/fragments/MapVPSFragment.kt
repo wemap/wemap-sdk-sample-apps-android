@@ -15,7 +15,12 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.AlertFactory
+import com.getwemap.example.common.HapticGenerator
 import com.getwemap.example.common.PermissionHelper
+import com.getwemap.example.common.map.GlobalOptions
+import com.getwemap.example.common.multiline
+import com.getwemap.example.common.onDismissed
+import com.getwemap.example.map.positioning.AppConstants
 import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.databinding.FragmentMapVpsBinding
 import com.getwemap.sdk.core.internal.extensions.disposedBy
@@ -23,6 +28,7 @@ import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.Itinerary
 import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.core.model.entities.PointOfInterest
+import com.getwemap.sdk.core.model.services.parameters.ItinerarySearchRules
 import com.getwemap.sdk.core.navigation.info.NavigationInfo
 import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
 import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
@@ -74,6 +80,12 @@ class MapVPSFragment : Fragment() {
     private var rescanSuggested = false
     private var isScreenWakeLockEnabled = false
     private val impreciseMessage = "Your location seems imprecise, you can scan again to refine your position if necessary"
+
+    private val haptic: HapticGenerator? by lazy {
+        if (AppConstants.ENABLE_HAPTIC_FEEDBACK) HapticGenerator(requireContext()) else null
+    }
+
+    private var backgroundScanHint: Snackbar? = null
 
     // region ------ Lifecycle ------
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -172,6 +184,7 @@ class MapVPSFragment : Fragment() {
         super.onStop()
         mapView.onStop()
         disposeBag.clear()
+        errorTimer.set(null)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -209,6 +222,7 @@ class MapVPSFragment : Fragment() {
         disposeBag.clear()
         disposeBag.dispose()
         mapView.onDestroy()
+        backgroundScanHint?.dismiss()
 
         _binding = null
 
@@ -327,10 +341,11 @@ class MapVPSFragment : Fragment() {
         return AlertFactory.showSimpleAlert(requireContext(), message, "User refused to open camera", "Open camera")
     }
 
-    private fun positioningLost() {
+    private fun positioningLost(reason: WemapVPSARCoreLocationSource.NotPositioningReason) {
         locationManager.cameraMode = CameraMode.NONE
+        haptic?.error()
         if (locationManager.lastCoordinate != null)
-            locateUser("We lost your position. In order to relocalize you we will use your camera")
+            locateUser("We lost your position. In order to relocalize you we will use your camera. $reason")
     }
 
     private val locationManagerListener by lazy {
@@ -343,7 +358,7 @@ class MapVPSFragment : Fragment() {
 
         if (error == WemapVPSARCoreLocationSourceError.slowConnectionDetected) {
             val text = "This is taking longer than expected. It looks like your internet connection is slow or unstable"
-            return Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).show()
+            return Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
         }
 
         binding.cameraDebugText.apply {
@@ -380,19 +395,42 @@ class MapVPSFragment : Fragment() {
             },
             { state ->
                 Log.d("WEMAP", "onStateChanged. State: ${state.name}")
+                showBackgroundScanHintIfNeeded()
 
                 binding.camera.isVisible = !state.isLost
                 binding.degradedIcon.isVisible = state.isDegraded
 
-                // you can hide blue dot from the map on tracking lost by disabling LocationManager
-                // you may want to do it to avoid confusing user with blue dot which doesn't move anymore
-                // in the next major version we are going to handle it internally by adding stale state of the blue dot
-                locationManager.isEnabled = !state.isLost
-
                 if (state.isLost)
-                    positioningLost()
+                    positioningLost(vpsLocationSource.notPositioningReason)
+            },
+            onBackgroundScanStatusChanged = {
+                Log.d("WEMAP", "onBackgroundScanStatusChanged. State: ${it.name}")
+                showBackgroundScanHintIfNeeded()
+            }, onLocalizedUser = { _, _, background ->
+                if (background && !vpsLocationSource.state.isDegraded)
+                    return@WemapVPSARCoreLocationSourceListener
+                haptic?.success()
+            }, onTrackingStateChanged = {
+                println("Tracking state changed - $it")
+            }, onTrackingFailureReasonChanged = {
+                println("Tracking failure reason changed - $it")
             }
         )
+    }
+
+    private fun showBackgroundScanHintIfNeeded() {
+        if (vpsLocationSource.backgroundScanStatus.isStopped || !vpsLocationSource.state.isDegraded) {
+            backgroundScanHint?.dismiss()
+            return
+        }
+
+        if (backgroundScanHint != null)
+            return
+
+        val text = "Please hold your phone vertically in front of you to let system recognize your surroundings"
+        backgroundScanHint = Snackbar.make(mapView, text, Snackbar.LENGTH_INDEFINITE).multiline()
+            .onDismissed { backgroundScanHint = null }
+            .apply { show() }
     }
 
     private fun createScanningTimer() {
@@ -428,7 +466,8 @@ class MapVPSFragment : Fragment() {
                 createScanningTimer()
             }, {
                 stopScan()
-                Snackbar.make(mapView, "Failed to localize you in reasonable time. Try again later", Snackbar.LENGTH_LONG).show()
+                val text = "Failed to localize you in reasonable time. Try again later"
+                Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
             })
         scanningTimer.set(continueAlert)
 
@@ -480,20 +519,23 @@ class MapVPSFragment : Fragment() {
             .subscribe({
                 calculateAndDrawItinerary(it, selectedPOI.coordinate)
             }, {
-                Snackbar.make(mapView, "Failed to start itinerary with error - ${it.message}", Snackbar.LENGTH_SHORT).show()
+                val text = "Failed to start itinerary with error - $it"
+                Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
             })
             .disposedBy(disposeBag)
     }
 
     private fun calculateAndDrawItinerary(origin: Coordinate, destination: Coordinate) {
+        val searchRules = if (AppConstants.USE_WHEELCHAIR) ItinerarySearchRules.WHEELCHAIR else ItinerarySearchRules()
         itineraryManager
-            .getItineraries(origin, destination)
+            .getItineraries(origin, destination, searchRules = searchRules)
             .subscribe(
                 { itineraries ->
                     renderItinerary(itineraries.first())
                 },
                 { error ->
-                    Snackbar.make(mapView, "Failed to compute itineraries with error - $error", Snackbar.LENGTH_SHORT).show()
+                    val text = "Failed to compute itineraries with error - $error"
+                    Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
                 }
             ).disposedBy(disposeBag)
     }
@@ -529,14 +571,16 @@ class MapVPSFragment : Fragment() {
 
     // region ------ Navigation ------
     private fun onStartNavigationClick() {
+        val navigationOptions = GlobalOptions.navigationOptions(requireContext())
         navigationManager
-            .startNavigation(currentItinerary!!)
+            .startNavigation(currentItinerary!!, navigationOptions)
             .subscribe(
                 {
                     renderNavigation()
                     updateScreenWakeLock()
                 }, {
-                    Snackbar.make(mapView, "Failed to start navigation with error - $it", Snackbar.LENGTH_SHORT).show()
+                    val text = "Failed to start navigation with error - $it"
+                    Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
                 }
             ).disposedBy(disposeBag)
     }
@@ -557,7 +601,8 @@ class MapVPSFragment : Fragment() {
 
     private fun onStopNavigationClick() {
         navigationManager.stopNavigation().onFailure {
-            Snackbar.make(mapView, "Failed to stop navigation with error - $it", Snackbar.LENGTH_SHORT).show()
+            val text = "Failed to stop navigation with error - $it"
+            Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
         }
         updateScreenWakeLock()
     }
@@ -575,10 +620,12 @@ class MapVPSFragment : Fragment() {
                 updateScreenWakeLock()
             }, onFailed = { error ->
                 currentItinerary?.let { renderItinerary(it) }
-                Snackbar.make(mapView, "Navigation failed with error - $error", Snackbar.LENGTH_SHORT).show()
+                val text = "Navigation failed with error - $error"
+                Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
                 updateScreenWakeLock()
             }, onRecalculated = {
-                Snackbar.make(mapView, "Navigation recalculated - $it", Snackbar.LENGTH_SHORT).show()
+                val text = "Navigation recalculated - $it"
+                Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
             }
         )
     }

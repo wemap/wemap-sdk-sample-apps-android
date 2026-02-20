@@ -11,6 +11,7 @@ import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.PointOfInterest
 import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
+import com.getwemap.sdk.core.poi.TagMatchMode
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
 import org.maplibre.android.MapLibre
@@ -95,7 +96,7 @@ class POIsFragment : MapFragment() {
         }
 
         buttonApplyFilter.setOnClickListener {
-            if (pointOfInterestManager.filterByTag("52970")) {
+            if (pointOfInterestManager.filterByTags(listOf("53003", "53014"), TagMatchMode.AND)) {
                 buttonApplyFilter.isEnabled = false
                 buttonRemoveFilters.isEnabled = true
             }

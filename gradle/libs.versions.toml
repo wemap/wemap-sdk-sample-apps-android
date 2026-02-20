@@ -1,8 +1,8 @@
 [versions]
-wemap = "0.26.3"
+wemap = "0.27.0"
 
 # plugins
-androidGradlePlugin = "8.13.0"
+androidGradlePlugin = "8.13.2"
 kotlin = "2.0.20"
 
 # dependencies
@@ -11,7 +11,7 @@ appcompat = "1.7.1"
 coreKtx = "1.17.0"
 fragmentKtx = "1.8.9"
 material = "1.13.0"
-navigationFragmentKtx = "2.9.5"
+navigationFragmentKtx = "2.9.6"
 preferenceKtx = "1.2.1"
 
 [libraries]

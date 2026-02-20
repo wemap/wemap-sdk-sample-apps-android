@@ -6,6 +6,30 @@
     android:layout_height="match_parent"
     tools:context="fragments.InitialFragment">
 
+    <LinearLayout
+        android:id="@+id/packdataLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="17dp"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/packdataLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="Offline packdata" />
+
+        <Button
+            android:id="@+id/checkAndDownloadButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Check for updates" />
+    </LinearLayout>
+
     <Button
         android:id="@+id/button_load_map"
         android:layout_width="wrap_content"
@@ -40,6 +64,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/onlineSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="17dp"
+        android:checked="true"
+        android:text="Online"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

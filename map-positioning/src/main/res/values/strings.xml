@@ -14,4 +14,7 @@
 
     <string name="start_navigation_user_created_annotations" translatable="false">Start navigation from user-created annotations</string>
     <string name="remove_user_created_annotations" translatable="false">Remove user-created annotations</string>
+
+    <string name="app_preferences" translatable="false">App</string>
+    <string name="enable_haptic_feedback_title" translatable="false">Enable haptic feedback</string>
 </resources>

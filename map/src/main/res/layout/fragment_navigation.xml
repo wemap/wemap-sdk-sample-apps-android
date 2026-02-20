@@ -9,7 +9,19 @@
     <com.getwemap.sdk.map.WemapMapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent" >
+
+    </com.getwemap.sdk.map.WemapMapView>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/wheelchairSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="17dp"
+        android:text="Wheelchair"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.getwemap.example.common.map.MapLevelsSwitcher
         android:id="@+id/levelsSwitcher"

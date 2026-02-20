@@ -2,6 +2,57 @@
 
 ---
 
+## [0.27.0]
+
+### Breaking changes
+
+* Core
+  * `Coordinate`
+    * `val accuracy: Float` changed to `val accuracy: Float?`. Null is returned if there is no accuracy.
+    * `val bearing: Float` changed to `val bearing: Float?`. Null is returned if there is no bearing.
+  * Removed `Step.Extras` data class.
+  * Removed `LevelChange` data class. All related properties are now available in `Step` data class.
+  * Removed `LevelChangeType` sealed class. Use `Step.Kind` instead.
+  * `Direction` sealed class replaced by `Step.Direction`.
+  * `ItinerarySearchOptions` data class replaced by `ItinerarySearchRules`. So `searchOptions` parameter replaced everywhere to `searchRules` accordingly.
+* Map
+  * Removed `OutOfActiveLevelStyle` data class. Now you can only specify opacity of the user indicator when user is not on the active level by `UserLocationViewStyles.outOfActiveLevelOpacity`.
+  * `UserLocationViewStyle` data class replaced by `UserLocationViewStyles`.
+  * `UserLocationManager.userLocationViewStyle: UserLocationViewStyle` changed to `UserLocationManager.userLocationViewStyles: UserLocationViewStyles`.
+  * `WemapMapSDK.loadLocalMapData(fromZip zip: URL)` moved to `IPackdataManager.loadMapData(fromZip zip: File)`
+
+### Added
+
+* Core: add AND and OR logic for filter by tags
+* Map: ability to download and check for available updates of offline packdata
+* Core: add support for custom rules for itineraries
+* Core: expose `extraMedias` of POI
+* Map: add support for stale state and accuracy ring of user location indicator
+* Pos(VPS): Add support for Conveying in elevators
+* SampleApp(Map+Pos[VPS]): add haptic feedback on successful scan (success) and on positioning lost (error), also add it on background scan success when state is degraded.
+* Pos(VPS): expose raw camera tracking state from ARCore
+* Pos(VPS): Force a re-scan if user moves away itinerary
+* Pos(VPS): add background scan to improve general system stability. It will be started based on different conditions like:
+  * distance traveled
+  * time passed since last successful VPS scan
+  * quality of relative positioning
+
+### Fixed
+
+* Map: Itinerary recalculation infinite loop
+* Map+Pos(VPS): blue dot don't turn gray on notPositioning
+
+### Dependencies
+
+* Plugins
+  * Gradle 8.13.0 -> 8.13.2
+* Map
+  * MapLibre 12.0.1 -> 12.2.2
+* AR
+  * Camera2 1.5.0 -> 1.5.2
+* Pos(VPS)
+  * ARCore 1.50.0 -> 1.52.0
+
 ## [0.26.3]
 
 ### Added

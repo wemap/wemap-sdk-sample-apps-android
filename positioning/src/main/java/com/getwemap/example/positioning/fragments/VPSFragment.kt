@@ -17,12 +17,11 @@ import com.getwemap.sdk.core.internal.helpers.Logger
 import com.getwemap.sdk.core.location.LocationSourceListener
 import com.getwemap.sdk.core.model.entities.Attitude
 import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.core.model.entities.Incline
 import com.getwemap.sdk.core.model.entities.Itinerary
 import com.getwemap.sdk.core.model.entities.LegSegment
-import com.getwemap.sdk.core.model.entities.LevelChange
-import com.getwemap.sdk.core.model.entities.LevelChangeType
 import com.getwemap.sdk.core.model.entities.MapData
+import com.getwemap.sdk.core.model.entities.Step.Direction
+import com.getwemap.sdk.core.model.entities.Step.Kind
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.ScanStatus
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.State
@@ -189,8 +188,9 @@ class VPSFragment : Fragment() {
             listOf(2.3567008, 48.8801748)
         ).map { Coordinate(it[1], it[0], listOf(-1f, 0f)) }
 
-        val levelChangeFrom0ToMinus1 = LevelChange(-1f, Incline.DOWN, LevelChangeType.Escalator)
-        val legSegmentsFrom0ToMinus1 = LegSegment.fromCoordinates(coordinatesFrom0ToMinus1, levelChangeFrom0ToMinus1)
+        val legSegmentsFrom0ToMinus1 = LegSegment.fromCoordinates(
+            coordinatesFrom0ToMinus1, -1f, Kind.ESCALATOR, Direction.DOWN
+        )
 
         val coordinatesLevelMinus1 = listOf(
             listOf(2.3567008, 48.8801748),
@@ -212,8 +212,9 @@ class VPSFragment : Fragment() {
             listOf(2.35727559, 48.88066565)
         ).map { Coordinate(it[1], it[0], listOf(-2f, -1f)) }
 
-        val levelChangeFromMinus1ToMinus2 = LevelChange(-1f, Incline.DOWN, LevelChangeType.Escalator)
-        val legSegmentsFromMinus1ToMinus2 = LegSegment.fromCoordinates(coordinatesFromMinus1ToMinus2, levelChangeFromMinus1ToMinus2)
+        val legSegmentsFromMinus1ToMinus2 = LegSegment.fromCoordinates(
+            coordinatesFromMinus1ToMinus2, -1f, Kind.ESCALATOR, Direction.DOWN
+        )
 
         val coordinatesLevelMinus2 = listOf(
             listOf(2.35727559, 48.88066565),

@@ -74,7 +74,7 @@ abstract class MapFragment : Fragment() {
     @SuppressLint("MissingPermission")
     private fun setupLocationSource() {
         val locationSource: LocationSource? = when (locationSourceId) {
-            0 -> SimulatorLocationSource(mapData, SimulationOptions(deviationRange = -20.0..20.0))
+            0 -> SimulatorLocationSource(mapData, SimulationOptions(deviationRange = -20.0..20.0, horizontalAccuracy = 3f))
             1 -> PolestarLocationSource(requireContext(), mapData, Constants.polestarApiKey)
             2 -> null
             3 -> PolestarLocationSource(requireContext(), mapData, "emulator")
@@ -88,15 +88,6 @@ abstract class MapFragment : Fragment() {
         }
 
         locationManagerReady()
-        // this way you can specify user location indicator appearance
-//        mapView.locationManager.userLocationViewStyle = UserLocationViewStyle(
-//            foregroundDrawable = R.drawable.custom_user_puck_icon,
-//            backgroundTintColor = Color.TRANSPARENT,
-//            bearingDrawable = R.drawable.custom_user_arrow,
-//            outOfActiveLevelStyle = UserLocationViewStyle.OutOfActiveLevelStyle(
-//                foregroundDrawable = R.drawable.ic_layers_clear
-//            )
-//        )
     }
 
     open fun locationManagerReady() {
@@ -163,7 +154,7 @@ abstract class MapFragment : Fragment() {
 
     private fun checkPermissionsAndSetupLocationSource() {
         permissionHelper
-            .request { granted, denied ->
+            .request { _, denied ->
                 if (denied.isEmpty()) {
                     setupLocationSource()
                 } else {

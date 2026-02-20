@@ -9,6 +9,7 @@ import com.getwemap.example.common.multiline
 import com.getwemap.example.map.databinding.FragmentNavigationBinding
 import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
+import com.getwemap.sdk.core.model.services.parameters.ItinerarySearchRules
 import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
@@ -52,6 +53,15 @@ class NavigationFragment : MapFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         mapView.getMapViewAsync { mapView, map, style, _ ->
+
+            mapView.itineraryManager
+                .searchRuleNames(mapData.extras?.graphId ?: "")
+                .subscribe({
+                    println("Available rule names - $it")
+                }, {
+                    println("Failed to get rule names with error - $it")
+                })
+                .disposedBy(disposeBag)
 
             _circleManager = CircleManager(mapView, map, style)
             setupNavigationManagerListener()
@@ -151,12 +161,13 @@ class NavigationFragment : MapFragment() {
         disableStartButtons()
 
         val navOptions = GlobalOptions.navigationOptions(requireContext())
+        val rules = if (binding.wheelchairSwitch.isChecked) ItinerarySearchRules.WHEELCHAIR else ItinerarySearchRules()
 
         navigationManager
             .startNavigation(
                 origin, destination,
                 options = navOptions,
-//                ItinerarySearchOptions(avoidStairs = true),
+                searchRules = rules,
                 itineraryOptions = GlobalOptions.itineraryOptions
             )
             .subscribe({
