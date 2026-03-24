@@ -7,18 +7,17 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentItemBinding
-import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.core.poi.PointOfInterestWithInfo
 import com.getwemap.sdk.map.poi.IMapPointOfInterestManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kotlinx.coroutines.launch
 
 enum class SortingType {
     DISTANCE, TIME
@@ -34,14 +33,13 @@ class PoisViewModel: ViewModel() {
 class PoisListFragment : BottomSheetDialogFragment() {
 
     private val viewModel: PoisViewModel by activityViewModels()
-    private val disposeBag = CompositeDisposable()
 
     private var _poisAdapter: PoisRecyclerViewAdapter? = null
     private val poisAdapter get() = _poisAdapter!!
     private val poiManager get() = viewModel.poiManager
 
     private val listener by lazy {
-        OnRecyclerViewClickListener { view, position ->
+        OnRecyclerViewClickListener { _, position ->
             val item = poisAdapter.pois[position]
             viewModel.poiManager.selectPOI(item.first)
             dismiss()
@@ -63,30 +61,24 @@ class PoisListFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val sort = when (viewModel.sortingType) {
-            SortingType.DISTANCE -> poiManager.sortPOIsByGraphDistance(viewModel.userCoordinate)
-            SortingType.TIME -> poiManager.sortPOIsByDuration(viewModel.userCoordinate)
-        }
-
-        sort.observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
+        lifecycleScope.launch {
+            runCatching {
+                when (viewModel.sortingType) {
+                    SortingType.DISTANCE -> poiManager.sortPOIsByGraphDistance(viewModel.userCoordinate)
+                    SortingType.TIME -> poiManager.sortPOIsByDuration(viewModel.userCoordinate)
+                }
+            }.onSuccess {
                 poisAdapter.pois = it
                 poisAdapter.notifyDataSetChanged()
-            }, {
+            }.onFailure {
                 println("Failed to sort POIs with error - $it")
-            })
-            .disposedBy(disposeBag)
+            }
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        disposeBag.clear()
         _poisAdapter = null
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        disposeBag.dispose()
     }
 }
 

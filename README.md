@@ -12,19 +12,7 @@
 
 * open project in `Android Studio`
 
-* specify `accessKey` and `secretKey` in [`settings.gradle`](settings.gradle)
-
-    ``` gradle
-    maven {
-        url "s3://mobile-dev.getwemap.com/wemap/sdk/android"
-        credentials(AwsCredentials) {
-            accessKey System.getenv("AWS_ACCESS_KEY_ID") // put your access key here or export it as an env variable
-            secretKey System.getenv("AWS_SECRET_ACCESS_KEY") // put your secret key here or export it as an env variable
-        }
-    }
-    ```
-
-* specify `mapID` and `token` and optionally `polestarApiKey` and `vpsEndpoint` in [`common Constants`](./common/src/main/java/com/getwemap/example/common/Constants.kt)
+* specify `mapId` and `token` in [`common Constants`](./common/src/main/java/com/getwemap/example/common/Constants.kt)
 
 * build and run desired example app
 

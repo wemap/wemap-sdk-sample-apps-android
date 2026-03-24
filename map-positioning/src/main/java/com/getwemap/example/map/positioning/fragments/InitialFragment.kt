@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.Constants
 import com.getwemap.example.common.multiline
@@ -17,7 +18,6 @@ import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.WemapMapSDK
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.getwemap.sdk.positioning.gps.GPSLocationSource
-import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.ArCoreApk
@@ -27,14 +27,14 @@ import com.google.ar.core.ArCoreApk.InstallStatus.INSTALLED
 import com.google.ar.core.ArCoreApk.InstallStatus.INSTALL_REQUESTED
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.Disposable
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class InitialFragment : Fragment() {
 
-    private var request: Disposable? = null
+    private var requestJob: Job? = null
 
     private var _binding: FragmentInitialBinding? = null
     private val binding get() = _binding!!
@@ -81,8 +81,7 @@ class InitialFragment : Fragment() {
             1, 2 -> loadMap() // Simulator, System Default
             3 -> if (GPSLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
             4 -> if (GmsFusedLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
-            5, 6 -> if (PolestarLocationSource.isAvailable) loadMap() else showUnavailableAlert()
-            else ->  throw RuntimeException("Unknown Location Source")
+            else ->  throw IllegalArgumentException("Unknown Location Source")
         }
     }
 
@@ -117,22 +116,22 @@ class InitialFragment : Fragment() {
         val id = text.toIntOrNull()
             ?: return println("Failed to get int ID from - '$text'")
 
-        if (request?.isDisposed == false)
+        if (requestJob?.isActive == true)
             return
 
         binding.buttonLoadMap.isEnabled = false
 
-        request = WemapMapSDK.instance
-            .mapData(id, Constants.token)
-            .doAfterTerminate {
+        requestJob = lifecycleScope.launch {
+            try {
+                val mapData = WemapMapSDK.instance.mapData(id, Constants.token)
+                showMap(mapData)
+            } catch (e: Exception) {
+                val str = "Failed to receive map data with error - ${e.message}"
+                Snackbar.make(binding.root, str, Snackbar.LENGTH_LONG).multiline().show()
+            } finally {
                 binding.buttonLoadMap.isEnabled = true
             }
-            .subscribe({
-                showMap(it)
-            }, {
-                val str = "Failed to receive map data with error - ${it.message}"
-                Snackbar.make(binding.root, str, Snackbar.LENGTH_LONG).multiline().show()
-            })
+        }
     }
 
     private fun showMap(mapData: MapData) {
@@ -159,7 +158,7 @@ class InitialFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        request?.dispose()
+        requestJob?.cancel()
         super.onDestroyView()
         _binding = null
     }

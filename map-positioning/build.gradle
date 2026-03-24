@@ -16,7 +16,6 @@ dependencies {
     implementation libs.wemap.positioning.vps.arcore
     implementation libs.wemap.positioning.gps
     implementation libs.wemap.positioning.fused.gms
-    implementation libs.wemap.positioning.polestar
 
     implementation libs.maplibre.annotation.v9
 

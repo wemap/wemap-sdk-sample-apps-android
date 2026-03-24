@@ -2,7 +2,49 @@
 
 ---
 
-## [0.27.0]
+## [0.28.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.28.0)
+
+### Breaking changes
+
+* SDKs: due to RxJava -> Coroutines migration all the RxJava types were replaced by Coroutine alternatives
+* Pos(VPS)
+  * Removed deprecated `WemapVPSARCoreLocationSource.checkVPSAvailability`. Use `WemapVPSARCoreLocationSource.isVPSAvailableAt` instead.
+
+### Added
+
+* Core: Return POI.externalData as generic data
+
+### Changed
+
+* SDKs: replace RxJava by Coroutines
+
+### Fixed
+
+* SDKs: show/hide POIs works unstable
+* Core(Offline): very long execution of sortPOIs by time or distance method
+* Core: some internal class references left after exiting MapView and reused for another MapView
+
+### Removed
+
+* SDKs: remove PositioningSDK(Polestar)
+
+### Dependencies
+
+* Core
+  * Removed RxJava
+  * Removed RxAndroid
+  * Removed Retrofit Adapter RxJava
+  * Added Coroutines 1.10.2
+* GeoAR
+  * Camera 1.5.2 -> 1.5.3
+* Pos(VPS)
+  * ARCore 1.52.0 -> 1.53.0
+* Pos(Adaptive)
+  * PlayServices Base 18.9.0 -> 18.10.0
+* Removed Pos(Polestar)
+  * Removed NAOSDK
+
+## [0.27.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.27.0)
 
 ### Breaking changes
 
@@ -53,7 +95,7 @@
 * Pos(VPS)
   * ARCore 1.50.0 -> 1.52.0
 
-## [0.26.3]
+## [0.26.3](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.26.3)
 
 ### Added
 
@@ -69,13 +111,13 @@
 * Pos(Polestar)
   * NAOSDK 4.11.16.1 -> 4.12.2
 
-## [0.26.1]
+## [0.26.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.26.1)
 
 ### Fixed
 
 * Map: levels on some styles are not well handled
 
-## [0.26.0]
+## [0.26.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.26.0)
 
 ### Breaking changes
 
@@ -101,7 +143,7 @@
 * Map
   * MapLibre 11.13.5 -> 12.0.1
 
-## [0.25.0]
+## [0.25.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.25.0)
 
 ### Added
 
@@ -116,7 +158,7 @@
 * Pos(Polestar)
   * NAOSDK 4.11.16 -> 4.11.16.1
 
-## [0.24.2]
+## [0.24.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.24.2)
 
 ### Behavioral changes
 
@@ -142,7 +184,7 @@
 * Pos(Adaptive)
   * PlayServices Base 18.7.2 -> 18.8.0
 
-## [0.24.0]
+## [0.24.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.24.0)
 
 ### Added
 
@@ -170,13 +212,13 @@
 * VPS
   * ARCore 1.48.0 -> 1.50.0
 
-## [0.23.1]
+## [0.23.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.23.1)
 
 ### Fixed
 
 * MapSDK: remaining step distance is missing in NavigationInfo
 
-## [0.23.0]
+## [0.23.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.23.0)
 
 ### Added
 
@@ -205,13 +247,13 @@
 * Polestar
   * NAOSDK 4.11.15 -> 4.11.16
 
-## [0.22.3]
+## [0.22.3](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.22.3)
 
 ### Fixed
 
 * PosSDK(VPS): fix unnecessary request for rescan on exit from conveyor
 
-## [0.22.2]
+## [0.22.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.22.2)
 
 ### Changed
 
@@ -224,7 +266,7 @@
 * MapSDK: crash on unselect many POIs at the same time
 * Samples: fix UI overlapping on Pixel 8 and devices with similar config
 
-## [0.22.1]
+## [0.22.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.22.1)
 
 ### Added
 
@@ -241,7 +283,7 @@
 * Core
   * Serialization 1.8.0 -> 1.6.3 (to be backward compatible with Kotlin 1.9.23)
 
-## [0.22.0]
+## [0.22.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.22.0)
 
 ### Added
 
@@ -253,7 +295,7 @@
 * Map
   * MapLibre 11.8.4 -> 11.8.6
 
-## [0.21.0]
+## [0.21.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.21.0)
 
 ### Added
 
@@ -286,13 +328,13 @@
 * Map
   * MapLibre 11.8.2 -> 11.8.4
 
-## [0.20.3]
+## [0.20.3](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.20.3)
 
 ### Added
 
 * MapSDK: write to logs and throw exception if map property accessed when map is destroyed or not yet loaded
 
-## [0.20.2]
+## [0.20.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.20.2)
 
 ### Changed
 
@@ -315,7 +357,7 @@
 * VPS
   * ARCore 1.47.0 -> 1.48.0
 
-## [0.20.1]
+## [0.20.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.20.1)
 
 ### Fixed
 
@@ -332,7 +374,7 @@
 * Map
   * MapLibre 11.8.0 -> 11.8.1
 
-## [0.20.0]
+## [0.20.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.20.0)
 
 ### Added
 
@@ -358,7 +400,7 @@
 * VPS
   * ARCore 1.46.0 -> 1.47.0
 
-## [0.19.2]
+## [0.19.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.19.2)
 
 ### Added
 
@@ -372,7 +414,7 @@
 
 * CoreSDK: unused `ItineraryError` class
 
-## [0.19.1]
+## [0.19.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.19.1)
 
 ### Added
 
@@ -390,7 +432,7 @@
 * Map
   * MapLibre 11.6.1 -> 11.7.1
 
-## [0.19.0]
+## [0.19.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.19.0)
 
 ### Breaking changes
 
@@ -418,13 +460,13 @@
 * Map
   * MapLibre 11.5.2 -> 11.6.1
 
-## [0.18.1]
+## [0.18.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.18.1)
 
 ### Fixed
 
 * CoreSDK: handle level change type - incline plane
 
-## [0.18.0]
+## [0.18.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.18.0)
 
 ### Breaking changes
 
@@ -548,7 +590,7 @@
 * VPS
   * ARCore 1.43.0 -> 1.46.0
 
-## [0.17.0]
+## [0.17.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.17.0)
 
 ### Breaking changes
 
@@ -585,13 +627,13 @@
 * Examples
   * PluginAnnotation 2.0.2 -> 3.0.0
 
-## [0.16.1]
+## [0.16.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.16.1)
 
 ### Fixed
 
 * MapSDK: buildings that are not related to the current map have been loaded
 
-## [0.16.0]
+## [0.16.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.16.0)
 
 ### Breaking changes
 
@@ -616,45 +658,45 @@
 * VPS
   * ARCore 1.42.0 -> 1.43.0
 
-## [0.15.9]
+## [0.15.9](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.15.9)
 
 ### Fixed
 
 * CoreSDK: sortPOIsByGraphDistance/Duration doesn't work in some cases
 
-## [0.15.8]
+## [0.15.8](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.15.8)
 
 ### Added
 
 * CoreSDK: navigation instruction translations to Dutch, German, Portuguese and Russian
 
-## [0.15.7]
+## [0.15.7](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.15.7)
 
 ### Fixed
 
 * CoreSDK: handle level change type - incline plane
 
-## [0.15.4]
+## [0.15.4](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.15.4)
 
 ### Fixed
 
 * PosSDK(VPS): Switch to SCAN_REQUIRED state when user is static in an elevator or escalator in navigation mode
 * PosSDK(VPS): Change VPS request timeout to 20s
 
-## [0.15.2]
+## [0.15.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.15.2)
 
 ### Fixed
 
 * MapSDK: buildings that are not related to the current map have been loaded
 
-## [0.15.1]
+## [0.15.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.15.1)
 
 ### Fixed
 
 * MapSDK: hideAllPOIs() and showAllPOIs() does not work
 * CoreSDK: accept VPS endpoint without '/' at the end
 
-## [0.15.0]
+## [0.15.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.15.0)
 
 ### Breaking changes
 
@@ -696,19 +738,19 @@
 * VPS
   * ARCore 1.41.0 -> 1.42.0
 
-## [0.14.4]
+## [0.14.4](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.14.4)
 
 ### Fixed
 
 * CoreSDK: handle sorting by graph distance/duration error
 
-## [0.14.2]
+## [0.14.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.14.2)
 
 ### Fixed
 
 * MapSDK: centerToPOI fails if POI doesn't have level or there is no building in focus
 
-## [0.14.1]
+## [0.14.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.14.1)
 
 ### Fixed
 
@@ -722,7 +764,7 @@
 * Fused-GMS
   * GMS 21.1.0 -> 21.2.0
 
-## [0.14.0]
+## [0.14.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.14.0)
 
 ### Breaking changes
 
@@ -741,7 +783,7 @@
 * Serialization 1.6.2 -> 1.6.3
 * Gradle 8.2.2 -> 8.3.0
 
-## [0.13.0]
+## [0.13.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.13.0)
 
 ### Breaking changes
 
@@ -799,7 +841,7 @@
 * Itineraries API v1 -> v2
 * Gradle 8.0.2 -> 8.2.2
 
-## [0.12.0]
+## [0.12.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.12.0)
 
 ### Breaking changes
 
@@ -844,7 +886,7 @@
 * Fused-GMS
   * GMS 21.0.1 -> 21.1.0
 
-## [0.11.0]
+## [0.11.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.11.0)
 
 ### Breaking changes
 
@@ -871,7 +913,7 @@
 * LoggingInterceptor 4.11.0 -> 4.12.0
 * Serialization 1.6.0 -> 1.6.2
 
-## [0.10.0]
+## [0.10.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.10.0)
 
 ### Added
 
@@ -889,7 +931,7 @@
 * RxJava 3.1.7 -> 3.1.8
 * ARCore 1.39.0 -> 1.40.0
 
-## [0.9.0]
+## [0.9.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.9.0)
 
 ### Added
 
@@ -928,13 +970,13 @@
 * RxJava 3.1.6 -> 3.1.7
 * Serialization 1.5.1 -> 1.6.0
 
-## [0.8.1]
+## [0.8.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.8.1)
 
 ### Fixed
 
 * CoreSDK: Fix low frequency position updates (regression appeared in 0.8.0)
 
-## [0.8.0]
+## [0.8.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.8.0)
 
 We created a `PositioningSDK` to handle multiple sources of positioning. This corresponds to a new transitive dependency. Some positioning systems can be used on the shelf directly in v0.8 by
 
@@ -998,13 +1040,13 @@ mapView.locationManager.apply {
 * Kotlin 1.8.21 -> 1.9.0
 * Gradle 7.4.2 -> 8.1.0
 
-## [0.7.2]
+## [0.7.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.7.2)
 
 ### Fixed
 
 * CoreSDK: fix pointOfInterestManager.getPOIs()
 
-## [0.7.1]
+## [0.7.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.7.1)
 
 ### Fixed
 

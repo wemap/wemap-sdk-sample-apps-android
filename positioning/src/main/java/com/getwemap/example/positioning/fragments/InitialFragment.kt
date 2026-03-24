@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.Constants
 import com.getwemap.example.common.multiline
@@ -23,14 +24,14 @@ import com.google.ar.core.ArCoreApk.InstallStatus.INSTALLED
 import com.google.ar.core.ArCoreApk.InstallStatus.INSTALL_REQUESTED
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.Disposable
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class InitialFragment : Fragment() {
 
-    private var request: Disposable? = null
+    private var request: Job? = null
 
     private var _binding: FragmentInitialBinding? = null
     private val binding get() = _binding!!
@@ -97,19 +98,19 @@ class InitialFragment : Fragment() {
         val id = text.toIntOrNull()
             ?: return println("Failed to get int ID from - '$text'")
 
-        if (request?.isDisposed == false)
+        if (request?.isActive == true)
             return
 
-        request = ServiceFactory
-            .getMapService()
-            .mapById(id, Constants.token)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
+        request = lifecycleScope.launch {
+            runCatching {
+                ServiceFactory.getMapService().mapById(id, Constants.token)
+            }.onSuccess {
                 showMap(it)
-            }, {
+            }.onFailure {
                 val str = "Failed to receive map data with error - ${it.message}"
                 Snackbar.make(binding.root, str, Snackbar.LENGTH_LONG).multiline().show()
-            })
+            }
+        }
     }
 
     private fun showMap(mapData: MapData) {
@@ -129,7 +130,7 @@ class InitialFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        request?.dispose()
+        request?.cancel()
         super.onDestroyView()
         _binding = null
     }

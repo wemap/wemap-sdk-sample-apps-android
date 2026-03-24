@@ -12,7 +12,6 @@ import com.getwemap.example.common.map.MapLevelsSwitcher
 import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.WemapMapView
 import com.google.android.material.snackbar.Snackbar
-import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.serialization.json.Json
 
 abstract class BaseFragment : Fragment() {
@@ -25,8 +24,6 @@ abstract class BaseFragment : Fragment() {
     protected val focusedBuilding get() = buildingManager.focusedBuilding
 
     private val buildingManager get() = mapView.buildingManager
-
-    protected val disposeBag = CompositeDisposable()
 
     protected val activityResultLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
         if (isGranted) {
@@ -98,12 +95,6 @@ abstract class BaseFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        disposeBag.clear()
         mapView.onDestroy()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        disposeBag.dispose()
     }
 }

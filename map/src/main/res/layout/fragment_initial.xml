@@ -66,15 +66,29 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/onlineSwitch"
+    <LinearLayout
+        android:id="@+id/switchesLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="17dp"
-        android:checked="true"
-        android:text="Online"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/onlineSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Online" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/envSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:checked="true"
+            android:text="Prod" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -12,7 +12,6 @@ dependencies {
     implementation libs.wemap.map
 
     implementation libs.wemap.positioning.fused.gms
-    implementation libs.wemap.positioning.polestar
 
     implementation libs.maplibre.annotation.v9
 

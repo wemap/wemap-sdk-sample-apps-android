@@ -1,5 +1,5 @@
 [versions]
-wemap = "0.27.0"
+wemap = "0.28.0"
 
 # plugins
 androidGradlePlugin = "8.13.2"
@@ -8,10 +8,10 @@ kotlin = "2.0.20"
 # dependencies
 maplibreAnnotationV9 = "3.0.2"
 appcompat = "1.7.1"
-coreKtx = "1.17.0"
+coreKtx = "1.18.0"
 fragmentKtx = "1.8.9"
 material = "1.13.0"
-navigationFragmentKtx = "2.9.6"
+navigationFragmentKtx = "2.9.7"
 preferenceKtx = "1.2.1"
 
 [libraries]
@@ -39,7 +39,6 @@ wemap-positioning-vps-arcore = { group = "com.getwemap.sdk.positioning", name = 
 wemap-positioning-android-fused-adaptive = { group = "com.getwemap.sdk.positioning", name = "android-fused-adaptive", version.ref = "wemap" }
 wemap-positioning-fused-gms = { group = "com.getwemap.sdk.positioning", name = "fused-gms", version.ref = "wemap" }
 wemap-positioning-gps = { group = "com.getwemap.sdk.positioning", name = "gps", version.ref = "wemap" }
-wemap-positioning-polestar = { group = "com.getwemap.sdk.positioning", name = "polestar", version.ref = "wemap" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

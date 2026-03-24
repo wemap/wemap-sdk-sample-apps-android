@@ -5,21 +5,27 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.databinding.FragmentPOIsBinding
-import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.Coordinate
+import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.core.model.entities.PointOfInterest
 import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
 import com.getwemap.sdk.core.poi.TagMatchMode
+import com.getwemap.sdk.map.OnMapViewReadyCallback
+import com.getwemap.sdk.map.WemapMapView
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonArray
+import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.Style
 import org.maplibre.android.plugins.annotation.Circle
 import org.maplibre.android.plugins.annotation.CircleManager
 import org.maplibre.android.plugins.annotation.CircleOptions
 
-class POIsFragment : MapFragment() {
+class POIsFragment : MapFragment(), OnMapViewReadyCallback {
 
     override val mapView get() = binding.mapView
     override val levelsSwitcher get() = binding.levelsSwitcher
@@ -55,45 +61,7 @@ class POIsFragment : MapFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mapView.getMapViewAsync { mapView, map, style, mapData ->
-            pointOfInterestManager.addListener(PointOfInterestManagerListener(
-                onClicked = {
-                    Snackbar.make(mapView, "onPointOfInterestClick - $it", Snackbar.LENGTH_LONG)
-                        .multiline().show()
-                }
-            ))
-
-            map.addOnMapClickListener {
-                if (pointOfInterestManager.selectionMode.isSingle)
-                    pointOfInterestManager.unselectPOI()
-                else
-                    pointOfInterestManager.unselectAllPOIs()
-                true
-            }
-
-            _circleManager = CircleManager(mapView, map, style)
-
-            map.addOnMapLongClickListener {
-                if (simulatedUserPosition != null)
-                    circleManager.delete(simulatedUserPosition)
-
-                val array = JsonArray()
-                if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(it))
-                    array.add(focusedBuilding!!.activeLevel.id)
-
-                val options = CircleOptions()
-                    .withLatLng(it)
-                    .withData(array)
-
-                simulatedUserPosition = circleManager.create(options)
-                enableSortButtons()
-
-                return@addOnMapLongClickListener true
-            }
-
-            viewModel.mapData = mapData
-            viewModel.poiManager = mapView.pointOfInterestManager
-        }
+        mapView.getMapViewAsync(this)
 
         buttonApplyFilter.setOnClickListener {
             if (pointOfInterestManager.filterByTags(listOf("53003", "53014"), TagMatchMode.AND)) {
@@ -128,6 +96,46 @@ class POIsFragment : MapFragment() {
         }
     }
 
+    override fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap, style: Style, data: MapData) {
+        pointOfInterestManager.addListener(PointOfInterestManagerListener(
+            onClicked = {
+                val text = "onPointOfInterestClick - $it"
+                Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
+            }
+        ))
+
+        map.addOnMapClickListener {
+            if (pointOfInterestManager.selectionMode.isSingle)
+                pointOfInterestManager.unselectPOI()
+            else
+                pointOfInterestManager.unselectAllPOIs()
+            true
+        }
+
+        _circleManager = CircleManager(mapView, map, style)
+
+        map.addOnMapLongClickListener {
+            if (simulatedUserPosition != null)
+                circleManager.delete(simulatedUserPosition)
+
+            val array = JsonArray()
+            if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(it))
+                array.add(focusedBuilding!!.activeLevel.id)
+
+            val options = CircleOptions()
+                .withLatLng(it)
+                .withData(array)
+
+            simulatedUserPosition = circleManager.create(options)
+            enableSortButtons()
+
+            return@addOnMapLongClickListener true
+        }
+
+        viewModel.mapData = mapData
+        viewModel.poiManager = mapView.pointOfInterestManager
+    }
+
     override fun onStart() {
         super.onStart()
         val text = "If you use simulator, long tap at any place on the map to simulate user location. " +
@@ -137,12 +145,14 @@ class POIsFragment : MapFragment() {
 
     override fun locationManagerReady() {
         super.locationManagerReady()
-        mapView.locationManager
-            .coordinate
-            .subscribe {
-                enableSortButtons()
-                userLocationTextView.text = it.toStringCompact()
-            }.disposedBy(disposeBag)
+        lifecycleScope.launch {
+            mapView.locationManager
+                .coordinateFlow
+                .collect {
+                    enableSortButtons()
+                    userLocationTextView.text = it.toStringCompact()
+                }
+        }
     }
 
     override fun onDestroyView() {

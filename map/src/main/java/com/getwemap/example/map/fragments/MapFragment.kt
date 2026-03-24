@@ -1,13 +1,10 @@
 package com.getwemap.example.map.fragments
 
 import android.Manifest.permission.ACCESS_FINE_LOCATION
-import android.Manifest.permission.BLUETOOTH_SCAN
 import android.annotation.SuppressLint
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import com.getwemap.example.common.Constants
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.map.MapLevelsSwitcher
 import com.getwemap.example.common.multiline
@@ -18,9 +15,7 @@ import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.WemapMapView
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
-import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.google.android.material.snackbar.Snackbar
-import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.serialization.json.Json
 
 abstract class MapFragment : Fragment() {
@@ -29,8 +24,6 @@ abstract class MapFragment : Fragment() {
     protected abstract val levelsSwitcher: MapLevelsSwitcher
 
     protected lateinit var mapData: MapData
-
-    protected val disposeBag = CompositeDisposable()
 
     // also you can use simulator to generate locations along the itinerary
     protected val simulator: SimulatorLocationSource?
@@ -45,9 +38,10 @@ abstract class MapFragment : Fragment() {
 
     private lateinit var permissionHelper: PermissionHelper
 
-//    private val maxBounds = LatLngBounds
-//        .from(48.84811619854466, 2.377353558713054,
-//            48.84045277048898, 2.371600716985739)
+//    private val maxBounds = LatLngBounds.from(
+//        48.84811619854466, 2.377353558713054,
+//        48.84045277048898, 2.371600716985739
+//    )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -75,12 +69,10 @@ abstract class MapFragment : Fragment() {
     private fun setupLocationSource() {
         val locationSource: LocationSource? = when (locationSourceId) {
             0 -> SimulatorLocationSource(mapData, SimulationOptions(deviationRange = -20.0..20.0, horizontalAccuracy = 3f))
-            1 -> PolestarLocationSource(requireContext(), mapData, Constants.polestarApiKey)
-            2 -> null
-            3 -> PolestarLocationSource(requireContext(), mapData, "emulator")
-            4 -> GmsFusedLocationSource(requireContext(), mapData)
-            5 -> GareDeLyonSimulatorsLocationSource.fromIndoorToOutdoor(mapData)
-            else -> throw Exception("Location source id should be passed in Bundle")
+            1 -> null
+            2 -> GmsFusedLocationSource(requireContext(), mapData)
+            3 -> GareDeLyonSimulatorsLocationSource.fromIndoorToOutdoor(mapData)
+            else -> throw IllegalArgumentException("Location source id should be passed in Bundle")
         }
         mapView.locationManager.apply {
             this.locationSource = locationSource
@@ -126,29 +118,16 @@ abstract class MapFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        disposeBag.clear()
         mapView.onDestroy()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        disposeBag.dispose()
     }
 
     // region ------ Permissions ------
     private fun createPermissionsHelper() {
         val requiredPermissions = when (locationSourceId) {
-            0, 5 -> listOf() // Simulator
-            1, 3 -> { // Polestar
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-                    listOf(ACCESS_FINE_LOCATION, BLUETOOTH_SCAN)
-                else
-                    listOf(ACCESS_FINE_LOCATION)
-            }
-            2, 4 -> listOf(ACCESS_FINE_LOCATION) // GMS and default
-            else -> throw Exception("Location source id should be passed in Bundle")
+            0, 3 -> listOf() // Simulator
+            1, 2 -> listOf(ACCESS_FINE_LOCATION) // GMS and default
+            else -> throw IllegalArgumentException("Location source id should be passed in Bundle")
         }
-
         permissionHelper = PermissionHelper(this, requiredPermissions)
     }
 

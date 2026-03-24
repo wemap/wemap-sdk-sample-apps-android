@@ -5,6 +5,7 @@ import android.graphics.Color
 import androidx.preference.PreferenceManager
 import com.getwemap.example.common.IPreferenceKey
 import com.getwemap.example.common.getString
+import com.getwemap.sdk.core.model.services.parameters.ItinerarySearchRules
 import com.getwemap.sdk.core.navigation.NavigationOptions
 import com.getwemap.sdk.map.itineraries.ItineraryOptions
 import com.getwemap.sdk.map.itineraries.LineOptions

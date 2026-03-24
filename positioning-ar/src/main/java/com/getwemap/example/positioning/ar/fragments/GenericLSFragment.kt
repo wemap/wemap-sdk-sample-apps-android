@@ -5,11 +5,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.lifecycleScope
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.multiline
 import com.getwemap.example.positioning.ar.databinding.FragmentGenericLsBinding
 import com.getwemap.sdk.core.extensions.toLocation
-import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.location.simulation.SimulationOptions
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.core.model.entities.Coordinate
@@ -23,6 +23,8 @@ import com.getwemap.sdk.positioning.androidfusedadaptive.AndroidFusedAdaptiveLoc
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.getwemap.sdk.positioning.gps.GPSLocationSource
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class GenericLSFragment: ARFragment() {
 
@@ -89,16 +91,16 @@ class GenericLSFragment: ARFragment() {
                 throw IllegalArgumentException("Unsupported location source id - $locationSourceId")
         }
 
-        snackbar = Snackbar.make(geoARView, "Searching for you location...", Snackbar.LENGTH_INDEFINITE)
+        snackbar = Snackbar.make(geoARView, "Searching for your location...", Snackbar.LENGTH_INDEFINITE)
             .also { it.show() }
 
-        locationManager.coordinate
-            .take(1)
-            .doFinally { snackbar?.dismiss() }
-            .subscribe {
+        lifecycleScope.launch {
+            try {
+                locationManager.coordinateFlow.first()
+            } finally {
                 snackbar?.dismiss()
             }
-            .disposedBy(disposeBag)
+        }
     }
 
     private fun startNavigation() {
@@ -112,24 +114,26 @@ class GenericLSFragment: ARFragment() {
 
         startNavigationButton.isEnabled = false
 
-        navigationManager
-            .startNavigation(destination = selectedPOI.coordinate)
-            .subscribe({
+        lifecycleScope.launch {
+            runCatching {
+                navigationManager.startNavigation(destination = selectedPOI.coordinate)
+            }.onSuccess {
                 simulator?.setItinerary(it.itinerary)
                 updateNavButtons()
-            }, {
+            }.onFailure {
                 updateNavButtons()
-            })
-            .disposedBy(disposeBag)
+            }
+        }
     }
 
     private fun stopNavigation() {
-        navigationManager.stopNavigation().fold({
-            updateNavButtons()
-            simulator?.reset()
-        }, {
-            updateNavButtons()
-        })
+        navigationManager.stopNavigation()
+            .onSuccess {
+                updateNavButtons()
+                simulator?.reset()
+            }.onFailure {
+                updateNavButtons()
+            }
     }
 
     private fun addPOI() {
@@ -234,7 +238,7 @@ class GenericLSFragment: ARFragment() {
         )
     }
 
-    // region ------ Lifecycle ------
+    // region Lifecycle
     override fun onStart() {
         super.onStart()
         if (geoARView.isLoaded) {
@@ -255,9 +259,9 @@ class GenericLSFragment: ARFragment() {
         super.onDestroyView()
         _binding = null
     }
-    // endregion ------ Lifecycle ------
+    // endregion
 
-    // region ------ Permissions ------
+    // region Permissions
     private fun createPermissionsHelper() {
         val requiredPermissions = when (locationSourceId) {
             0 -> listOf(permission.CAMERA)
@@ -268,7 +272,7 @@ class GenericLSFragment: ARFragment() {
 
     private fun checkPermissionsAndSetupLocationSource() {
         permissionHelper
-            .request { granted, denied ->
+            .request { _, denied ->
                 if (denied.isEmpty()) {
                     setupLocationSource()
                 } else {
@@ -277,5 +281,5 @@ class GenericLSFragment: ARFragment() {
                 }
             }
     }
-    // endregion ------ Permissions ------
+    // endregion
 }

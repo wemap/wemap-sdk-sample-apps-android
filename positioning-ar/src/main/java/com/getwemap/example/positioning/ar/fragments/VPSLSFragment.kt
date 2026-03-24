@@ -7,11 +7,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.lifecycleScope
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.multiline
 import com.getwemap.example.positioning.ar.databinding.FragmentVpsLsBinding
-import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.model.entities.MapData
+import com.getwemap.sdk.core.model.entities.PointOfInterest
+import com.getwemap.sdk.core.navigation.Navigation
 import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
 import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
 import com.getwemap.sdk.geoar.GeoARView
@@ -21,6 +23,7 @@ import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.ScanStatus
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 
 class VPSLSFragment : ARFragment() {
 
@@ -56,8 +59,8 @@ class VPSLSFragment : ARFragment() {
         startNavigationButton.setOnClickListener { startNavigation() }
         stopNavigationButton.setOnClickListener { stopNavigation() }
 
-        startScanningButton.setOnClickListener { startScanning() }
-        stopScanningButton.setOnClickListener { stopScanning() }
+        startScanningButton.setOnClickListener { vpsLocationSource.startScan() }
+        stopScanningButton.setOnClickListener { vpsLocationSource.stopScan() }
     }
 
     override fun onARViewLoaded(arView: GeoARView, mapData: MapData) {
@@ -70,6 +73,7 @@ class VPSLSFragment : ARFragment() {
     private fun setupLocationSource() {
         locationManager.locationSource = WemapVPSARCoreLocationSource(requireContext(), mapData)
         vpsLocationSource.vpsListeners.add(vpsListener)
+        geoARView.locationManager.addListener(locationManagerListener)
         startScanningButton.isEnabled = true
     }
 
@@ -79,42 +83,32 @@ class VPSLSFragment : ARFragment() {
 
         startNavigationButton.isEnabled = false
 
-        navigationManager
-            .startNavigation(destination = selectedPOI.coordinate)
-            .subscribe({
+        lifecycleScope.launch {
+            try {
+                navigationManager.startNavigation(destination = selectedPOI.coordinate)
+            } catch(e: Exception) {
+                println("failed to start navigation with error - $e")
+            } finally {
                 stopNavigationButton.isEnabled = true
-            }, {
-                println("failed to start navigation with error - $it")
-                startNavigationButton.isEnabled = true
-            })
-            .disposedBy(disposeBag)
+            }
+        }
     }
 
     private fun stopNavigation() {
-        navigationManager.stopNavigation().fold({
-            startNavigationButton.isEnabled = true
-            stopNavigationButton.isEnabled = false
-        }, {
-            println("failed to stop navigation with error - $it")
-        })
-    }
-
-    private fun startScanning() {
-        vpsLocationSource.startScan()
-        stopScanningButton.isEnabled = true
-    }
-
-    private fun stopScanning() {
-        vpsLocationSource.stopScan()
-        startScanningButton.isEnabled = true
+        navigationManager.stopNavigation()
+            .onSuccess {
+                startNavigationButton.isEnabled = true
+                stopNavigationButton.isEnabled = false
+            }.onFailure {
+                println("failed to stop navigation with error - $it")
+            }
     }
 
     private val vpsListener by lazy {
-        WemapVPSARCoreLocationSourceListener(
-            onScanStatusChanged = { scanStatus ->
-                println("scan status - $scanStatus")
-
-                when (scanStatus) {
+        object: WemapVPSARCoreLocationSourceListener {
+            override fun onScanStatusChanged(status: ScanStatus) {
+                println("scan status - $status")
+                when (status) {
                     ScanStatus.STARTED -> {
                         startScanningButton.isEnabled = false
                         stopScanningButton.isEnabled = true
@@ -125,32 +119,34 @@ class VPSLSFragment : ARFragment() {
                         stopScanningButton.isEnabled = false
                     }
                 }
-            }, onStateChanged = { state ->
+            }
+
+            override fun onStateChanged(state: WemapVPSARCoreLocationSource.State) {
                 println("state - $state")
                 startScanningButton.isEnabled = !state.isAccurate
                 startNavigationButton.isEnabled = !state.isLost
             }
-        )
+        }
     }
 
     private val poiListener by lazy {
-        PointOfInterestManagerListener(
-            onSelected = {
+        object : PointOfInterestManagerListener {
+            override fun onPointOfInterestSelected(poi: PointOfInterest) {
                 startNavigationButton.isEnabled = true
-            },
-            onUnselected = {
+            }
+            override fun onPointOfInterestUnselected(poi: PointOfInterest) {
                 startNavigationButton.isEnabled = false
             }
-        )
+        }
     }
 
     private val navListener by lazy {
-        NavigationManagerListener(
-            onStopped = {
+        object : NavigationManagerListener {
+            override fun onNavigationStopped(navigation: Navigation) {
                 startNavigationButton.isEnabled = pointOfInterestManager.getSelectedPOI() != null
                 stopNavigationButton.isEnabled = false
             }
-        )
+        }
     }
 
     private val locationManagerListener by lazy {
@@ -206,7 +202,7 @@ class VPSLSFragment : ARFragment() {
 
     private fun checkPermissionsAndSetupLocationSource() {
         permissionHelper
-            .request { granted, denied ->
+            .request { _, denied ->
                 if (denied.isEmpty()) {
                     setupLocationSource()
                 } else {

@@ -18,13 +18,16 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.edit
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.Constants
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.Config
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentInitialBinding
-import com.getwemap.sdk.core.internal.extensions.disposedBy
+import com.getwemap.sdk.core.Environment.Dev
+import com.getwemap.sdk.core.Environment.Prod
+import com.getwemap.sdk.core.WemapCoreSDK
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.WemapMapSDK
@@ -32,10 +35,8 @@ import com.getwemap.sdk.map.internal.MapDependencyManager
 import com.getwemap.sdk.map.offline.IPackdataManager
 import com.getwemap.sdk.map.offline.Packdata
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
-import com.getwemap.sdk.positioning.polestar.PolestarLocationSource
 import com.google.android.material.snackbar.Snackbar
-import io.reactivex.rxjava3.core.Single
-import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -56,9 +57,8 @@ class InitialFragment : Fragment() {
     private val onlineSwitch: SwitchCompat get() = binding.onlineSwitch
     private val mapIdTextView: EditText get() = binding.mapIdTextView
     private val loadMapButton: Button get() = binding.buttonLoadMap
+    private val envSwitch: SwitchCompat get() = binding.envSwitch
     // endregion ------ Common UI ------
-
-    private var disposeBag = CompositeDisposable()
 
     private val packdataManager: IPackdataManager by lazy {
         MapDependencyManager.getPackdataManager(requireContext())
@@ -77,11 +77,8 @@ class InitialFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         updateSwitchText()
-        mapIdTextView.setText("${Constants.mapId}")
 
-        // uncomment if you want to use dev environment
-//        WemapCoreSDK.setEnvironment(Environment.Dev())
-//        WemapCoreSDK.setItinerariesEnvironment(Environment.Dev())
+        mapIdTextView.setText("${Constants.mapId}")
 
         ArrayAdapter
             .createFromResource(
@@ -101,6 +98,16 @@ class InitialFragment : Fragment() {
             updateSwitchText()
         }
 
+        envSwitch.setOnClickListener {
+            envSwitch.text = if (envSwitch.isChecked) "Prod" else "Dev"
+
+            val env = if (envSwitch.isChecked) Prod() else Dev()
+            WemapCoreSDK.setEnvironment(env)
+            WemapCoreSDK.setItinerariesEnvironment(env)
+
+            mapIdTextView.setText("${Constants.mapId}")
+        }
+
         checkAndDownloadButton.setOnClickListener {
             if (checkAndDownloadButton.isSelected) {
                 downloadNewPackdata()
@@ -110,15 +117,17 @@ class InitialFragment : Fragment() {
         }
 
         // if you need to retrieve all points of interest for some map in advance
-//        ServiceFactory
-//            .getPointOfInterestService()
-//            .pointsOfInterestById(Constants.mapId)
-//            .subscribe({
+//        lifecycleScope.launch {
+//            runCatching {
+//                ServiceFactory
+//                    .getPointOfInterestService()
+//                    .pointsOfInterestById(Constants.mapId)
+//            }.onSuccess {
 //                println("received pois - $it")
-//            }, {
+//            }.onFailure {
 //                println("failed to receive pois with error - $it")
-//            })
-//            .disposedBy(disposeBag)
+//            }
+//        }
 
         packdata = loadPackdataIfAvailable()
         if (packdata != null) {
@@ -131,7 +140,6 @@ class InitialFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        disposeBag.clear()
         super.onDestroyView()
         _binding = null
     }
@@ -146,11 +154,10 @@ class InitialFragment : Fragment() {
     private fun showMap() {
         val message = "Desired location source is unavailable on this device"
         when (spinner.selectedItemPosition) {
-            0, 5 ->  if (SimulatorLocationSource.isAvailable) loadMap() else showAlert(message)
-            2 -> loadMap()
-            1, 3 -> if (PolestarLocationSource.isAvailable) loadMap() else showAlert(message)
-            4 -> if (GmsFusedLocationSource.isAvailable(requireContext())) loadMap() else showAlert(message)
-            else ->  throw RuntimeException("Unknown Location Source")
+            0, 3 -> if (SimulatorLocationSource.isAvailable) loadMap() else showAlert(message)
+            1 -> loadMap()
+            2 -> if (GmsFusedLocationSource.isAvailable(requireContext())) loadMap() else showAlert(message)
+            else -> throw IllegalArgumentException("Unknown Location Source")
         }
     }
 
@@ -173,21 +180,22 @@ class InitialFragment : Fragment() {
     private fun loadMap() {
         loadMapButton.isEnabled = false
 
-        val request = (if (onlineSwitch.isChecked) getRemoteMapDataRequest() else getLocalMapDataRequest())
-            ?: return
+        lifecycleScope.launch {
+            try {
+                val mapData = (if (onlineSwitch.isChecked) getRemoteMapDataRequest() else getLocalMapDataRequest())
+                    ?: throw IllegalArgumentException()
 
-        request
-            .doOnTerminate { loadMapButton.isEnabled = true }
-            .subscribe(
-            {
-                showMap(it)
-            }, { error ->
-                val text = "Failed to load map with error - $error"
+                showMap(mapData)
+            } catch(e: Exception) {
+                val text = "Failed to load map with error - $e"
                 Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
-            }).disposedBy(disposeBag)
+            } finally {
+                loadMapButton.isEnabled = true
+            }
+        }
     }
 
-    private fun getRemoteMapDataRequest(): Single<MapData>? {
+    private suspend fun getRemoteMapDataRequest(): MapData? {
         val id = getMapID()
             ?: return null
 
@@ -206,7 +214,7 @@ class InitialFragment : Fragment() {
     // endregion ------ Private ------
 
     // region ------ Packdata ------
-    private fun getLocalMapDataRequest(): Single<MapData>? {
+    private suspend fun getLocalMapDataRequest(): MapData? {
         val packdataItem = packdata
             ?: return null
 
@@ -222,21 +230,21 @@ class InitialFragment : Fragment() {
 
         checkAndDownloadButton.isEnabled = false
 
-        packdataManager
-            .downloadPackdata(id)
-            .subscribe(
-                { packdataItem ->
-                    if (storePackdata(packdataItem)) {
-                        checkAndDownloadButton.isSelected = false
-                        checkAndDownloadButton.text = "Downloaded (v${packdataItem.version})"
-                        loadMapButton.isEnabled = true
-                    }
-                }, { error ->
-                    val text = "Failed to download packdata with error: $error"
-                    Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
-                    checkAndDownloadButton.isEnabled = true
+        lifecycleScope.launch {
+            runCatching {
+                packdataManager.downloadPackdata(id)
+            }.onSuccess { packdataItem ->
+                if (storePackdata(packdataItem)) {
+                    checkAndDownloadButton.isSelected = false
+                    checkAndDownloadButton.text = "Downloaded (v${packdataItem.version})"
+                    loadMapButton.isEnabled = true
                 }
-            ).disposedBy(disposeBag)
+            }.onFailure { error ->
+                val text = "Failed to download packdata with error: $error"
+                Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
+                checkAndDownloadButton.isEnabled = true
+            }
+        }
     }
 
     private fun checkForUpdates() {
@@ -248,24 +256,23 @@ class InitialFragment : Fragment() {
 
         checkAndDownloadButton.isEnabled = false
 
-        packdataManager
-            .isNewPackdataAvailable(id, eTag)
-            .doOnDispose {
+        lifecycleScope.launch {
+            runCatching {
+                packdataManager.isNewPackdataAvailable(id, eTag)
+            }.onSuccess { available ->
+                checkAndDownloadButton.isSelected = available
+                val title = if (available) "Download new packdata" else "Check for updates"
+                checkAndDownloadButton.text = title
+                if (!available) {
+                    showAlert("No new packdata available yet")
+                }
+                checkAndDownloadButton.isEnabled = true
+            }.onFailure { error ->
+                val text = "Failed to check for packdata updates with error: $error"
+                Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
                 checkAndDownloadButton.isEnabled = true
             }
-            .subscribe(
-                { available ->
-                    checkAndDownloadButton.isSelected = available
-                    val title = if (available) "Download new packdata" else "Check for updates"
-                    checkAndDownloadButton.text = title
-                    if (!available) {
-                        showAlert("No new packdata available yet")
-                    }
-                }, { error ->
-                    val text = "Failed to check for packdata updates with error: $error"
-                    Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
-                }
-            ).disposedBy(disposeBag)
+        }
     }
 
     private fun loadPackdataIfAvailable(): Packdata? {

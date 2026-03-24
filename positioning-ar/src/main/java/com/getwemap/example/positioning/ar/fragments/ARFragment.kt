@@ -4,17 +4,14 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.geoar.GeoARView
 import com.getwemap.sdk.geoar.managers.ARLocationManager
 import com.getwemap.sdk.geoar.managers.IARNavigationManager
-import com.getwemap.sdk.core.model.entities.MapData
-import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 abstract class ARFragment : Fragment() {
-
-    protected val disposeBag = CompositeDisposable()
 
     protected abstract val geoARView: GeoARView
     protected lateinit var mapData: MapData
@@ -38,14 +35,4 @@ abstract class ARFragment : Fragment() {
     }
 
     abstract fun onARViewLoaded(arView: GeoARView, mapData: MapData)
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        disposeBag.clear()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        disposeBag.dispose()
-    }
 }

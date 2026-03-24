@@ -7,12 +7,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.multiline
 import com.getwemap.example.positioning.databinding.FragmentVpsBinding
 import com.getwemap.sdk.core.extensions.Location
 import com.getwemap.sdk.core.internal.DependencyManager
-import com.getwemap.sdk.core.internal.extensions.disposedBy
 import com.getwemap.sdk.core.internal.helpers.Logger
 import com.getwemap.sdk.core.location.LocationSourceListener
 import com.getwemap.sdk.core.model.entities.Attitude
@@ -27,7 +27,8 @@ import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.State
 import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
 import com.google.android.material.snackbar.Snackbar
-import io.reactivex.rxjava3.disposables.CompositeDisposable
+import com.google.ar.core.TrackingFailureReason
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 class VPSFragment : Fragment() {
@@ -54,8 +55,6 @@ class VPSFragment : Fragment() {
 
     private var currentSnackbar: Snackbar? = null
     private var rescanRequested = false
-
-    private val disposeBag = CompositeDisposable()
 
     private lateinit var mapData: MapData
     private lateinit var permissionHelper: PermissionHelper
@@ -106,8 +105,7 @@ class VPSFragment : Fragment() {
         debugTextScanStatus.text = "${vpsLocationSource.scanStatus}"
     }
 
-    // UI
-
+    // region UI
     private fun showCamera() {
         mapPlaceholder.visibility = View.INVISIBLE
         cameraLayout.visibility = View.VISIBLE
@@ -124,7 +122,9 @@ class VPSFragment : Fragment() {
         currentSnackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
         currentSnackbar!!.show()
     }
+    // endregion
 
+    // region Private
     /** This method is temporary and may be removed in any future release. */
     private fun forceUserPosition() {
         // Let consider levels mapping (level 0 => 0m, -1 => level -3.5m, level -2 => -7m) // From Wemap BO
@@ -157,15 +157,17 @@ class VPSFragment : Fragment() {
         val origin = Coordinate(48.88007462, 2.35591097, 0f)
         val destination = Coordinate(48.88141308, 2.35747255, -2f)
 
-        DependencyManager
-            .getItineraryProvider()
-            .itineraries(origin, destination, mapId = mapData.id)
-            .subscribe({ itineraries ->
-                vpsLocationSource.itinerary = itineraries.first()
-            }, { error ->
+        lifecycleScope.launch {
+            runCatching {
+                DependencyManager
+                    .getItineraryProvider()
+                    .itineraries(origin, destination, mapId = mapData.id)
+            }.onSuccess {
+                vpsLocationSource.itinerary = it.first()
+            }.onFailure { error ->
                 println("Failed to calculate itineraries with error: $error")
-            })
-            .disposedBy(disposeBag)
+            }
+        }
     }
 
     private fun hardcodedItinerary(): Itinerary {
@@ -236,8 +238,9 @@ class VPSFragment : Fragment() {
 
         return Itinerary.fromSegments(origin, destination, segments)
     }
+    // endregion
 
-    // region ------ Lifecycle ------
+    // region Lifecycle
     override fun onStart() {
         if (permissionHelper.allGranted())
             vpsLocationSource.start()
@@ -253,15 +256,14 @@ class VPSFragment : Fragment() {
     override fun onDestroyView() {
         println("onDestroyView")
         super.onDestroyView()
-        disposeBag.dispose()
         vpsLocationSource.listener = null
         vpsLocationSource.vpsListeners.remove(vpsListener)
         vpsLocationSource.unbind()
         _binding = null
     }
-    // endregion ------ Lifecycle ------
+    // endregion
 
-    // region ------ Listeners ------
+    // region Listeners
     private val locationListener by lazy {
         object : LocationSourceListener {
             override fun onCoordinateChanged(coordinate: Coordinate) {
@@ -282,23 +284,24 @@ class VPSFragment : Fragment() {
     }
 
     private val vpsListener by lazy {
-        WemapVPSARCoreLocationSourceListener(
-            onScanStatusChanged = { scanStatus ->
-                debugTextScanStatus.text = "$scanStatus"
-                updateScanButtons(scanStatus)
+        object : WemapVPSARCoreLocationSourceListener {
+            override fun onScanStatusChanged(status: ScanStatus) {
+                debugTextScanStatus.text = "$status"
+                updateScanButtons(status)
 
                 // rescan successful, reset rescanRequested and update UI
-                if (!scanStatus.isStarted && vpsLocationSource.state.isAccurate) {
+                if (!status.isStarted && vpsLocationSource.state.isAccurate) {
                     rescanRequested = false
                     showMapPlaceholder()
                 }
-            },
-            onStateChanged = { state ->
+            }
+
+            override fun onStateChanged(state: State) {
                 debugTextState.text = "$state"
 
                 // if rescan requested - don't update UI on state changes. UI will be updated on scan status change
                 if (rescanRequested)
-                    return@WemapVPSARCoreLocationSourceListener
+                    return
 
                 when(state) {
                     State.ACCURATE_POSITIONING, State.DEGRADED_POSITIONING ->
@@ -306,18 +309,20 @@ class VPSFragment : Fragment() {
                     State.NOT_POSITIONING ->
                         showCamera()
                 }
-            },
-            onNotPositioningReasonChanged = { reason ->
+            }
+
+            override fun onNotPositioningReasonChanged(reason: WemapVPSARCoreLocationSource.NotPositioningReason) {
                 showError("Not positioning reason: $reason")
-            },
-            onTrackingFailureReasonChanged = { reason ->
+            }
+
+            override fun onTrackingFailureReasonChanged(reason: TrackingFailureReason) {
                 showError("Tracking failure reason: $reason")
             }
-        )
+        }
     }
-    // endregion ------ Listeners ------
+    // endregion
 
-    // region ------ Permissions ------
+    // region Permissions
     private fun createPermissionsHelper() {
         val requiredPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             listOf(permission.CAMERA, permission.ACTIVITY_RECOGNITION)
@@ -329,7 +334,7 @@ class VPSFragment : Fragment() {
 
     private fun checkPermissionsAndStartLocationSource() {
         permissionHelper
-            .request { granted, denied ->
+            .request { _, denied ->
                 if (denied.isEmpty()) {
                     startLocationSource()
                 } else {
@@ -338,5 +343,5 @@ class VPSFragment : Fragment() {
                 }
             }
     }
-    // endregion ------ Permissions ------
+    // endregion
 }
