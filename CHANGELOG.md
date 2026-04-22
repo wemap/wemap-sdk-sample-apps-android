@@ -2,6 +2,18 @@
 
 ---
 
+## [0.28.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.28.1)
+
+### Changed
+
+* All: migrate to kotlin DSL from groovy
+* GeoAR: improve navigation objects loading
+
+### Fixed
+
+* GeoAR: memory crash on long itinerary generation
+* GeoAR: crash due to memory leak of a ViewNode on some devices
+
 ## [0.28.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.28.0)
 
 ### Breaking changes

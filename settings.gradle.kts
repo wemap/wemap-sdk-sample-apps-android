@@ -5,25 +5,26 @@ pluginManagement {
         mavenCentral()
     }
 }
+
 plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
-        maven {
-            url "https://s3.eu-west-1.amazonaws.com/mobile.getwemap.com/releases/android"
-        }
+        maven { url = uri("https://s3.eu-west-1.amazonaws.com/mobile.getwemap.com/releases/android") }
     }
 }
+
 rootProject.name = "WemapSDKSampleApps"
 
 // Examples
-include ':common'
-include ':common-map'
-include ':map'
-include ':map-positioning'
-include ':positioning'
-include ':positioning-ar'
+include(":common")
+include(":common-map")
+include(":map")
+include(":map-positioning")
+include(":positioning-ar")
+include(":positioning")
