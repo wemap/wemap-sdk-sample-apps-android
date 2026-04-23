@@ -56,6 +56,17 @@
 * Removed Pos(Polestar)
   * Removed NAOSDK
 
+## [0.27.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.27.1)
+
+### Changed
+
+* GeoAR: improve navigation objects loading
+
+### Fixed
+
+* GeoAR: memory crash on long itinerary generation
+* GeoAR: crash due to memory leak of a ViewNode on some devices
+
 ## [0.27.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.27.0)
 
 ### Breaking changes
