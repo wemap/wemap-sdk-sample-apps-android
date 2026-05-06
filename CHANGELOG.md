@@ -2,6 +2,14 @@
 
 ---
 
+## [0.28.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.28.2)
+
+### Fixed
+
+* Pos(VPS): Conveyor detected multiple times in a row
+* Core: map matching failed and recalculated itinerary
+* Core: handle unknown Step.kind with generic instruction
+
 ## [0.28.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.28.1)
 
 ### Changed

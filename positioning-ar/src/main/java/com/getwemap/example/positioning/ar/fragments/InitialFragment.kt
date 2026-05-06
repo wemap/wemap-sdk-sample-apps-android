@@ -59,7 +59,7 @@ class InitialFragment : Fragment() {
 
         request = lifecycleScope.launch {
             runCatching {
-                ServiceFactory.getMapService().mapById(id, Constants.token)
+                ServiceFactory.getMapService().mapById(id, Constants.TOKEN)
             }.onSuccess {
                 println("Received map data - $it")
                 val bundle = Bundle()

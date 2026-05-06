@@ -54,6 +54,8 @@
     <string name="recalculate_itinerary_title" translatable="false">Recalculate itinerary if user is far from itinerary</string>
     <string name="user_location_projection_on_itinerary_title" translatable="false">Project user location on itinerary</string>
     <string name="user_location_projection_on_graph_title" translatable="false">Project user location on graph</string>
+    <string name="simulator_deviation_range_title" translatable="false">Simulator deviation range</string>
+    <string name="simulator_deviation_range_message" translatable="false">Simulator deviation range in degrees. This range is used to simulate random user deviation when following the itinerary. Set 0 if you want to disable it. Default value is 20 degrees</string>
 
     <!-- VPS Preferences -->
     <string name="stale_timeout_milliseconds" translatable="false">Stale state timeout in milliseconds</string>

@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import com.getwemap.example.common.CommonAppConstants
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.map.MapLevelsSwitcher
 import com.getwemap.example.common.multiline
@@ -67,8 +68,16 @@ abstract class MapFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     private fun setupLocationSource() {
+
+        val rangeBound = CommonAppConstants.SIMULATOR_DEVIATION_RANGE
+        val simulationOptions = if (rangeBound == .0) {
+            SimulationOptions()
+        } else {
+            SimulationOptions(deviationRange = -rangeBound/2 .. rangeBound/2)
+        }
+
         val locationSource: LocationSource? = when (locationSourceId) {
-            0 -> SimulatorLocationSource(mapData, SimulationOptions(deviationRange = -20.0..20.0, horizontalAccuracy = 3f))
+            0 -> SimulatorLocationSource(mapData, simulationOptions)
             1 -> null
             2 -> GmsFusedLocationSource(requireContext(), mapData)
             3 -> GareDeLyonSimulatorsLocationSource.fromIndoorToOutdoor(mapData)

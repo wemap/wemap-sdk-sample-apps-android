@@ -2,6 +2,13 @@
 
     <PreferenceCategory app:title="@string/global_preferences">
 
+        <EditTextPreference
+            app:defaultValue="20"
+            app:key="SIMULATOR_DEVIATION_RANGE"
+            app:title="@string/simulator_deviation_range_title"
+            app:dialogMessage="@string/simulator_deviation_range_message"
+            app:useSimpleSummaryProvider="true" />
+
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS"

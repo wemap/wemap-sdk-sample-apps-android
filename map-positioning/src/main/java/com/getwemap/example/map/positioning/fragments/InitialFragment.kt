@@ -123,7 +123,7 @@ class InitialFragment : Fragment() {
 
         requestJob = lifecycleScope.launch {
             try {
-                val mapData = WemapMapSDK.instance.mapData(id, Constants.token)
+                val mapData = WemapMapSDK.instance.mapData(id, Constants.TOKEN)
                 showMap(mapData)
             } catch (e: Exception) {
                 val str = "Failed to receive map data with error - ${e.message}"

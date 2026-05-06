@@ -2,6 +2,7 @@ package com.getwemap.example.map
 
 import android.content.Context
 import androidx.preference.PreferenceManager
+import com.getwemap.example.common.CommonAppConstants
 import com.getwemap.example.common.IPreferenceKey
 import com.getwemap.example.common.getBoolean
 import com.getwemap.example.common.getString
@@ -12,6 +13,10 @@ object Config {
 
     fun applyGlobalOptions(context: Context) {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        with(CommonAppConstants) {
+            SIMULATOR_DEVIATION_RANGE = prefs.getString(PreferenceKey.SIMULATOR_DEVIATION_RANGE)
+                ?.toDouble() ?: SIMULATOR_DEVIATION_RANGE
+        }
         with(CoreConstants) {
             ITINERARY_RECALCULATION_ENABLED = prefs
                 .getBoolean(PreferenceKey.ITINERARY_RECALCULATION_ENABLED, ITINERARY_RECALCULATION_ENABLED)
@@ -30,6 +35,8 @@ object Config {
 }
 
 enum class PreferenceKey: IPreferenceKey {
+    // App
+    SIMULATOR_DEVIATION_RANGE,
     // Core
     ITINERARY_RECALCULATION_ENABLED,
     USER_LOCATION_PROJECTION_ON_ITINERARY_ENABLED,
@@ -37,5 +44,5 @@ enum class PreferenceKey: IPreferenceKey {
 
     // Map
     SWITCH_LEVELS_AUTOMATICALLY_ON_USER_MOVEMENTS,
-    STALE_TIMEOUT_MILLISECONDS,
+    STALE_TIMEOUT_MILLISECONDS
 }

@@ -103,7 +103,7 @@ class InitialFragment : Fragment() {
 
         request = lifecycleScope.launch {
             runCatching {
-                ServiceFactory.getMapService().mapById(id, Constants.token)
+                ServiceFactory.getMapService().mapById(id, Constants.TOKEN)
             }.onSuccess {
                 showMap(it)
             }.onFailure {

@@ -199,7 +199,7 @@ class InitialFragment : Fragment() {
         val id = getMapID()
             ?: return null
 
-        return WemapMapSDK.instance.mapData(id, Constants.token)
+        return WemapMapSDK.instance.mapData(id, Constants.TOKEN)
     }
 
     private fun showMap(mapData: MapData) {

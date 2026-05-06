@@ -3,8 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+group = "com.getwemap.example"
+
 android {
-    namespace = "${project.group}.common"
+    namespace = "$group.common"
     compileSdk = 36
 
     defaultConfig {

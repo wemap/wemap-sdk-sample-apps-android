@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+group = "com.getwemap.example"
+
 val appNamespace = "$group.map"
 
 android {
