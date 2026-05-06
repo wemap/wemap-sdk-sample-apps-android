@@ -350,6 +350,10 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
     }
 
     private fun positioningLost(reason: WemapVPSARCoreLocationSource.NotPositioningReason) {
+        // use this if you want to hide blue dot completely instead of having last known position visible.
+        // blue dot becomes gray be default when tracking is lost
+//        locationManager.isEnabled = false
+
         locationManager.cameraMode = CameraMode.NONE
         haptic?.error()
         if (locationManager.lastCoordinate != null)
