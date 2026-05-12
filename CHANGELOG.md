@@ -79,6 +79,8 @@
 
 ### Breaking changes
 
+* Pos(VPS)
+  * Added background scan to improve general system stability. For more info please check our [VPS best practices guide][vps-best-practices]
 * Core
   * `Coordinate`
     * `val accuracy: Float` changed to `val accuracy: Float?`. Null is returned if there is no accuracy.
@@ -105,7 +107,8 @@
 * SampleApp(Map+Pos[VPS]): add haptic feedback on successful scan (success) and on positioning lost (error), also add it on background scan success when state is degraded.
 * Pos(VPS): expose raw camera tracking state from ARCore
 * Pos(VPS): Force a re-scan if user moves away itinerary
-* Pos(VPS): add background scan to improve general system stability. It will be started based on different conditions like:
+* Pos(VPS): add background scan to improve general system stability. Please check our [VPS best practices guide][vps-best-practices].
+  Background scan will be started based on different conditions like:
   * distance traveled
   * time passed since last successful VPS scan
   * quality of relative positioning
@@ -1099,3 +1102,4 @@ mapView.locationManager.apply {
 [3]: https://developers.getwemap.com/android-native-sdk/positioning/wemap-vps-arcore/com.getwemap.sdk.positioning.wemapvpsarcore/-wemap-v-p-s-a-r-core-location-source/check-v-p-s-availability
 [4]: https://developers.getwemap.com/android-native-sdk/positioning/wemap-vps-arcore/com.getwemap.sdk.positioning.wemapvpsarcore/-wemap-v-p-s-a-r-core-location-source/is-v-p-s-available-at
 [5]: https://developers.getwemap.com/android-native-sdk/core/com.getwemap.sdk.core.model.services.parameters/-itinerary-search-options/is-wheelchair
+[vps-best-practices]: https://developers.getwemap.com/docs/guides/vps-best-practices
