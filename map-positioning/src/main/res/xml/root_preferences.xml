@@ -48,6 +48,51 @@
             app:dialogMessage="@string/slow_connection_seconds_message"
             app:useSimpleSummaryProvider="true" />
 
+        <EditTextPreference
+            app:defaultValue="65"
+            app:key="MIN_INCLINATION_ANGLE"
+            app:title="@string/foreground_scan_min_inclination_angle"
+            app:dialogMessage="@string/foreground_scan_min_inclination_angle_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="75"
+            app:key="BACKGROUND_SCAN_MIN_INCLINATION_ANGLE"
+            app:title="@string/background_scan_min_inclination_angle"
+            app:dialogMessage="@string/background_scan_min_inclination_angle_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="30"
+            app:key="BACKGROUND_SCAN_TIME_INTERVAL"
+            app:title="@string/background_scan_time_interval"
+            app:dialogMessage="@string/background_scan_time_interval_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="15"
+            app:key="BACKGROUND_SCAN_DISTANCE_THRESHOLD"
+            app:title="@string/background_scan_distance_threshold"
+            app:dialogMessage="@string/background_scan_distance_threshold_message"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/state_manager_preferences">
+
+        <EditTextPreference
+            app:defaultValue="75"
+            app:key="DEGRADED_DISTANCE_THRESHOLD"
+            app:title="@string/degraded_distance_threshold"
+            app:dialogMessage="@string/degraded_distance_threshold_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="150"
+            app:key="NOT_POSITIONING_DISTANCE_THRESHOLD"
+            app:title="@string/not_positioning_distance_threshold"
+            app:dialogMessage="@string/not_positioning_distance_threshold_message"
+            app:useSimpleSummaryProvider="true" />
+
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/navigation_preferences">

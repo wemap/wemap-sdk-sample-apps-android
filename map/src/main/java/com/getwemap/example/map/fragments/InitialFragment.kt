@@ -6,6 +6,9 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Environment
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
@@ -16,6 +19,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.edit
+import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -41,7 +45,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 
-class InitialFragment : Fragment() {
+class InitialFragment : Fragment(), MenuProvider {
 
     // region ------ Packdata UI ------
     private val packdataLabel: TextView get() = binding.packdataLabel
@@ -75,6 +79,7 @@ class InitialFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        requireActivity().addMenuProvider(this, viewLifecycleOwner)
 
         updateSwitchText()
 
@@ -142,6 +147,20 @@ class InitialFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+        menuInflater.inflate(R.menu.settings_menu, menu)
+    }
+
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
+            R.id.preferences -> {
+                findNavController().navigate(R.id.action_Anywhere_to_SettingsFragment)
+                true
+            }
+            else -> false
+        }
     }
 
     // region ------ Private ------

@@ -14,11 +14,12 @@ import com.getwemap.example.map.databinding.FragmentItemBinding
 class SamplesListFragment : Fragment() {
 
     private val listener by lazy {
-        OnRecyclerViewClickListener { view, position ->
+        OnRecyclerViewClickListener { _, position ->
             val navId = when (position) {
                 0 -> R.id.action_SamplesListFragment_to_LevelsFragment
                 1 -> R.id.action_SamplesListFragment_to_POIsFragment
                 2 -> R.id.action_SamplesListFragment_to_NavigationFragment
+                3 -> R.id.action_SamplesListFragment_to_CustomCreditsFragment
                 else -> throw Exception("Unsupported transition")
             }
             findNavController().navigate(navId, requireArguments())
@@ -53,6 +54,10 @@ class SamplesRecyclerViewAdapter(
             Pair(
                 "Navigation",
                 "Shows how to start/stop navigation to user-created annotations"
+            ),
+            Pair(
+                "Custom credits",
+                "Shows how to override the attribution (ⓘ) button with a custom accessible credits sheet"
             )
         ).map {
             SamplesItem(it.first, it.second)

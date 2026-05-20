@@ -35,6 +35,9 @@
         <action
             android:id="@+id/action_SamplesListFragment_to_NavigationFragment"
             app:destination="@id/NavigationFragment" />
+        <action
+            android:id="@+id/action_SamplesListFragment_to_CustomCreditsFragment"
+            app:destination="@id/CustomCreditsFragment" />
     </fragment>
 
     <fragment
@@ -68,4 +71,10 @@
         android:id="@+id/PoisListFragment"
         android:name="com.getwemap.example.map.fragments.PoisListFragment"
         android:label="@string/pois_list_fragment_label" />
+
+    <fragment
+        android:id="@+id/CustomCreditsFragment"
+        android:name="com.getwemap.example.map.fragments.CustomCreditsFragment"
+        android:label="@string/custom_credits_fragment_label"
+        tools:layout="@layout/fragment_custom_credits" />
 </navigation>

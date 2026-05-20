@@ -3,9 +3,13 @@ package com.getwemap.example.map.positioning.fragments
 import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -32,7 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-class InitialFragment : Fragment() {
+class InitialFragment : Fragment(), MenuProvider {
 
     private var requestJob: Job? = null
 
@@ -49,6 +53,7 @@ class InitialFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        requireActivity().addMenuProvider(this, viewLifecycleOwner)
 
         mapIdTextView.setText("${Constants.mapId}")
 
@@ -161,5 +166,19 @@ class InitialFragment : Fragment() {
         requestJob?.cancel()
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+        menuInflater.inflate(R.menu.settings_menu, menu)
+    }
+
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
+            R.id.preferences -> {
+                findNavController().navigate(R.id.action_Anywhere_to_SettingsFragment)
+                true
+            }
+            else -> false
+        }
     }
 }

@@ -5,6 +5,10 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/InitialFragment">
 
+    <action
+        android:id="@+id/action_Anywhere_to_SettingsFragment"
+        app:destination="@id/SettingsFragment" />
+
     <fragment
         android:id="@+id/InitialFragment"
         android:name="com.getwemap.example.positioning.ar.fragments.InitialFragment"
@@ -73,5 +77,10 @@
         android:name="com.getwemap.example.positioning.ar.fragments.GenericLSFragment"
         android:label="@string/gps_fragment_label"
         tools:layout="@layout/fragment_generic_ls"/>
+
+    <fragment
+        android:id="@+id/SettingsFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.SettingsFragment"
+        android:label="@string/settings_fragment_label" />
 
 </navigation>

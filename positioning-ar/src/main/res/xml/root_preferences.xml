@@ -1,0 +1,13 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/ar_preferences">
+
+        <EditTextPreference
+            app:defaultValue="10.0"
+            app:key="NAVIGATION_VISIBILITY_DISTANCE"
+            app:title="@string/navigation_visibility_distance"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

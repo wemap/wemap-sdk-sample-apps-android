@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.preference.ktx)
 
     implementation(libs.wemap.geoar)
     implementation(libs.wemap.positioning.vps.arcore)

@@ -14,6 +14,7 @@
     <string name="android_fused_adaptive_fragment_label" translatable="false">Android Fused Adaptive Fragment</string>
     <string name="gps_fragment_label" translatable="false">GPS Fragment</string>
     <string name="fused_gms_fragment_label" translatable="false">Fused GMS Fragment</string>
+    <string name="custom_credits_fragment_label" translatable="false">Custom Credits Fragment</string>
 
     <string name="apply_filter" translatable="false">Apply filter</string>
     <string name="remove_filters" translatable="false">Remove filters</string>
@@ -47,7 +48,13 @@
     <!-- Preference Groups -->
     <string name="global_preferences" translatable="false">Global</string>
     <string name="navigation_preferences" translatable="false">Navigation</string>
+    <string name="ar_preferences" translatable="false">AR</string>
     <string name="vps_preferences" translatable="false">VPS</string>
+    <string name="state_manager_preferences" translatable="false">VPS - State Manager</string>
+    <string name="vps_controller_preferences" translatable="false">VPS - VPS Controller</string>
+
+    <!-- AR Preferences -->
+    <string name="navigation_visibility_distance" translatable="false">Navigation visibility distance</string>
 
     <!-- Global Preferences -->
     <string name="switch_levels_title" translatable="false">Switch levels automatically on user movements</string>
@@ -61,6 +68,18 @@
     <string name="stale_timeout_milliseconds" translatable="false">Stale state timeout in milliseconds</string>
     <string name="slow_connection_seconds" translatable="false">Slow connection (in seconds)</string>
     <string name="slow_connection_seconds_message" translatable="false">The maximum allowed time in seconds for a VPS request, at which the connection will be considered slow and the error slowConnectionDetected will be triggered. Default is 5 seconds</string>
+    <string name="foreground_scan_min_inclination_angle" translatable="false">Foreground scan minimum inclination angle (in degrees)</string>
+    <string name="foreground_scan_min_inclination_angle_message" translatable="false">The minimum angle of the phone in degrees allowed for sending an image for recognition on the server during a foreground scan. 0 - the phone is turned face down, 90 - in portrait mode. Default is 65 degrees</string>
+    <string name="background_scan_min_inclination_angle" translatable="false">Background scan minimum inclination angle (in degrees)</string>
+    <string name="background_scan_min_inclination_angle_message" translatable="false">The minimum angle of the phone in degrees allowed for sending an image for recognition on the server during a background scan. Stricter than foreground to reduce floor-picture noise. Default is 75 degrees</string>
+    <string name="background_scan_time_interval" translatable="false">Background scan time interval (in seconds)</string>
+    <string name="background_scan_time_interval_message" translatable="false">Time interval in seconds after which a new background scan will be scheduled. Default is 30 seconds</string>
+    <string name="background_scan_distance_threshold" translatable="false">Background scan distance threshold (in meters)</string>
+    <string name="background_scan_distance_threshold_message" translatable="false">The threshold value of the distance in meters that is used to determine the reliability of the VPS BE result. If the distance exceeds the threshold value, a new background scan will be scheduled to re-check the result. Default is 15 meters</string>
+    <string name="degraded_distance_threshold" translatable="false">Degraded positioning distance threshold (in meters)</string>
+    <string name="degraded_distance_threshold_message" translatable="false">Distance traveled in meters at which the degraded positioning state will be triggered if the scan has not been performed. Default is 75 meters</string>
+    <string name="not_positioning_distance_threshold" translatable="false">Not positioning distance threshold (in meters)</string>
+    <string name="not_positioning_distance_threshold_message" translatable="false">Distance traveled in meters at which the not positioning state will be triggered if the scan has not been performed. Default is 150 meters</string>
 
     <!-- Navigation Preferences -->
     <string name="arrived_distance_threshold_title" translatable="false">Arrived distance threshold</string>

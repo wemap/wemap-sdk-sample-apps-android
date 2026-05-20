@@ -2,6 +2,26 @@
 
 ---
 
+## [0.29.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.29.0)
+
+### Added
+
+* Map: allow overriding (i) button + add a new CustomCredits sample
+* GeoAR: add ability to disable navigation arrows
+* Pos(VPS): Split inclination angle constant in two (background/foreground) for VPS scan
+
+### Changed
+
+* Map: make WemapMapView class open to allow subclassing
+* Pos(VPS): Foreground scan minimum inclination angle changed from 80 to 65 degrees by default
+
+### Dependencies
+
+* Pos(VPS)
+  * ARCore 1.53.0 -> 1.54.0
+* GeoAR
+  * Camera 1.5.3 -> 1.6.1
+
 ## [0.28.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.28.2)
 
 ### Fixed

@@ -7,6 +7,8 @@ import com.getwemap.example.common.getBoolean
 import com.getwemap.example.common.getString
 import com.getwemap.sdk.core.CoreConstants
 import com.getwemap.sdk.map.helpers.MapConstants
+import com.getwemap.sdk.positioning.wemapvpsarcore.constants.StateManagerConstants
+import com.getwemap.sdk.positioning.wemapvpsarcore.constants.VPSControllerConstants
 import com.getwemap.sdk.positioning.wemapvpsarcore.internal.WemapVPSARCoreConstants
 
 object AppConstants {
@@ -46,6 +48,22 @@ object Config {
         with(WemapVPSARCoreConstants) {
             SLOW_CONNECTION_SECONDS = prefs.getString(PreferenceKey.SLOW_CONNECTION_SECONDS)
                 ?.toLong() ?: SLOW_CONNECTION_SECONDS
+            MIN_INCLINATION_ANGLE = prefs.getString(PreferenceKey.MIN_INCLINATION_ANGLE)
+                ?.toDouble() ?: MIN_INCLINATION_ANGLE
+        }
+        with(VPSControllerConstants) {
+            BACKGROUND_SCAN_MIN_INCLINATION_ANGLE = prefs.getString(PreferenceKey.BACKGROUND_SCAN_MIN_INCLINATION_ANGLE)
+                ?.toDouble() ?: BACKGROUND_SCAN_MIN_INCLINATION_ANGLE
+            BACKGROUND_SCAN_TIME_INTERVAL = prefs.getString(PreferenceKey.BACKGROUND_SCAN_TIME_INTERVAL)
+                ?.toDouble() ?: BACKGROUND_SCAN_TIME_INTERVAL
+            BACKGROUND_SCAN_DISTANCE_THRESHOLD = prefs.getString(PreferenceKey.BACKGROUND_SCAN_DISTANCE_THRESHOLD)
+                ?.toDouble() ?: BACKGROUND_SCAN_DISTANCE_THRESHOLD
+        }
+        with(StateManagerConstants) {
+            DEGRADED_DISTANCE_THRESHOLD = prefs.getString(PreferenceKey.DEGRADED_DISTANCE_THRESHOLD)
+                ?.toDouble() ?: DEGRADED_DISTANCE_THRESHOLD
+            NOT_POSITIONING_DISTANCE_THRESHOLD = prefs.getString(PreferenceKey.NOT_POSITIONING_DISTANCE_THRESHOLD)
+                ?.toDouble() ?: NOT_POSITIONING_DISTANCE_THRESHOLD
         }
     }
 }
@@ -64,5 +82,15 @@ enum class PreferenceKey: IPreferenceKey {
     STALE_TIMEOUT_MILLISECONDS,
 
     // VPS
-    SLOW_CONNECTION_SECONDS
+
+    // VPSController
+    SLOW_CONNECTION_SECONDS,
+    MIN_INCLINATION_ANGLE,
+    BACKGROUND_SCAN_MIN_INCLINATION_ANGLE,
+    BACKGROUND_SCAN_TIME_INTERVAL,
+    BACKGROUND_SCAN_DISTANCE_THRESHOLD,
+
+    // StateManager
+    DEGRADED_DISTANCE_THRESHOLD,
+    NOT_POSITIONING_DISTANCE_THRESHOLD
 }
