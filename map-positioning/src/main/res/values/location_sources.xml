@@ -6,5 +6,6 @@
         <item>System Default</item>
         <item>GPS</item>
         <item>Fused GMS</item>
+        <item>VPS Local (offline)</item>
     </string-array>
 </resources>

@@ -1,5 +1,6 @@
 [versions]
 wemap = "0.29.0"
+wemapVpsLocal = "0.29.0-alpha.1"
 
 # plugins
 androidGradlePlugin = "8.13.2"
@@ -36,6 +37,7 @@ wemap-geoar = { group = "com.getwemap.sdk", name = "geo-ar", version.ref = "wema
 
 # wemap positioning
 wemap-positioning-vps-arcore = { group = "com.getwemap.sdk.positioning", name = "wemap-vps-arcore", version.ref = "wemap" }
+wemap-positioning-vps-local = { group = "com.getwemap.sdk.positioning", name = "wemap-vps-local", version.ref = "wemapVpsLocal" }
 wemap-positioning-android-fused-adaptive = { group = "com.getwemap.sdk.positioning", name = "android-fused-adaptive", version.ref = "wemap" }
 wemap-positioning-fused-gms = { group = "com.getwemap.sdk.positioning", name = "fused-gms", version.ref = "wemap" }
 wemap-positioning-gps = { group = "com.getwemap.sdk.positioning", name = "gps", version.ref = "wemap" }

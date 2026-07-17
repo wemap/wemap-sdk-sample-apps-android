@@ -8,8 +8,10 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.core.view.MenuProvider
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -17,6 +19,7 @@ import com.getwemap.example.common.Constants
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.positioning.Config
 import com.getwemap.example.map.positioning.R
+import com.getwemap.example.map.positioning.VpsLocalMapDownloader
 import com.getwemap.example.map.positioning.databinding.FragmentInitialBinding
 import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.WemapMapSDK
@@ -32,13 +35,18 @@ import com.google.ar.core.ArCoreApk.InstallStatus.INSTALL_REQUESTED
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+private const val LOCATION_SOURCE_VPS_LOCAL = 5
+
 class InitialFragment : Fragment(), MenuProvider {
 
     private var requestJob: Job? = null
+    private var downloadJob: Job? = null
 
     private var _binding: FragmentInitialBinding? = null
     private val binding get() = _binding!!
@@ -68,9 +76,22 @@ class InitialFragment : Fragment(), MenuProvider {
                 spinner.adapter = adapter
             }
 
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                updateVpsLocalUi()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        binding.vpsLocalDownloadButton.setOnClickListener {
+            downloadVpsLocalDatabase()
+        }
+
         binding.buttonLoadMap.setOnClickListener {
             checkAvailability()
         }
+
+        updateVpsLocalUi()
     }
 
     private fun checkAvailability() {
@@ -86,9 +107,81 @@ class InitialFragment : Fragment(), MenuProvider {
             1, 2 -> loadMap() // Simulator, System Default
             3 -> if (GPSLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
             4 -> if (GmsFusedLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
+            LOCATION_SOURCE_VPS_LOCAL -> // VPS Local (offline)
+                if (VpsLocalMapDownloader.isAvailable(requireContext()))
+                    loadMap()
+                else
+                    showUnavailableAlert("Offline VPS map database is not downloaded yet")
             else ->  throw IllegalArgumentException("Unknown Location Source")
         }
     }
+
+    // region ------ VPS Local (offline) ------
+    private fun updateVpsLocalUi() {
+        val isVpsLocal = spinner.selectedItemPosition == LOCATION_SOURCE_VPS_LOCAL
+        binding.vpsLocalLayout.isVisible = isVpsLocal
+        if (!isVpsLocal)
+            return
+
+        // Prefill the map id that matches the offline dataset, when it is configured.
+        if (VpsLocalMapDownloader.MAP_ID >= 0)
+            mapIdTextView.setText("${VpsLocalMapDownloader.MAP_ID}")
+
+        if (VpsLocalMapDownloader.isAvailable(requireContext())) {
+            binding.vpsLocalStatus.text = "Offline VPS map database ready"
+            binding.vpsLocalDownloadButton.text = "Re-download"
+        } else {
+            binding.vpsLocalStatus.text = "Offline VPS map database not downloaded"
+            binding.vpsLocalDownloadButton.text = "Download"
+        }
+    }
+
+    private fun downloadVpsLocalDatabase() {
+        if (downloadJob?.isActive == true)
+            return
+
+        val ids = try {
+            val forceAll = VpsLocalMapDownloader.isAvailable(requireContext())
+            VpsLocalMapDownloader.enqueueDownloads(requireContext(), forceAll)
+        } catch (e: IllegalStateException) {
+            // Raised by VpsLocalMapDownloader when MAP_ID / MAP_NAME are still placeholders.
+            binding.vpsLocalStatus.text = e.message
+            return
+        }
+        if (ids.isEmpty()) {
+            updateVpsLocalUi()
+            return
+        }
+
+        binding.vpsLocalDownloadButton.isEnabled = false
+
+        downloadJob = lifecycleScope.launch {
+            while (isActive) {
+                val progress = VpsLocalMapDownloader.queryProgress(requireContext(), ids)
+                val downloaded = progress.sumOf { it.downloaded }
+                val total = progress.sumOf { it.total }.coerceAtLeast(1)
+
+                when {
+                    progress.any { it.failed } -> {
+                        binding.vpsLocalStatus.text = "Download failed"
+                        binding.vpsLocalDownloadButton.isEnabled = true
+                        break
+                    }
+                    progress.isNotEmpty() && progress.all { it.done } -> {
+                        binding.vpsLocalDownloadButton.isEnabled = true
+                        updateVpsLocalUi()
+                        break
+                    }
+                    else -> {
+                        binding.vpsLocalStatus.text =
+                            "Downloading… ${downloaded / 1_000_000}MB / ${total / 1_000_000}MB"
+                    }
+                }
+                delay(500)
+            }
+        }
+    }
+    // endregion ------ VPS Local (offline) ------
 
     // requestInstall(Activity, true) will triggers installation of
     // Google Play Services for AR if necessary.
@@ -151,12 +244,15 @@ class InitialFragment : Fragment(), MenuProvider {
         val bundle = Bundle().apply {
             putInt("locationSourceId", spinner.selectedItemPosition)
             putString("mapData", Json.encodeToString(mapData))
+            if (spinner.selectedItemPosition == LOCATION_SOURCE_VPS_LOCAL) {
+                putString("mapDir", VpsLocalMapDownloader.mapDir(requireContext()).absolutePath)
+            }
         }
 
-        val destination = if (spinner.selectedItemPosition == 0) {
-            R.id.action_InitialFragment_to_MapVPSFragment
-        } else {
-            R.id.action_InitialFragment_to_MapFragment
+        val destination = when (spinner.selectedItemPosition) {
+            0 -> R.id.action_InitialFragment_to_MapVPSFragment
+            LOCATION_SOURCE_VPS_LOCAL -> R.id.action_InitialFragment_to_MapVPSLocalFragment
+            else -> R.id.action_InitialFragment_to_MapFragment
         }
 
         findNavController().navigate(destination, bundle)
@@ -164,6 +260,7 @@ class InitialFragment : Fragment(), MenuProvider {
 
     override fun onDestroyView() {
         requestJob?.cancel()
+        downloadJob?.cancel()
         super.onDestroyView()
         _binding = null
     }

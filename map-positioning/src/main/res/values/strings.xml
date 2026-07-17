@@ -4,6 +4,7 @@
     <string name="map_fragment_label" translatable="false">Map Fragment</string>
     <string name="initial_fragment_label" translatable="false">Initial Fragment</string>
     <string name="map_vps_fragment_label" translatable="false">Map VPS Fragment</string>
+    <string name="map_vps_local_fragment_label" translatable="false">Map VPS Local Fragment</string>
     <string name="settings_fragment_label" translatable="false">Settings Fragment</string>
     <string name="load_map" translatable="false">Load Map</string>
     <string name="locate_me" translatable="false">Locate Me</string>
