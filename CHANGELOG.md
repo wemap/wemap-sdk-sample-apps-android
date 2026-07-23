@@ -2,6 +2,14 @@
 
 ---
 
+## [0.29.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.29.1)
+
+### Fixed
+
+* GeoAR: hideAllPOIs doesn't work if called on geoARViewLoaded callback
+* Map: blue dot missing the very first coordinate received
+* Map: blue dot is not updated after location source switch
+
 ## [0.29.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.29.0)
 
 ### Added
