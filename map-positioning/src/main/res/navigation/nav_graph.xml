@@ -25,6 +25,10 @@
         <action
             android:id="@+id/action_InitialFragment_to_MapVPSLocalFragment"
             app:destination="@id/MapVPSLocalFragment" />
+
+        <action
+            android:id="@+id/action_InitialFragment_to_VpsLocalHistoryFragment"
+            app:destination="@id/VpsLocalHistoryFragment" />
     </fragment>
 
     <fragment
@@ -45,6 +49,23 @@
         android:name="com.getwemap.example.map.positioning.fragments.MapVPSLocalFragment"
         android:label="@string/map_vps_local_fragment_label"
         tools:layout="@layout/fragment_map_vps_local"/>
+
+    <fragment
+        android:id="@+id/VpsLocalHistoryFragment"
+        android:name="com.getwemap.example.map.positioning.fragments.VpsLocalHistoryFragment"
+        android:label="@string/vps_local_history_label"
+        tools:layout="@layout/fragment_vps_local_history">
+
+        <action
+            android:id="@+id/action_VpsLocalHistoryFragment_to_VpsLocalHistoryMapFragment"
+            app:destination="@id/VpsLocalHistoryMapFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/VpsLocalHistoryMapFragment"
+        android:name="com.getwemap.example.map.positioning.fragments.VpsLocalHistoryMapFragment"
+        android:label="@string/vps_local_history_label"
+        tools:layout="@layout/fragment_vps_local_history_map" />
 
     <fragment
         android:id="@+id/SettingsFragment"

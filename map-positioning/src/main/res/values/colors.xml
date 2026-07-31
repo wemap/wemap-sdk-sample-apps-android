@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Offline VPS scan-activity indicator: producing events / quiet (movement-aware cadence
+         holding off a scan) / silent for longer than expected / scan loop stopped. -->
+    <color name="scan_active">#4CD964</color>
+    <color name="scan_idle">#FFCC00</color>
+    <color name="scan_stalled">#FF3B30</color>
+    <color name="scan_stopped">#8E8E93</color>
+</resources>

@@ -16,6 +16,15 @@
     <string name="start_navigation_user_created_annotations" translatable="false">Start navigation from user-created annotations</string>
     <string name="remove_user_created_annotations" translatable="false">Remove user-created annotations</string>
 
+    <!-- Offline VPS session history -->
+    <string name="vps_local_history_label" translatable="false">Scan history</string>
+    <string name="vps_local_history_button" translatable="false">History</string>
+    <string name="vps_local_history_header" translatable="false">Map %1$d — %2$d recorded session(s)</string>
+    <string name="vps_local_history_empty" translatable="false">No scanning sessions recorded yet for this map. Run the offline VPS sample and they will appear here.</string>
+    <string name="vps_local_history_delete_all" translatable="false">Delete all sessions</string>
+    <string name="vps_local_history_no_fixes" translatable="false">This session recorded no fixes, so there is no trace to draw.</string>
+    <string name="vps_local_history_tap_hint" translatable="false">Tap the map for the nearest fix</string>
+
     <string name="app_preferences" translatable="false">App</string>
     <string name="enable_haptic_feedback_title" translatable="false">Enable haptic feedback</string>
 </resources>

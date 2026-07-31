@@ -1,6 +1,6 @@
 [versions]
 wemap = "0.29.1"
-wemapVpsLocal = "0.29.1-alpha.2"
+wemapVpsLocal = "0.29.1-alpha.3"
 
 # plugins
 androidGradlePlugin = "8.13.2"

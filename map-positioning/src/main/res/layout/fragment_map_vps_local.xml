@@ -56,85 +56,8 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_horizontal" />
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="16dp" />
-
-                    <Button
-                        android:id="@+id/itinerary_calculate_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:text="Calculate Itinerary to PoI" />
-
                 </LinearLayout>
 
-                <LinearLayout
-                    android:id="@+id/itinerary_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="#DDDDDDDD"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:id="@+id/itinerary_info"
-                        style="@style/TextAppearance.AppCompat.Title"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_horizontal" />
-
-                    <LinearLayout
-                        style="?android:attr/buttonBarStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:orientation="horizontal">
-
-                        <Button
-                            android:id="@+id/navigation_start_button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Start Navigation" />
-
-                        <View
-                            android:layout_width="16dp"
-                            android:layout_height="match_parent" />
-
-                        <Button
-                            android:id="@+id/itinerary_close_button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Close Itinerary" />
-                    </LinearLayout>
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/navigation_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="#DDDDDDDD"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:id="@+id/navigation_info"
-                        style="@style/TextAppearance.AppCompat.Title"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_horizontal" />
-
-                    <Button
-                        android:id="@+id/navigation_stop_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:text="Stop Navigation" />
-
-                </LinearLayout>
             </FrameLayout>
 
             <ImageButton
@@ -166,6 +89,42 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <!-- Compact status chip surfaced over the map during continuous background scanning,
+             when the full-screen scan overlay (and its scan_status_text) is hidden. The dot is the
+             liveness indicator: it flashes on every scan event and its colour tells whether the scan
+             loop is running, merely quiet (movement-aware cadence), or stalled. -->
+        <LinearLayout
+            android:id="@+id/map_scan_status_chip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_margin="16dp"
+            android:background="#DD222222"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <View
+                android:id="@+id/scan_activity_dot"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_circle"
+                android:backgroundTint="@color/scan_active" />
+
+            <TextView
+                android:id="@+id/map_scan_status_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/white"
+                tools:text="Scanning • 3 fixes • 2s ago\nLocalized ✓" />
+
+        </LinearLayout>
+
     </FrameLayout>
 
     <FrameLayout
@@ -182,16 +141,38 @@
             android:layout_height="match_parent"
             android:layout_gravity="top" />
 
-        <TextView
-            style="@style/TextAppearance.AppCompat.Title"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal|top"
+            android:layout_gravity="top"
             android:layout_margin="16dp"
-            android:background="#DDDDDD"
-            android:gravity="center"
-            android:padding="16dp"
-            android:text="Scan your surroundings by pointing camera to shops or signs around you." />
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/TextAppearance.AppCompat.Title"
+                android:background="#DDDDDD"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="Scan your surroundings by pointing camera to shops or signs around you." />
+
+            <!-- Live scan status: updated on every localization, scan outcome, and error so the
+                 scanner's behaviour is visible during on-device tests (not just in logcat). -->
+            <TextView
+                android:id="@+id/scan_status_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="#DD222222"
+                android:gravity="center"
+                android:padding="8dp"
+                android:textColor="@color/white"
+                android:visibility="gone"
+                tools:text="Scanning…"
+                tools:visibility="visible" />
+
+        </LinearLayout>
 
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/continuous_scan_switch"
