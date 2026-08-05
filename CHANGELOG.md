@@ -2,6 +2,12 @@
 
 ---
 
+## [0.29.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.29.2)
+
+### Fixed
+
+* Map: Map stuck in loading state after repeated instantiation (Compose)
+
 ## [0.29.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.29.1)
 
 ### Fixed
