@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The Custom credits screen's own controls. The credits button cannot be styled from XML - MapLibre
+         builds it - so CustomCreditsFragment applies the same resources to it by hand. -->
+    <style name="OverlayIconButton">
+        <item name="android:background">@drawable/bg_overlay_button</item>
+        <item name="android:foreground">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:padding">@dimen/overlay_button_padding</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">?attr/colorPrimary</item>
+    </style>
+</resources>

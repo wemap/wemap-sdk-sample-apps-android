@@ -28,8 +28,8 @@ class CreditsBottomSheetFragment : BottomSheetDialogFragment() {
         ViewCompat.setAccessibilityHeading(binding.titleLabel, true)
 
         binding.creditsLabel.text =
-            "This map was created using Wemap SDK (v${BuildConfig.LIBRARY_VERSION}) " +
-            "with data from OpenStreetMap contributors."
+            "Cette carte a été créée par notre partenaire Wemap grâce aux données d'Open StreetMap. " +
+            "Version actuelle : ${BuildConfig.LIBRARY_VERSION}."
 
         binding.wemapButton.setOnClickListener { openUrl("https://getwemap.com") }
         binding.osmButton.setOnClickListener { openUrl("https://www.openstreetmap.org/copyright") }

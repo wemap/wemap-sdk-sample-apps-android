@@ -2,6 +2,10 @@
 
 ---
 
+### Changed
+
+* Map: the CustomCredits sample customizes the size, border and position of the (i) button, and styles the screen's own controls to match
+
 ## [0.29.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.29.2)
 
 ### Fixed

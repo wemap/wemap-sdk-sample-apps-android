@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The fill, the border and the circular shape of every overlay control on the Custom credits screen,
+     the credits button MapLibre owns included - it is a plain ImageView, so it takes this background too. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/colorSurface" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/overlay_button_border" />
+</shape>
