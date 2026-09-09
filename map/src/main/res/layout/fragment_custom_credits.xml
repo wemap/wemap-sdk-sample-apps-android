@@ -4,32 +4,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.getwemap.example.map.fragments.NavigationMapView
+    <com.getwemap.example.map.fragments.CustomCreditsMapView
         android:id="@+id/map_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:accessibilityTraversalAfter="@+id/dummyButton" />
 
-    <Button
+    <ImageButton
         android:id="@+id/closeButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:text="Close"
-        android:contentDescription="Close"
+        style="@style/OverlayIconButton"
+        android:layout_width="@dimen/overlay_button_size"
+        android:layout_height="@dimen/overlay_button_size"
+        android:layout_margin="@dimen/overlay_button_margin"
+        android:src="@drawable/close_24px"
+        android:contentDescription="Fermer"
         android:accessibilityTraversalBefore="@+id/dummyButton"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <Button
+    <ImageButton
         android:id="@+id/dummyButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:text="Dummy"
-        android:contentDescription="Dummy"
+        style="@style/OverlayIconButton"
+        android:layout_width="@dimen/overlay_button_size"
+        android:layout_height="@dimen/overlay_button_size"
+        android:layout_margin="@dimen/overlay_button_margin"
+        android:src="@drawable/add_24px"
+        android:contentDescription="Bouton d\'exemple"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

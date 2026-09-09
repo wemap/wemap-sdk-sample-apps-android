@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Hairline around the overlay controls of the Custom credits screen. -->
+    <color name="overlay_button_border">#1F000000</color>
+</resources>

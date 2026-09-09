@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shared by the Custom credits screen's own buttons and by the credits button it restyles in code -
+         one set of values is what makes the three read as one set of controls. 48dp is the minimum touch
+         target Android asks for. -->
+    <dimen name="overlay_button_size">48dp</dimen>
+    <dimen name="overlay_button_padding">12dp</dimen>
+    <dimen name="overlay_button_margin">16dp</dimen>
+</resources>

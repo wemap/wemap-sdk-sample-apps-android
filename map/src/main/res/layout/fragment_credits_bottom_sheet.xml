@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        android:text="Map information"
+        android:text="Informations sur la carte de la gare"
         android:textAppearance="@style/TextAppearance.AppCompat.Title"
         android:gravity="center" />
 
@@ -39,8 +39,9 @@
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Learn more about Wemap"
-        android:contentDescription="Learn more about Wemap. Opens in browser." />
+        android:text="En savoir plus sur Wemap"
+        android:textAllCaps="false"
+        android:contentDescription="En savoir plus sur Wemap. Ouverture dans une nouvelle fenêtre." />
 
     <View
         android:layout_width="match_parent"
@@ -52,8 +53,9 @@
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="OpenStreetMap contributors"
-        android:contentDescription="OpenStreetMap contributors information. Opens in browser." />
+        android:text="Plus d\'informations sur Open StreetMap"
+        android:textAllCaps="false"
+        android:contentDescription="Plus d\'informations sur Open StreetMap. Ouverture dans une nouvelle fenêtre." />
 
     <View
         android:layout_width="match_parent"
@@ -65,7 +67,8 @@
         android:id="@+id/closeButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Close"
-        android:contentDescription="Close" />
+        android:text="Fermer"
+        android:textAllCaps="false"
+        android:contentDescription="Fermer" />
 
 </LinearLayout>

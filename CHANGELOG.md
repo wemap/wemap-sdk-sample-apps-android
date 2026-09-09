@@ -2,6 +2,20 @@
 
 ---
 
+### Added
+
+* Map: the Levels sample restores the camera and active level across screen recreation
+
+### Changed
+
+* Map: the CustomCredits sample customizes the size, border and position of the (i) button, and styles the screen's own controls to match
+
+## [0.29.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.29.2)
+
+### Fixed
+
+* Map: Map stuck in loading state after repeated instantiation (Compose)
+
 ## [0.29.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.29.1)
 
 ### Fixed
