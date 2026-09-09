@@ -4,11 +4,17 @@
 
 ### Added
 
+* Pos(VPS Local): the offline VPS sample loads the venue from a downloaded packdata instead of the backend, so the map, positioning and scan history all work with no network
+* Pos(VPS Local): scan history resolves its venue offline too, so a recorded walk stays reviewable without a network
 * Map: the Levels sample restores the camera and active level across screen recreation
 
 ### Changed
 
 * Map: the CustomCredits sample customizes the size, border and position of the (i) button, and styles the screen's own controls to match
+
+### Fixed
+
+* Pos(VPS Local): opening a recorded session's trace crashed unless a map had been loaded earlier in the same process
 
 ## [0.29.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.29.2)
 

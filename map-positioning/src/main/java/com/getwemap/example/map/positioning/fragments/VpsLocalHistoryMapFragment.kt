@@ -12,6 +12,7 @@ import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.map.OnMapViewReadyCallback
 import com.getwemap.sdk.map.WemapMapView
 import kotlinx.serialization.json.Json
+import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
@@ -54,6 +55,7 @@ class VpsLocalHistoryMapFragment : Fragment(), OnMapViewReadyCallback {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
+        MapLibre.getInstance(requireContext())
         _binding = FragmentVpsLocalHistoryMapBinding.inflate(inflater, container, false)
         return binding.root
     }

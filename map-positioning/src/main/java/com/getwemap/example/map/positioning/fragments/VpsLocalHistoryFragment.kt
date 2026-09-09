@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.getwemap.example.common.Constants
 import com.getwemap.example.common.multiline
+import com.getwemap.example.map.positioning.PackdataStore
 import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.VpsLocalSessionHistory
 import com.getwemap.example.map.positioning.databinding.FragmentVpsLocalHistoryBinding
@@ -36,6 +37,9 @@ class VpsLocalHistoryFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val mapId: Int by lazy { requireArguments().getInt(ARG_MAP_ID) }
+
+    /** Whether the launching screen is in offline mode — see [openTrace]. */
+    private val isOffline: Boolean by lazy { requireArguments().getBoolean(ARG_OFFLINE) }
     private var mapDataJob: Job? = null
 
     override fun onCreateView(
@@ -66,9 +70,13 @@ class VpsLocalHistoryFragment : Fragment() {
     }
 
     /**
-     * Opens a session's trace. The venue's [com.getwemap.sdk.core.model.entities.MapData] is fetched here
+     * Opens a session's trace. The venue's [com.getwemap.sdk.core.model.entities.MapData] is resolved here
      * rather than passed down from the launching screen: a session records the map id it belongs to, so
      * history is reachable without having loaded that venue's map first.
+     *
+     * Offline it comes from the stored packdata rather than the backend. Reviewing a walk is exactly what
+     * happens after one — often still in the venue, still without a network — so fetching the venue online
+     * would strand the whole screen there.
      */
     private fun openTrace(session: VpsLocalSessionHistory.Session) {
         if (session.fixes.isEmpty()) {
@@ -79,7 +87,11 @@ class VpsLocalHistoryFragment : Fragment() {
         mapDataJob?.cancel()
         mapDataJob = viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val mapData = WemapMapSDK.instance.mapData(session.mapId, Constants.TOKEN)
+                val mapData = if (isOffline)
+                    PackdataStore.loadMapData(requireContext(), session.mapId)
+                else
+                    WemapMapSDK.instance.mapData(session.mapId, Constants.TOKEN)
+
                 findNavController().navigate(
                     R.id.action_VpsLocalHistoryFragment_to_VpsLocalHistoryMapFragment,
                     Bundle().apply {
@@ -128,5 +140,6 @@ class VpsLocalHistoryFragment : Fragment() {
 
     companion object {
         const val ARG_MAP_ID = "mapId"
+        const val ARG_OFFLINE = "offline"
     }
 }
