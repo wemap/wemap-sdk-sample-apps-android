@@ -9,7 +9,12 @@ import com.getwemap.example.map.databinding.FragmentLevelsBinding
 import com.getwemap.sdk.core.internal.geo.LevelUtils
 import com.getwemap.sdk.core.internal.helpers.Logger
 import com.getwemap.sdk.core.model.entities.PointOfInterest
+import com.getwemap.sdk.map.buildings.Building
+import com.getwemap.sdk.map.buildings.BuildingManager
+import com.getwemap.sdk.map.buildings.BuildingManagerListener
 import org.maplibre.android.MapLibre
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.constants.MapLibreConstants
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.LineLayer
@@ -20,6 +25,15 @@ import org.maplibre.geojson.Point
 import org.maplibre.turf.TurfConstants
 import org.maplibre.turf.TurfTransformation
 
+/**
+ * Demonstrates level switching, POI selection, and state restoration across activity recreation.
+ *
+ * [MapFragment] forwards the saved instance state to MapLibre, which initially restores the complete camera.
+ * Pre-v1 [com.getwemap.sdk.map.WemapMapView] then applies the map-data camera after its style loads, so this
+ * fragment retains MapLibre's saved camera and reapplies it when Wemap reports the map ready. The SDK does not
+ * put the active level in that bundle, so the fragment saves its ID and reapplies it when the recreated map
+ * focuses a building.
+ */
 class LevelsFragment : MapFragment() {
 
     override val mapView get() = binding.mapView
@@ -33,6 +47,15 @@ class LevelsFragment : MapFragment() {
 
     private val pois: Set<PointOfInterest> get() = pointOfInterestManager.getPOIs()
     private var uniqueLevels: Set<Float> = emptySet()
+    private var observedBuildingManager: BuildingManager? = null
+    private var cameraPositionToRestore: CameraPosition? = null
+    private var currentLevelId: Float? = null
+    private var levelIdToRestore: Float? = null
+
+    private val buildingManagerListener = BuildingManagerListener(
+        onActiveLevelChanged = { _, level -> currentLevelId = level.id },
+        onFocusedBuildingChanged = ::restoreOrRememberLevel
+    )
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
@@ -41,15 +64,35 @@ class LevelsFragment : MapFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        cameraPositionToRestore = savedInstanceState?.savedCameraPosition()
+        currentLevelId = savedInstanceState?.takeIf { it.containsKey(SAVED_LEVEL_ID) }?.getFloat(SAVED_LEVEL_ID)
+        levelIdToRestore = currentLevelId
+
         super.onViewCreated(view, savedInstanceState)
 
         buttonFirstPOI.setOnClickListener { firstClicked() }
         buttonSecondPOI.setOnClickListener { secondClicked() }
 
-        mapView.getMapViewAsync { _, map, style, _ ->
+        mapView.getMapViewAsync { loadedView, map, style, _ ->
+            val manager = loadedView.buildingManager
+            if (manager.addListener(buildingManagerListener)) {
+                observedBuildingManager = manager
+            }
+
+            cameraPositionToRestore?.let {
+                map.cameraPosition = it
+                cameraPositionToRestore = null
+            }
+
             uniqueLevels = pois.mapNotNull { it.coordinate.levels.firstOrNull() }.toSet()
             drawCircleAroundCenter(map, style)
+            restoreOrRememberLevel(manager.focusedBuilding)
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        currentLevelId?.let { outState.putFloat(SAVED_LEVEL_ID, it) }
+        super.onSaveInstanceState(outState)
     }
 
     private fun firstClicked() {
@@ -94,11 +137,34 @@ class LevelsFragment : MapFragment() {
     }
 
     override fun onDestroyView() {
+        observedBuildingManager?.removeListener(buildingManagerListener)
+        observedBuildingManager = null
         super.onDestroyView()
         _binding = null
     }
 
+    private fun restoreOrRememberLevel(building: Building?) {
+        val focusedBuilding = building ?: return
+        val savedLevelId = levelIdToRestore
+        if (savedLevelId != null) {
+            if (focusedBuilding.levels.any { it.id == savedLevelId }) {
+                focusedBuilding.activeLevelId = savedLevelId
+                currentLevelId = savedLevelId
+            } else {
+                currentLevelId = focusedBuilding.activeLevelId
+            }
+            levelIdToRestore = null
+        } else {
+            currentLevelId = focusedBuilding.activeLevelId
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun Bundle.savedCameraPosition(): CameraPosition? =
+        getParcelable(MapLibreConstants.STATE_CAMERA_POSITION)
+
     companion object {
+        private const val SAVED_LEVEL_ID = "savedLevelId"
         private const val CIRCLE_SOURCE_ID = "center-circle-source"
         private const val CIRCLE_LAYER_ID = "center-circle-layer"
         private const val CIRCLE_RADIUS_METERS = 100.0

@@ -2,6 +2,10 @@
 
 ---
 
+### Added
+
+* Map: the Levels sample restores the camera and active level across screen recreation
+
 ### Changed
 
 * Map: the CustomCredits sample customizes the size, border and position of the (i) button, and styles the screen's own controls to match

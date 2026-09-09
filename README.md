@@ -19,7 +19,7 @@
 ## Examples
 
 * Map
-  * Levels - Shows how to switch between levels and perform POI selection on different levels
+  * Levels - Shows level switching, POI selection, and map state restoration across screen recreation
   * Points of interests - Shows how to hide/show and select/unselect POIs
   * Navigation - Shows how to start/stop navigation to user-created annotations
   * Custom credits - Shows how to override the attribution (ⓘ) button with a custom accessible credits sheet

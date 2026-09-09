@@ -45,7 +45,7 @@ class SamplesRecyclerViewAdapter(
         listOf(
             Pair(
                 "Levels",
-                "Shows how to switch between levels and perform POI selection on different levels"
+                "Shows level switching, POI selection, and map state restoration across screen recreation"
             ),
             Pair(
                 "Points of interest",
