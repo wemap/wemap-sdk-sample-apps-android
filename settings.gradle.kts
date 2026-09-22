@@ -16,6 +16,16 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url = uri("https://s3.eu-west-1.amazonaws.com/mobile.getwemap.com/releases/android") }
+        // Private `alpha` channel on the credential-gated bucket — hosts the offline VPS
+        // (wemap-vps-local). Needs read AWS credentials via env vars; unlike the public
+        // prod bucket above, this bucket is not anonymously reachable over https.
+        maven {
+            url = uri("s3://mobile-dev.getwemap.com/alpha/wemap/sdk/android")
+            credentials(AwsCredentials::class) {
+                accessKey = System.getenv("AWS_ACCESS_KEY_ID") ?: ""
+                secretKey = System.getenv("AWS_SECRET_ACCESS_KEY") ?: ""
+            }
+        }
     }
 }
 

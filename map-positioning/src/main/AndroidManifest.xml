@@ -5,6 +5,20 @@
     <uses-feature android:glEsVersion="0x00030000" android:required="true"/>
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Offline VPS background scanning (VpsLocalForegroundService). Only needed by apps that pass a
+         foregroundService config to VpsLocalLocationSource; the SDK module does not declare these.
+         CAMERA is also merged in from the vps-local AAR, but a foregroundServiceType="camera" service
+         requires it declared in the same manifest (lint ForegroundServicePermission), so declare it
+         here explicitly too. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Camera is used for VPS scans but the app runs without one (map + other sources), so it is not
+         required. Declared here (also merged from the AAR) to pair with the CAMERA permission. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -27,5 +41,12 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
+
+        <!-- Offline VPS background scanning: names the SDK service so the camera stays available while
+             the app is backgrounded / screen off. See VpsLocalForegroundService. -->
+        <service
+            android:name="com.getwemap.sdk.positioning.wemapvpslocal.VpsLocalForegroundService"
+            android:foregroundServiceType="camera"
+            android:exported="false" />
     </application>
 </manifest>

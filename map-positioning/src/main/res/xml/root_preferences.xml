@@ -39,7 +39,9 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/vps_preferences">
+    <PreferenceCategory
+        app:key="category_vps"
+        app:title="@string/vps_preferences">
 
         <EditTextPreference
             app:defaultValue="5"
@@ -77,7 +79,101 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/state_manager_preferences">
+    <PreferenceCategory
+        app:key="category_vps_local"
+        app:title="@string/vps_local_preferences">
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="VPS_LOCAL_BACKGROUND_SCANNING_ENABLED"
+            app:title="@string/vps_local_background_scanning" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="VPS_LOCAL_CAMERA_PREVIEW_ENABLED"
+            app:title="@string/vps_local_camera_preview"
+            app:summary="@string/vps_local_camera_preview_message" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="VPS_LOCAL_CAMERA_AUTO_SWITCH_ENABLED"
+            app:title="@string/vps_local_camera_auto_switch" />
+
+        <EditTextPreference
+            app:defaultValue="1000"
+            app:key="VPS_LOCAL_MIN_SCAN_INTERVAL_MS"
+            app:title="@string/vps_local_min_scan_interval"
+            app:dialogMessage="@string/vps_local_min_scan_interval_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="10000"
+            app:key="VPS_LOCAL_MAX_SCAN_INTERVAL_MS"
+            app:title="@string/vps_local_max_scan_interval"
+            app:dialogMessage="@string/vps_local_max_scan_interval_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="4"
+            app:key="VPS_LOCAL_RESCAN_DISTANCE_METERS"
+            app:title="@string/vps_local_rescan_distance"
+            app:dialogMessage="@string/vps_local_rescan_distance_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="0.4"
+            app:key="VPS_LOCAL_TEXTURE_MAX_LOW_TILE_RATIO"
+            app:title="@string/vps_local_texture_max_low_tile_ratio"
+            app:dialogMessage="@string/vps_local_texture_max_low_tile_ratio_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="10"
+            app:key="VPS_LOCAL_MIN_SHARPNESS"
+            app:title="@string/vps_local_min_sharpness"
+            app:dialogMessage="@string/vps_local_min_sharpness_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="65"
+            app:key="VPS_LOCAL_MIN_INCLINATION_ANGLE"
+            app:title="@string/vps_local_min_inclination_angle"
+            app:dialogMessage="@string/vps_local_min_inclination_angle_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="0.8"
+            app:key="VPS_LOCAL_STEP_LENGTH_METERS"
+            app:title="@string/vps_local_step_length"
+            app:dialogMessage="@string/vps_local_step_length_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="200"
+            app:key="VPS_LOCAL_SHORTLIST_SIZE"
+            app:title="@string/vps_local_shortlist_size"
+            app:dialogMessage="@string/vps_local_shortlist_size_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="20"
+            app:key="VPS_LOCAL_RERANK_SIZE"
+            app:title="@string/vps_local_rerank_size"
+            app:dialogMessage="@string/vps_local_rerank_size_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="2"
+            app:key="VPS_LOCAL_DOMINANCE_RATIO"
+            app:title="@string/vps_local_dominance_ratio"
+            app:dialogMessage="@string/vps_local_dominance_ratio_message"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="category_state_manager"
+        app:title="@string/state_manager_preferences">
 
         <EditTextPreference
             app:defaultValue="75"

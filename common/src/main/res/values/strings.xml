@@ -52,6 +52,31 @@
     <string name="vps_preferences" translatable="false">VPS</string>
     <string name="state_manager_preferences" translatable="false">VPS - State Manager</string>
     <string name="vps_controller_preferences" translatable="false">VPS - VPS Controller</string>
+    <string name="vps_local_preferences" translatable="false">VPS - Local (offline)</string>
+    <string name="vps_local_camera_auto_switch" translatable="false">Auto-switch camera (lanyard)</string>
+    <string name="vps_local_background_scanning" translatable="false">Background scanning (foreground service)</string>
+    <string name="vps_local_camera_preview" translatable="false">Camera preview</string>
+    <string name="vps_local_camera_preview_message" translatable="false">Show the live camera feed behind the scan overlay. Off = no PreviewView is passed to the SDK, so CameraX binds still capture only.</string>
+    <string name="vps_local_min_scan_interval" translatable="false">Min scan interval (ms)</string>
+    <string name="vps_local_min_scan_interval_message" translatable="false">Minimum time between the starts of two scan attempts, and the loop poll granularity. Only limits acquiring the first fix, retrying after a failure, and re-scanning while walking — a stationary localized user does not scan regardless. Default is 1000 ms</string>
+    <string name="vps_local_max_scan_interval" translatable="false">Max scan interval (ms)</string>
+    <string name="vps_local_max_scan_interval_message" translatable="false">Even when stationary (no dead-reckoning drift), a scan fires at least this often to re-verify the fix. Default is 10000 ms</string>
+    <string name="vps_local_rescan_distance" translatable="false">Rescan distance (m)</string>
+    <string name="vps_local_rescan_distance_message" translatable="false">Distance dead reckoning may carry the position from the last fix before a re-scan is triggered. Lower = tighter correction (more scans while walking). Default is 4 m</string>
+    <string name="vps_local_texture_max_low_tile_ratio" translatable="false">Texture max low-tile ratio</string>
+    <string name="vps_local_texture_max_low_tile_ratio_message" translatable="false">Max fraction of low-texture image tiles (0..1) a frame may have and still be sent to inference. Frames above this (blank walls/floors) are skipped. 1.0 disables the gate. Default is 0.4. Tightening to 0.20 (the research bench\'s preset) was measured and reverted: it cost good fixes and prevented none of the bad ones, which come from clean frames rather than poor ones</string>
+    <string name="vps_local_min_sharpness" translatable="false">Min sharpness</string>
+    <string name="vps_local_min_sharpness_message" translatable="false">Minimum frame sharpness (variance of the image Laplacian) required to reach inference. Motion-blurred frames below this are skipped. Default is 10, on this SDK\'s normalised (480 px) scale — not comparable with the research bench\'s 25, nor between devices (the same scene scores ~11x lower on a low-end phone). Judge any change by whether fixes are correct, not by how many there are</string>
+    <string name="vps_local_shortlist_size" translatable="false">Shortlist size</string>
+    <string name="vps_local_shortlist_size_message" translatable="false">Number of keyframes kept by the Hamming shortlist before cosine reranking. Default is 200</string>
+    <string name="vps_local_rerank_size" translatable="false">Rerank size</string>
+    <string name="vps_local_rerank_size_message" translatable="false">Number of top candidates kept after cosine reranking. Default is 20</string>
+    <string name="vps_local_dominance_ratio" translatable="false">Dominance ratio</string>
+    <string name="vps_local_dominance_ratio_message" translatable="false">The best cluster score must exceed the runner-up by this factor for a fix to be accepted. Higher = stricter (fewer, more confident fixes). Default is 2</string>
+    <string name="vps_local_min_inclination_angle" translatable="false">Min inclination angle (degrees)</string>
+    <string name="vps_local_min_inclination_angle_message" translatable="false">Minimum device inclination to scan. Frames captured while the phone points at the floor/ceiling (below this) are skipped. 90 = phone upright. Default is 65 degrees</string>
+    <string name="vps_local_step_length" translatable="false">Step length (m)</string>
+    <string name="vps_local_step_length_message" translatable="false">Assumed stride used by pedestrian dead reckoning to advance the position between fixes. Fixed (not adaptive). Default is 0.8 m</string>
 
     <!-- AR Preferences -->
     <string name="navigation_visibility_distance" translatable="false">Navigation visibility distance</string>
