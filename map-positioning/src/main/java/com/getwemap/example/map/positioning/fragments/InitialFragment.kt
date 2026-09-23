@@ -22,6 +22,7 @@ import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.positioning.Config
 import com.getwemap.example.map.positioning.LocationSourceType
+import com.getwemap.example.map.positioning.PackdataStore
 import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.VpsLocalMapDownloader
 import com.getwemap.example.map.positioning.databinding.FragmentInitialBinding
@@ -55,12 +56,18 @@ class InitialFragment : Fragment(), MenuProvider {
     private val spinner get() = binding.spinner
     private val mapIdTextView get() = binding.mapIdTextView
     private val datasetSpinner get() = binding.vpsLocalDatasetSpinner
+    private val onlineSwitch get() = binding.onlineSwitch
 
     /** Map id currently typed in [mapIdTextView], or `null` when it is empty / not a number. */
     private val enteredMapId: Int? get() = mapIdTextView.text.toString().toIntOrNull()
 
     /** Guards the two-way sync between [datasetSpinner] and [mapIdTextView] against feedback loops. */
     private var isSyncingVpsLocalMapId = false
+
+    private var packdataJob: Job? = null
+
+    /** Set by an update check, so the next tap downloads the newer packdata instead of re-checking. */
+    private var isPackdataUpdateAvailable = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentInitialBinding.inflate(inflater, container, false)
@@ -88,13 +95,15 @@ class InitialFragment : Fragment(), MenuProvider {
 
         setupVpsLocalDatasetSpinner()
 
-        // Availability is per map id, so the offline VPS UI follows whatever is typed in the field.
+        // Availability is per map id, so both the offline VPS dataset and the offline map follow
+        // whatever is typed in the field.
         mapIdTextView.doAfterTextChanged {
-            if (selectedSource != LocationSourceType.VPS_LOCAL)
-                return@doAfterTextChanged
-
-            selectDatasetOf(enteredMapId)
-            updateVpsLocalStatus()
+            if (selectedSource == LocationSourceType.VPS_LOCAL) {
+                selectDatasetOf(enteredMapId)
+                updateVpsLocalStatus()
+            }
+            isPackdataUpdateAvailable = false
+            updatePackdataUi()
         }
 
         binding.vpsLocalDownloadButton.setOnClickListener {
@@ -111,8 +120,25 @@ class InitialFragment : Fragment(), MenuProvider {
             }
             findNavController().navigate(
                 R.id.action_InitialFragment_to_VpsLocalHistoryFragment,
-                Bundle().apply { putInt(VpsLocalHistoryFragment.ARG_MAP_ID, mapId) },
+                Bundle().apply {
+                    putInt(VpsLocalHistoryFragment.ARG_MAP_ID, mapId)
+                    putBoolean(VpsLocalHistoryFragment.ARG_OFFLINE, !onlineSwitch.isChecked)
+                },
             )
+        }
+
+        onlineSwitch.setOnClickListener {
+            updatePackdataUi()
+        }
+
+        binding.packdataButton.setOnClickListener {
+            val mapId = enteredMapId
+                ?: return@setOnClickListener
+
+            if (storedPackdata(mapId) == null || isPackdataUpdateAvailable)
+                downloadPackdata(mapId)
+            else
+                checkPackdataUpdates(mapId)
         }
 
         binding.buttonLoadMap.setOnClickListener {
@@ -120,6 +146,7 @@ class InitialFragment : Fragment(), MenuProvider {
         }
 
         updateVpsLocalUi()
+        updatePackdataUi()
     }
 
     /** The row the spinner is on. Its position is an index into [LocationSourceType.entries] by construction. */
@@ -295,6 +322,89 @@ class InitialFragment : Fragment(), MenuProvider {
     }
     // endregion VPS Local (offline)
 
+    // region Offline map (packdata)
+
+    /**
+     * Reflects the offline switch. The packdata section is only relevant offline, and offline the map
+     * can only be loaded once a packdata for the entered map id sits on the device.
+     */
+    private fun updatePackdataUi() {
+        val isOffline = !onlineSwitch.isChecked
+        onlineSwitch.text = if (isOffline) "Offline" else "Online"
+        binding.packdataLayout.isVisible = isOffline
+        binding.buttonLoadMap.isEnabled = !isOffline || enteredMapId?.let { storedPackdata(it) } != null
+
+        if (isOffline) {
+            updatePackdataStatus()
+        }
+    }
+
+    /** Reports the state of the packdata of the currently entered map id. */
+    private fun updatePackdataStatus() {
+        if (packdataJob?.isActive == true)
+            return
+
+        val mapId = enteredMapId
+        val stored = mapId?.let { storedPackdata(it) }
+
+        binding.packdataStatus.text = when {
+            mapId == null -> "Enter a map id to use an offline map"
+            stored == null -> "Offline map of map $mapId is not downloaded"
+            isPackdataUpdateAvailable -> "Offline map of map $mapId is outdated (v${stored.version})"
+            else -> "Offline map of map $mapId is ready (v${stored.version})"
+        }
+        binding.packdataButton.isEnabled = mapId != null
+        binding.packdataButton.text =
+            if (stored == null || isPackdataUpdateAvailable) "Download" else "Check for updates"
+    }
+
+    private fun downloadPackdata(mapId: Int) {
+        if (packdataJob?.isActive == true)
+            return
+
+        binding.packdataButton.isEnabled = false
+        binding.packdataStatus.text = "Downloading offline map of map $mapId…"
+
+        packdataJob = lifecycleScope.launch {
+            try {
+                PackdataStore.download(requireContext(), mapId)
+                isPackdataUpdateAvailable = false
+            } catch (e: Exception) {
+                val text = "Failed to download offline map with error - ${e.message}"
+                Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
+            } finally {
+                packdataJob = null
+                updatePackdataUi()
+            }
+        }
+    }
+
+    private fun checkPackdataUpdates(mapId: Int) {
+        if (packdataJob?.isActive == true)
+            return
+
+        binding.packdataButton.isEnabled = false
+
+        packdataJob = lifecycleScope.launch {
+            try {
+                isPackdataUpdateAvailable = PackdataStore.isUpdateAvailable(requireContext(), mapId)
+                if (!isPackdataUpdateAvailable) {
+                    val text = "No new offline map available yet"
+                    Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
+                }
+            } catch (e: Exception) {
+                val text = "Failed to check for offline map updates with error - ${e.message}"
+                Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
+            } finally {
+                packdataJob = null
+                updatePackdataUi()
+            }
+        }
+    }
+
+    private fun storedPackdata(mapId: Int) = PackdataStore.stored(requireContext(), mapId)
+    // endregion Offline map (packdata)
+
     // requestInstall(Activity, true) will triggers installation of
     // Google Play Services for AR if necessary.
     private var userRequestedInstall = true
@@ -333,9 +443,10 @@ class InitialFragment : Fragment(), MenuProvider {
 
         requestJob = lifecycleScope.launch {
             try {
-                val session = MapSession.create(
-                    requireContext(), id, Constants.TOKEN, Config.makeSessionConfig(requireContext())
-                )
+                val session = if (onlineSwitch.isChecked)
+                    MapSession.create(requireContext(), id, Constants.TOKEN, Config.makeSessionConfig(requireContext()))
+                else
+                    PackdataStore.createSession(requireContext(), id)
                 sessionViewModel.replace(session)
                 showMap(session)
             } catch (e: Exception) {
@@ -378,6 +489,7 @@ class InitialFragment : Fragment(), MenuProvider {
     override fun onDestroyView() {
         requestJob?.cancel()
         downloadJob?.cancel()
+        packdataJob?.cancel()
         super.onDestroyView()
         _binding = null
     }

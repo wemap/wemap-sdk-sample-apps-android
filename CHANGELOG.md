@@ -6,6 +6,20 @@ This log covers the **sample apps**. The SDKs they use have their own change his
 
 ---
 
+## [Unreleased]
+
+### Added
+
+* Sample(Map+Positioning): the offline VPS sample can run against an offline map, so the whole flow works with
+  no network at all — an Online/Offline switch on the initial screen creates the session from a downloaded
+  packdata instead of the backend, with Download and Check for updates controls, and scan history opens a
+  recorded session's venue the same way
+
+### Fixed
+
+* Sample(Map+Positioning): opening a recorded session's trace crashed unless a map had been loaded earlier in
+  the same process
+
 ## [1.0.0-beta.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/1.0.0-beta.1)
 
 SDK changes in this release: [Wemap SDKs 1.0.0-beta.1](SDK_CHANGELOG.md#100-beta1)

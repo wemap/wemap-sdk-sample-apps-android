@@ -74,6 +74,16 @@ The full guide, ordered so each step leaves your project compiling, is part of t
   2. Tap **Download** to fetch the offline map database. Progress is shown in the status line; once it reads that the database is ready, the files are on the device (you only need to do this once).
   3. Open the map and point the camera at shops, signs, or other distinctive surroundings to get localized. You get one position fix per successful scan; between fixes the blue dot is carried by dead reckoning (your steps advance the position along the last VPS-anchored heading).
 
+  #### Offline map
+
+  VPS Local needs no network to position, and the map it positions on does not need one either. Switch the
+  initial screen from **Online** to **Offline** and tap **Download** to fetch the venue's packdata — its map,
+  buildings, points of interest and routing graph in one file, through
+  `MapSession.createPackdataService(mapId)`. Offline, **Load Map** creates the session from that file with
+  `MapSession.create(context, offlineZip)` instead of the backend, and scan history opens a recorded session
+  the same way. Once a packdata is stored, the button checks for a newer one instead. The venue must have a
+  packdata published by Wemap; one without it reports so when you tap **Download**.
+
   #### Single-shot vs continuous scan
 
   The scan overlay has a **"Keep scanning to auto-correct (continuous)"** switch:

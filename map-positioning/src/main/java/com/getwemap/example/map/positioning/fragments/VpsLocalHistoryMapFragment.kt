@@ -17,6 +17,7 @@ import com.getwemap.sdk.map.MapSession
 import com.getwemap.sdk.map.WemapMapView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
@@ -63,6 +64,7 @@ class VpsLocalHistoryMapFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
+        MapLibre.getInstance(requireContext())
         _binding = FragmentVpsLocalHistoryMapBinding.inflate(inflater, container, false)
         return binding.root
     }

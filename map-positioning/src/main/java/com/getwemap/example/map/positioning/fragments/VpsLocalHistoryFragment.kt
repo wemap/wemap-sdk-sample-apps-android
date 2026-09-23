@@ -15,6 +15,7 @@ import com.getwemap.example.common.Constants
 import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.positioning.Config
+import com.getwemap.example.map.positioning.PackdataStore
 import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.VpsLocalSessionHistory
 import com.getwemap.example.map.positioning.databinding.FragmentVpsLocalHistoryBinding
@@ -37,6 +38,9 @@ class VpsLocalHistoryFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val mapId: Int by lazy { requireArguments().getInt(ARG_MAP_ID) }
+
+    /** Whether the launching screen is in offline mode — see [openTrace]. */
+    private val isOffline: Boolean by lazy { requireArguments().getBoolean(ARG_OFFLINE) }
     private val sessionViewModel: SessionViewModel by activityViewModels()
     private var sessionJob: Job? = null
 
@@ -76,6 +80,10 @@ class VpsLocalHistoryFragment : Fragment() {
      * assignment: this screen may be displacing the venue session the initial screen created, and that one
      * has to be `deinit`-ed rather than dropped. Only the file path travels in the `Bundle` (primitives only
      * — a session is not serializable).
+     *
+     * Offline the session comes from the stored packdata rather than the backend. Reviewing a walk is exactly
+     * what happens after one — often still in the venue, still without a network — so fetching the venue
+     * online would strand the whole screen there.
      */
     private fun openTrace(session: VpsLocalSessionHistory.Session) {
         if (session.fixes.isEmpty()) {
@@ -86,9 +94,12 @@ class VpsLocalHistoryFragment : Fragment() {
         sessionJob?.cancel()
         sessionJob = viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val mapSession = MapSession.create(
-                    requireContext(), session.mapId, Constants.TOKEN, Config.makeSessionConfig(requireContext())
-                )
+                val mapSession = if (isOffline)
+                    PackdataStore.createSession(requireContext(), session.mapId)
+                else
+                    MapSession.create(
+                        requireContext(), session.mapId, Constants.TOKEN, Config.makeSessionConfig(requireContext())
+                    )
                 sessionViewModel.replace(mapSession)
                 findNavController().navigate(
                     R.id.action_VpsLocalHistoryFragment_to_VpsLocalHistoryMapFragment,
@@ -137,5 +148,6 @@ class VpsLocalHistoryFragment : Fragment() {
 
     companion object {
         const val ARG_MAP_ID = "mapId"
+        const val ARG_OFFLINE = "offline"
     }
 }
