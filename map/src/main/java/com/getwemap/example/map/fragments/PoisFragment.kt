@@ -4,19 +4,21 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.getwemap.example.common.multiline
-import com.getwemap.example.map.databinding.FragmentPOIsBinding
+import com.getwemap.example.map.databinding.FragmentPoisBinding
+import com.getwemap.example.map.insetOverlayBelowTransparentAppBar
+import com.getwemap.sdk.core.awaitLoaded
 import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.core.model.entities.MapData
+import com.getwemap.sdk.core.model.entities.Levels
 import com.getwemap.sdk.core.model.entities.PointOfInterest
-import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
 import com.getwemap.sdk.core.poi.TagMatchMode
-import com.getwemap.sdk.map.OnMapViewReadyCallback
 import com.getwemap.sdk.map.WemapMapView
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
 import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
 import org.maplibre.android.maps.MapLibreMap
@@ -25,23 +27,23 @@ import org.maplibre.android.plugins.annotation.Circle
 import org.maplibre.android.plugins.annotation.CircleManager
 import org.maplibre.android.plugins.annotation.CircleOptions
 
-class POIsFragment : MapFragment(), OnMapViewReadyCallback {
+class PoisFragment : MapFragment() {
 
     override val mapView get() = binding.mapView
     override val levelsSwitcher get() = binding.levelsSwitcher
 
     private val buttonApplyFilter get() = binding.applyFilter
     private val buttonRemoveFilters get() = binding.removeFilters
-    private val buttonShowHiddenPOI get() = binding.showHiddenPOI
-    private val buttonHideRandomPOI get() = binding.hideRandomPOI
-    private val buttonShowAllPOIs get() = binding.showAllPOIs
-    private val buttonHideAllPOIs get() = binding.hideAllPOIs
+    private val buttonShowHiddenPoi get() = binding.showHiddenPoi
+    private val buttonHideRandomPoi get() = binding.hideRandomPoi
+    private val buttonShowAllPois get() = binding.showAllPois
+    private val buttonHideAllPois get() = binding.hideAllPois
     private val userLocationTextView get() = binding.userLocationTextView
     private val poisSortedByDistance get() = binding.poisSortedByDistance
     private val poisSortedByTime get() = binding.poisSortedByTime
     private val toggleSelectionModeButton get() = binding.toggleSelectionModeButton
 
-    private var _binding: FragmentPOIsBinding? = null
+    private var _binding: FragmentPoisBinding? = null
     private val binding get() = _binding!!
 
     private var _circleManager: CircleManager? = null
@@ -49,19 +51,32 @@ class POIsFragment : MapFragment(), OnMapViewReadyCallback {
 
     private val viewModel: PoisViewModel by activityViewModels()
 
-    private var hiddenPOI: PointOfInterest? = null
+    private var hiddenPoi: PointOfInterest? = null
     private var simulatedUserPosition: Circle? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
-        _binding = FragmentPOIsBinding.inflate(inflater, container, false)
+        _binding = FragmentPoisBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mapView.getMapViewAsync(this)
+        // One call for the whole screen: the app bar floats over the map, and every control this screen
+        // puts over it lives in `overlay`.
+        binding.overlay.insetOverlayBelowTransparentAppBar()
+
+        lifecycleScope.launch {
+            runCatching {
+                mapView.awaitLoaded()
+            }.onSuccess {
+                onMapViewReady(it, it.map, it.map.style!!)
+            }.onFailure { error ->
+                val message = "Failed to load map with error - $error"
+                Snackbar.make(mapView, message, Snackbar.LENGTH_LONG).multiline().show()
+            }
+        }
 
         buttonApplyFilter.setOnClickListener {
             if (pointOfInterestManager.filterByTags(listOf("53003", "53014"), TagMatchMode.AND)) {
@@ -76,14 +91,14 @@ class POIsFragment : MapFragment(), OnMapViewReadyCallback {
             buttonRemoveFilters.isEnabled = false
         }
 
-        buttonShowHiddenPOI.setOnClickListener { showHiddenPOI() }
-        buttonHideRandomPOI.setOnClickListener { hideRandomPOI() }
+        buttonShowHiddenPoi.setOnClickListener { showHiddenPoi() }
+        buttonHideRandomPoi.setOnClickListener { hideRandomPoi() }
 
-        buttonShowAllPOIs.setOnClickListener { showAllPOIs() }
-        buttonHideAllPOIs.setOnClickListener { hideAllPOIs() }
+        buttonShowAllPois.setOnClickListener { showAllPois() }
+        buttonHideAllPois.setOnClickListener { hideAllPois() }
 
-        poisSortedByDistance.setOnClickListener { showSortedPOIsFragment(SortingType.DISTANCE) }
-        poisSortedByTime.setOnClickListener { showSortedPOIsFragment(SortingType.TIME) }
+        poisSortedByDistance.setOnClickListener { showSortedPoisFragment(SortingType.DISTANCE) }
+        poisSortedByTime.setOnClickListener { showSortedPoisFragment(SortingType.TIME) }
 
         binding.userSelectionSwitch.setOnClickListener {
             pointOfInterestManager.isUserSelectionEnabled = !pointOfInterestManager.isUserSelectionEnabled
@@ -96,19 +111,19 @@ class POIsFragment : MapFragment(), OnMapViewReadyCallback {
         }
     }
 
-    override fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap, style: Style, data: MapData) {
-        pointOfInterestManager.addListener(PointOfInterestManagerListener(
-            onClicked = {
-                val text = "onPointOfInterestClick - $it"
+    fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap, style: Style) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            pointOfInterestManager.touchedPois.collect { poi ->
+                val text = "onPointOfInterestClick - $poi"
                 Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
             }
-        ))
+        }
 
         map.addOnMapClickListener {
             if (pointOfInterestManager.selectionMode.isSingle)
-                pointOfInterestManager.unselectPOI()
+                pointOfInterestManager.unselectPoi()
             else
-                pointOfInterestManager.unselectAllPOIs()
+                pointOfInterestManager.unselectAllPois()
             true
         }
 
@@ -118,13 +133,15 @@ class POIsFragment : MapFragment(), OnMapViewReadyCallback {
             if (simulatedUserPosition != null)
                 circleManager.delete(simulatedUserPosition)
 
-            val array = JsonArray()
-            if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(it))
-                array.add(focusedBuilding!!.activeLevel.id)
+            val properties = JsonObject()
+            focusedBuilding?.let { building ->
+                if (building.boundingBox.contains(it))
+                    properties.add("level", JsonPrimitive(building.activeLevel.id))
+            }
 
             val options = CircleOptions()
                 .withLatLng(it)
-                .withData(array)
+                .withData(properties)
 
             simulatedUserPosition = circleManager.create(options)
             enableSortButtons()
@@ -132,7 +149,6 @@ class POIsFragment : MapFragment(), OnMapViewReadyCallback {
             return@addOnMapLongClickListener true
         }
 
-        viewModel.mapData = mapData
         viewModel.poiManager = mapView.pointOfInterestManager
     }
 
@@ -147,10 +163,11 @@ class POIsFragment : MapFragment(), OnMapViewReadyCallback {
         super.locationManagerReady()
         lifecycleScope.launch {
             mapView.locationManager
-                .coordinateFlow
+                .coordinates
                 .collect {
                     enableSortButtons()
-                    userLocationTextView.text = it.toStringCompact()
+                    userLocationTextView.text = it.toCompactString()
+                    userLocationTextView.isVisible = true
                 }
         }
     }
@@ -178,7 +195,13 @@ class POIsFragment : MapFragment(), OnMapViewReadyCallback {
         return Coordinate(latLng.latitude, latLng.longitude, getLevelFromAnnotation(simulated))
     }
 
-    private fun showSortedPOIsFragment(type: SortingType) {
+    private fun showSortedPoisFragment(type: SortingType) {
+        if (pointOfInterestManager.getPois().isEmpty()) {
+            val message = "This map has no POIs. So nothing to sort by distance or time"
+            Snackbar.make(mapView, message, Snackbar.LENGTH_LONG).multiline().show()
+            return
+        }
+
         viewModel.apply {
             userCoordinate = getLastCoordinate()
             sortingType = type
@@ -187,57 +210,62 @@ class POIsFragment : MapFragment(), OnMapViewReadyCallback {
         overlay.show(parentFragmentManager, null)
     }
 
-    private fun showHiddenPOI() {
-        val hiddenPOI = hiddenPOI
-            ?: throw IllegalStateException("Hidden POI is null")
+    private fun showHiddenPoi() {
+        val hiddenPoi = hiddenPoi
+            ?: return Snackbar.make(mapView, "Hidden POI is null", Snackbar.LENGTH_LONG).multiline().show()
 
-        Snackbar.make(mapView, "Showing POI - ${hiddenPOI.name}", Snackbar.LENGTH_LONG).multiline().show()
-        pointOfInterestManager.centerToPOI(hiddenPOI)
-        if (pointOfInterestManager.showPOI(hiddenPOI)) {
-            this.hiddenPOI = null
-            updateShowHidePOIButtons()
+        Snackbar.make(mapView, "Showing POI - ${hiddenPoi.name}", Snackbar.LENGTH_LONG).multiline().show()
+        pointOfInterestManager.centerToPoi(hiddenPoi)
+        if (pointOfInterestManager.showPoi(hiddenPoi)) {
+            this.hiddenPoi = null
+            updateShowHidePoiButtons()
         } else {
-            Snackbar.make(mapView, "Failed to show POI - ${hiddenPOI!!.name}", Snackbar.LENGTH_LONG)
+            Snackbar.make(mapView, "Failed to show POI - ${hiddenPoi.name}", Snackbar.LENGTH_LONG)
                 .multiline().show()
         }
     }
 
-    private fun hideRandomPOI() {
-        val randomPOI = pointOfInterestManager.getPOIs().random()
-        Snackbar.make(mapView, "Hiding POI - ${randomPOI.name}", Snackbar.LENGTH_LONG).multiline().show()
-        pointOfInterestManager.centerToPOI(randomPOI)
-        if (pointOfInterestManager.hidePOI(randomPOI)) {
-            hiddenPOI = randomPOI
-            updateShowHidePOIButtons()
+    private fun hideRandomPoi() {
+        val randomPoi = pointOfInterestManager.getPois().randomOrNull()
+            ?: return Snackbar.make(mapView, "Random POI is nil", Snackbar.LENGTH_SHORT).multiline().show()
+
+        Snackbar.make(mapView, "Hiding POI - ${randomPoi.name}", Snackbar.LENGTH_LONG).multiline().show()
+        pointOfInterestManager.centerToPoi(randomPoi)
+        if (pointOfInterestManager.hidePoi(randomPoi)) {
+            hiddenPoi = randomPoi
+            updateShowHidePoiButtons()
         } else {
-            Snackbar.make(mapView, "Failed to hide POI - ${randomPOI.name}", Snackbar.LENGTH_LONG)
+            Snackbar.make(mapView, "Failed to hide POI - ${randomPoi.name}", Snackbar.LENGTH_LONG)
                 .multiline().show()
         }
     }
 
-    private fun showAllPOIs() {
-        val shown = pointOfInterestManager.showAllPOIs()
-        buttonHideAllPOIs.isEnabled = shown
-        buttonShowAllPOIs.isEnabled = !shown
+    private fun showAllPois() {
+        val shown = pointOfInterestManager.showAllPois()
+        buttonHideAllPois.isEnabled = shown
+        buttonShowAllPois.isEnabled = !shown
     }
 
-    private fun hideAllPOIs() {
-        val hidden = pointOfInterestManager.hideAllPOIs()
-        buttonHideAllPOIs.isEnabled = !hidden
-        buttonShowAllPOIs.isEnabled = hidden
+    private fun hideAllPois() {
+        val hidden = pointOfInterestManager.hideAllPois()
+        buttonHideAllPois.isEnabled = !hidden
+        buttonShowAllPois.isEnabled = hidden
         if (hidden) {
-            hiddenPOI = null
-            updateShowHidePOIButtons()
+            hiddenPoi = null
+            updateShowHidePoiButtons()
         }
     }
 
-    private fun updateShowHidePOIButtons() {
-        val hiddenPOIExists = hiddenPOI != null
-        buttonShowHiddenPOI.isEnabled = hiddenPOIExists
-        buttonHideRandomPOI.isEnabled = !hiddenPOIExists
+    private fun updateShowHidePoiButtons() {
+        val hiddenPoiExists = hiddenPoi != null
+        buttonShowHiddenPoi.isEnabled = hiddenPoiExists
+        buttonHideRandomPoi.isEnabled = !hiddenPoiExists
     }
 
-    private fun getLevelFromAnnotation(annotation: Circle): List<Float> {
-        return annotation.data!!.asJsonArray.map { it.asFloat }
+    private fun getLevelFromAnnotation(annotation: Circle): Levels {
+        val level = annotation.data?.asJsonObject?.get("level")?.asFloat
+            ?: return Levels.Outdoor
+
+        return Levels.Single(level)
     }
 }

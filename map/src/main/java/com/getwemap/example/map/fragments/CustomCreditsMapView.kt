@@ -1,7 +1,7 @@
 package com.getwemap.example.map.fragments
 
-import android.content.DialogInterface
 import android.content.Context
+import android.content.DialogInterface
 import android.util.AttributeSet
 import android.widget.ImageView
 import androidx.fragment.app.FragmentActivity

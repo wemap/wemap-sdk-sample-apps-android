@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 group = "com.getwemap.example"
@@ -9,11 +10,11 @@ val appNamespace = "$group.map"
 
 android {
     namespace = appNamespace
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 23
-        targetSdk = 36
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
         applicationId = appNamespace
 
         val commonVersionCode = (rootProject.properties["commonVersionCode"] as? String)?.toInt() ?: 0
@@ -30,35 +31,43 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = "1.8"
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     buildFeatures {
+        compose = true
         viewBinding = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
     }
 }
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":common-map"))
+
+    implementation(libs.wemap.map)
+    implementation(libs.wemap.map.compose)
+    implementation(libs.wemap.positioning.fused.gms)
+
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
-
-    implementation(libs.wemap.map)
-    implementation(libs.wemap.positioning.fused.gms)
-
-    implementation(project(":common-map"))
+    implementation(libs.androidx.preference.ktx)
 
     implementation(libs.maplibre.annotation.v9)
 
-    implementation(libs.androidx.preference.ktx)
-    implementation(libs.androidx.navigation.fragment.ktx)
 }

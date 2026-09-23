@@ -21,58 +21,55 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.AlertFactory
 import com.getwemap.example.common.HapticGenerator
 import com.getwemap.example.common.PermissionHelper
+import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.common.multiline
+import com.getwemap.example.common.setSurfaceVisible
 import com.getwemap.example.map.positioning.AppConstants
+import com.getwemap.example.map.positioning.Config
 import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.VpsLocalMapDownloader
 import com.getwemap.example.map.positioning.VpsLocalSessionRecorder
 import com.getwemap.example.map.positioning.databinding.FragmentMapVpsLocalBinding
-import com.getwemap.sdk.core.model.entities.Attitude
-import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.core.model.entities.MapData
+import com.getwemap.sdk.core.awaitLoaded
 import com.getwemap.sdk.core.model.entities.PointOfInterest
-import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
-import com.getwemap.sdk.map.OnMapViewReadyCallback
+import com.getwemap.sdk.map.MapSession
 import com.getwemap.sdk.map.WemapMapView
-import com.getwemap.sdk.map.helpers.MapConstants
 import com.getwemap.sdk.map.location.UserLocationManager
-import com.getwemap.sdk.map.location.UserLocationManagerListener
-import com.getwemap.sdk.map.poi.IMapPointOfInterestManager
+import com.getwemap.sdk.map.poi.MapPointOfInterestManager
 import com.getwemap.sdk.positioning.wemapvpslocal.AlphaVpsLocalApi
 import com.getwemap.sdk.positioning.wemapvpslocal.VpsLocalForegroundService
 import com.getwemap.sdk.positioning.wemapvpslocal.VpsLocalLocationSource
 import com.getwemap.sdk.positioning.wemapvpslocal.VpsLocalLocationSource.ScanOutcome
 import com.getwemap.sdk.positioning.wemapvpslocal.VpsLocalLocationSource.ScanStatus
-import com.getwemap.sdk.positioning.wemapvpslocal.VpsLocalLocationSourceListener
-import com.getwemap.sdk.positioning.wemapvpslocal.constants.VpsLocalConstants
+import com.getwemap.sdk.positioning.wemapvpslocal.configs.VpsLocalConfig
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.serialization.json.Json
 import org.maplibre.android.MapLibre
 import org.maplibre.android.location.OnCameraTrackingChangedListener
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.Style
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /** A scan event this recent means the loop is actively producing results. */
-private const val SCAN_EVENT_FRESH_MS = 3_000L
+private val SCAN_EVENT_FRESH = 3.seconds
 
-/** Grace on top of `MAX_SCAN_INTERVAL_MS` before a silent loop is reported as stalled. */
-private const val SCAN_EVENT_STALLED_SLACK_MS = 5_000L
+/** Grace on top of the config's `maxScanInterval` before a silent loop is reported as stalled. */
+private val SCAN_EVENT_STALLED_SLACK = 5.seconds
 
 /** Duration of the activity-dot flash fired on every scan event. */
 private const val SCAN_DOT_FADE_MS = 900L
@@ -90,7 +87,7 @@ private const val SCAN_DOT_FADE_MS = 900L
  * a convenient way to check a fix against a known place on the map.
  */
 @SuppressLint("MissingPermission")
-class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
+class MapVpsLocalFragment : Fragment() {
 
     enum class AppState { BROWSING, POI_SELECTED, SCANNING }
 
@@ -99,15 +96,25 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
 
     private val applicationContext get() = requireContext().applicationContext
     private val mapView get() = binding.mapView
-    private val pointOfInterestManager: IMapPointOfInterestManager get() = mapView.pointOfInterestManager
+    private val pointOfInterestManager: MapPointOfInterestManager get() = mapView.pointOfInterestManager
     private val locationManager: UserLocationManager get() = mapView.locationManager
 
+    private val sessionViewModel: SessionViewModel by activityViewModels()
     private lateinit var permissionHelper: PermissionHelper
+    private lateinit var session: MapSession
+    private lateinit var vpsLocalConfig: VpsLocalConfig
     private lateinit var vpsLocationSource: VpsLocalLocationSource
 
     private var scanningTimerJob: Job? = null
     private var errorTimerJob: Job? = null
     private var isScreenWakeLockEnabled = false
+
+    /**
+     * Whether the SDK was handed a [PreviewView] to render into. Fixed at source-creation time, like every
+     * other config value on this screen — and load-bearing for [makeCameraVisible], where it decides whether
+     * the scan overlay is opaque enough to hide the map behind.
+     */
+    private var isCameraPreviewEnabled = false
 
     // region Scan liveness — see updateScanStatus / renderScanStatus
     /** Latest scan event message, rendered under the liveness header. */
@@ -129,7 +136,6 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
 
     // region Lifecycle
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        MapConstants.STALE_TIMEOUT_MILLISECONDS = 30_000
         MapLibre.getInstance(applicationContext)
         _binding = FragmentMapVpsLocalBinding.inflate(inflater, container, false)
         return binding.root
@@ -140,15 +146,14 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
 
         createPermissionsHelper()
 
-        mapView.onCreate(savedInstanceState)
-
-        val mapDataString = requireArguments().getString("mapData")!!
-        val mapData = Json.decodeFromString<MapData>(mapDataString)
-        mapView.mapData = mapData
+        session = sessionViewModel.session!!
+        // makeVpsLocalMapViewConfig, not makeMapViewConfig: offline fixes are sparse, so this sample needs a much
+        // longer stale-state timeout than the other map samples — see Config.makeVpsLocalMapViewConfig.
+        mapView.configure(session, Config.makeVpsLocalMapViewConfig(requireContext()))
 
         // Map database directory downloaded in advance (see VpsLocalMapDownloader) — one per map id.
         val mapDir = requireArguments().getString("mapDir")?.let { File(it) }
-            ?: VpsLocalMapDownloader.mapDir(applicationContext, mapData.id)
+            ?: VpsLocalMapDownloader.mapDir(applicationContext, session.mapId)
 
         // Create the offline location source. The SDK owns the camera and renders the live preview
         // into the PreviewView we pass in. Background scanning (keeps running when the screen is off /
@@ -160,18 +165,31 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
         val previewView =
             if (AppConstants.VPS_LOCAL_CAMERA_PREVIEW_ENABLED) binding.previewView else null
         binding.previewView.isVisible = previewView != null
+        isCameraPreviewEnabled = previewView != null
+        // Read once and held: the config is immutable and fixed at source-creation time, so the recorder's
+        // header and this screen's liveness thresholds are guaranteed to describe the source that is running.
+        vpsLocalConfig = Config.makeVpsLocalConfig(requireContext())
         vpsLocationSource = VpsLocalLocationSource(
-            applicationContext, mapDir, mapData, previewView,
+            applicationContext, session, mapDir, vpsLocalConfig, previewView,
             foregroundService = foregroundServiceConfig,
         )
         // Records this session to `<map dir>/history/`, so a walk with the screen unwatched (lanyard,
         // pocket, screen off) can be reviewed afterwards — see VpsLocalHistoryFragment.
-        sessionRecorder = VpsLocalSessionRecorder(applicationContext, mapData.id)
+        sessionRecorder = VpsLocalSessionRecorder(applicationContext, session.mapId, vpsLocalConfig)
 
         // to prevent interactions with MapView before it's loaded
         binding.locateMe.isEnabled = false
 
-        mapView.getMapViewAsync(this)
+        lifecycleScope.launch {
+            runCatching {
+                mapView.awaitLoaded()
+            }.onSuccess {
+                onMapViewReady(it, it.map)
+            }.onFailure { error ->
+                val message = "Failed to load MapView with error - $error"
+                Snackbar.make(mapView, message, Snackbar.LENGTH_LONG).show()
+            }
+        }
 
         binding.locateMe.setOnClickListener { locateMeButtonClicked() }
         binding.camera.setOnClickListener { cameraButtonClicked() }
@@ -186,21 +204,21 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
             })
     }
 
-    override fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap, style: Style, data: MapData) {
-        // Register the offline VPS scan listener
-        vpsLocationSource.listeners.add(vpsListener)
+    private fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap) {
+        // Observe the offline VPS scan streams
+        observeVps()
         // Bind location source to the map to show the blue dot from VPS
         // This action can be done only when mapView is ready
         locationManager.locationSource = vpsLocationSource
         // It enables the blue dot orientation rendering
         locationManager.renderMode = RenderMode.COMPASS
 
-        locationManager.addListener(locationManagerListener)
-        pointOfInterestManager.addListener(poiListener)
+        observeUserLocationManager()
+        observePointOfInterestManager()
 
-        mapView.map.addOnMapClickListener {
+        map.addOnMapClickListener {
             if (getAppState() == AppState.POI_SELECTED)
-                pointOfInterestManager.unselectPOI()
+                pointOfInterestManager.unselectPoi()
 
             return@addOnMapClickListener true
         }
@@ -214,56 +232,26 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
             }
         })
 
-        binding.levelsSwitcher.bind(mapView.buildingManager)
+        binding.levelsSwitcher.bind(mapView.buildingManager, viewLifecycleOwner.lifecycleScope)
         binding.locateMe.isEnabled = true
 
+        // Moved clear of this screen's own bottom-trailing button stack, which would otherwise sit on top of
+        // the attribution. The SDK's corner (bottom-trailing, matching iOS) is right for a screen without one.
         mapView.map.uiSettings.attributionGravity = Gravity.START or Gravity.BOTTOM
     }
 
-    override fun onStart() {
-        super.onStart()
-        mapView.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mapView.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        mapView.onPause()
-    }
-
+    // No onStart/onResume/onPause/onStop/onSaveInstanceState/onLowMemory forwarding: WemapMapView drives the
+    // MapLibre lifecycle itself from the lifecycle it discovers in the view tree.
     override fun onStop() {
         super.onStop()
-        mapView.onStop()
         errorTimerJob?.cancel()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onLowMemory() {
-        super.onLowMemory()
-        mapView.onLowMemory()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
 
         scanActivityJob?.cancel()
-        binding.levelsSwitcher.unbind()
 
-        if (mapView.isLoaded) {
-            pointOfInterestManager.removeListener(poiListener)
-            locationManager.removeListener(locationManagerListener)
-            locationManager.locationSource = null
-        }
-        vpsLocationSource.listeners.remove(vpsListener)
         vpsLocationSource.deinit()
         // Closed after deinit(), so events emitted while the source shuts down still reach the file.
         sessionRecorder?.close()
@@ -274,9 +262,6 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
             requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             isScreenWakeLockEnabled = false
         }
-
-        mapView.onDestroy()
-        MapConstants.STALE_TIMEOUT_MILLISECONDS = 5_000
 
         _binding = null
 
@@ -339,7 +324,7 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
     private fun startScan() {
         vpsLocationSource.startScan()
         binding.camera.isVisible = true
-        binding.cameraLayout.visibility = View.VISIBLE
+        makeCameraVisible(true)
         lastScanMessage = "Scanning…"
         lastScanEventElapsedMs = null
         fixCount = 0
@@ -351,7 +336,7 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
 
     private fun stopScan() {
         vpsLocationSource.stopScan()
-        _binding?.cameraLayout?.visibility = View.INVISIBLE
+        makeCameraVisible(false)
         // Scanning has fully stopped — hide both status surfaces.
         scanActivityJob?.cancel()
         _binding?.scanStatusText?.isVisible = false
@@ -365,11 +350,31 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
      * scanning in the background so each new fix re-anchors dead reckoning (drift auto-correction).
      */
     private fun revealMapKeepScanning() {
-        _binding?.cameraLayout?.visibility = View.INVISIBLE
+        makeCameraVisible(false)
         scanningTimerJob?.cancel()
         updateScreenWakeLock()
         // Overlay is now hidden but the SDK keeps scanning — move the status onto the map chip.
         renderScanStatus()
+    }
+
+    /**
+     * Shows or hides the full-screen scan overlay.
+     *
+     * The same three moves as `MapVpsFragment.makeCameraVisible`, with one difference this screen forces:
+     * its camera preview is optional. Hiding the map is what keeps the scan view's frame rate up — an
+     * `INVISIBLE` `SurfaceView` releases its surface, which stops MapLibre's render loop, where a visible one
+     * keeps drawing at full rate behind an opaque feed. That only holds *while there is a feed*: with
+     * `VPS_LOCAL_CAMERA_PREVIEW_ENABLED` off the overlay is see-through, so hiding the map would leave a blank
+     * screen.
+     */
+    private fun makeCameraVisible(visible: Boolean) {
+        val binding = _binding ?: return
+        binding.cameraLayout.visibility = if (visible) View.VISIBLE else View.INVISIBLE
+        if (!isCameraPreviewEnabled) {
+            return
+        }
+        binding.previewView.setSurfaceVisible(visible)
+        binding.mapLayout.visibility = if (visible) View.INVISIBLE else View.VISIBLE
     }
 
     private fun updateLocateMeButtonIcon() {
@@ -387,9 +392,11 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
         )
     }
 
-    private val locationManagerListener by lazy {
-        UserLocationManagerListener { error ->
-            setErrorMessageAndStartTimer(error)
+    private fun observeUserLocationManager() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            locationManager.errors.collect { error ->
+                setErrorMessageAndStartTimer(error)
+            }
         }
     }
 
@@ -407,14 +414,20 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
         }
     }
 
-    private val vpsListener by lazy {
-        object : VpsLocalLocationSourceListener {
-            override fun onLocalized(coordinate: Coordinate, attitude: Attitude) {
-                Log.d("WEMAP", "onLocalized. Coordinate: $coordinate")
-                // Recorded before hopping to the UI thread, and unconditionally: the session file must
-                // reflect what the SDK did, not what this screen happened to be showing.
-                sessionRecorder?.recordFix(coordinate, attitude)
-                runOnUi {
+    /**
+     * Collects the source's scan streams.
+     *
+     * All three are collected on `viewLifecycleOwner.lifecycleScope`, which dispatches on the main thread —
+     * so the `runOnUi` hop the old listener callbacks needed is gone. Note the recording calls stay
+     * unconditional and come first: the session file must reflect what the SDK did, not what this screen
+     * happened to be showing.
+     */
+    private fun observeVps() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            launch {
+                vpsLocationSource.userLocalizationUpdates.collect { update ->
+                    Log.d("WEMAP", "localized. Coordinate: ${update.coordinate}")
+                    sessionRecorder?.recordFix(update.coordinate, update.attitude)
                     fixCount++
                     // Every fix buzzes — in continuous mode this is the only feedback that a scan
                     // succeeded while the phone is pocketed / on a lanyard and the map is not watched.
@@ -423,7 +436,7 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
                     // Only act on the first fix that ends the scan-overlay session; later continuous
                     // fixes just update the dot underneath the (already-hidden) overlay.
                     if (_binding?.cameraLayout?.visibility != View.VISIBLE)
-                        return@runOnUi
+                        return@collect
                     if (binding.continuousScanSwitch.isChecked) {
                         // Continuous: reveal the map but keep scanning so fixes keep re-anchoring PDR.
                         revealMapKeepScanning()
@@ -433,17 +446,19 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
                     }
                 }
             }
-
-            override fun onScanFailed(outcome: ScanOutcome) {
-                Log.d("WEMAP", "onScanFailed. Outcome: ${outcome.name}")
-                sessionRecorder?.recordOutcome(outcome)
-                runOnUi { onScanEvent(scanOutcomeMessage(outcome)) }
+            launch {
+                vpsLocationSource.scanOutcomes.collect { outcome ->
+                    Log.d("WEMAP", "scan failed. Outcome: ${outcome.name}")
+                    sessionRecorder?.recordOutcome(outcome)
+                    onScanEvent(scanOutcomeMessage(outcome))
+                }
             }
-
-            override fun onError(error: Throwable) {
-                Log.e("WEMAP", "VPS local error", error)
-                sessionRecorder?.recordError(error)
-                runOnUi { onScanEvent("⚠ Error: ${error.message ?: error}") }
+            launch {
+                vpsLocationSource.errors.collect { error ->
+                    Log.e("WEMAP", "VPS local error", error)
+                    sessionRecorder?.recordError(error)
+                    onScanEvent("⚠ Error: ${error.message ?: error}")
+                }
             }
         }
     }
@@ -502,12 +517,12 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
 
         val last = lastScanEventElapsedMs
             ?: return ScanActivity.ACTIVE // starting up — the first scan has not completed yet
-        val ageMs = SystemClock.elapsedRealtime() - last
+        val age = (SystemClock.elapsedRealtime() - last).milliseconds
         return when {
-            ageMs <= SCAN_EVENT_FRESH_MS -> ScanActivity.ACTIVE
-            // A stationary user is re-scanned only every MAX_SCAN_INTERVAL_MS; anything beyond that
+            age <= SCAN_EVENT_FRESH -> ScanActivity.ACTIVE
+            // A stationary user is re-scanned only every maxScanInterval; anything beyond that
             // (plus the duration of a scan itself) means the loop is no longer getting through.
-            ageMs <= VpsLocalConstants.MAX_SCAN_INTERVAL_MS + SCAN_EVENT_STALLED_SLACK_MS -> ScanActivity.QUIET
+            age <= vpsLocalConfig.maxScanInterval + SCAN_EVENT_STALLED_SLACK -> ScanActivity.QUIET
             else -> ScanActivity.STALLED
         }
     }
@@ -620,15 +635,14 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
         binding.poiInfo.text = poi.name
     }
 
-    private val poiListener by lazy {
-        PointOfInterestManagerListener(
-            {
-                renderPoI(it)
-            },
-            {
-                hideAllStatesUI()
+    private fun observePointOfInterestManager() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            pointOfInterestManager.selectionUpdates.collect { update ->
+                if (update.unselected.isNotEmpty())
+                    hideAllStatesUI()
+                update.selected.forEach { renderPoI(it) }
             }
-        )
+        }
     }
     // endregion
 
@@ -642,20 +656,20 @@ class MapVPSLocalFragment : Fragment(), OnMapViewReadyCallback {
             // "Scanning" is the full-screen overlay session, not the SDK's scan status: in continuous
             // mode the SDK keeps scanning in the background while the app is browsing.
             _binding?.cameraLayout?.visibility == View.VISIBLE -> AppState.SCANNING
-            pointOfInterestManager.getSelectedPOI() != null -> AppState.POI_SELECTED
+            pointOfInterestManager.getSelectedPoi() != null -> AppState.POI_SELECTED
             else -> AppState.BROWSING
         }
     }
 
     private fun handleBackPressed() {
-        if (!mapView.isLoaded) {
+        if (!mapView.loadPhase.isReady) {
             findNavController().navigateUp()
             return
         }
 
         when (getAppState()) {
             AppState.SCANNING -> stopScan()
-            AppState.POI_SELECTED -> pointOfInterestManager.unselectPOI()
+            AppState.POI_SELECTED -> pointOfInterestManager.unselectPoi()
             // Navigate back to the previous fragment
             else -> findNavController().navigateUp()
         }

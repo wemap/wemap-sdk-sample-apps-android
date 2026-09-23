@@ -8,22 +8,28 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
+import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentCustomCreditsBinding
-import com.getwemap.sdk.core.model.entities.MapData
+import com.getwemap.example.map.insetOverlayBelowTransparentAppBar
+import com.getwemap.sdk.core.awaitLoaded
+import com.getwemap.sdk.map.MapSession
 import com.google.android.material.color.MaterialColors
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
-import org.maplibre.android.maps.MapLibreMap
 
 class CustomCreditsFragment : Fragment() {
 
     private var _binding: FragmentCustomCreditsBinding? = null
     private val binding get() = _binding!!
 
+    private val sessionViewModel: SessionViewModel by activityViewModels()
+
+    private lateinit var session: MapSession
+
     private val mapView get() = binding.mapView
-    private val closeButton get() = binding.closeButton
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
@@ -34,51 +40,27 @@ class CustomCreditsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val mapData: MapData = Json.decodeFromString(requireArguments().getString("mapData")!!)
+        // One call for the whole screen: both overlay buttons live in `overlay`.
+        binding.overlay.insetOverlayBelowTransparentAppBar()
 
-        closeButton.setOnClickListener { findNavController().popBackStack() }
+        // The session was created in InitialFragment and shared via the activity-scoped ViewModel.
+        session = sessionViewModel.session!!
+        mapView.configure(session)
+        // WemapMapView drives its own MapLibre lifecycle from the fragment's ViewTree lifecycle owner.
 
-        mapView.mapData = mapData
-        mapView.onCreate(savedInstanceState)
-
-        mapView.getMapViewAsync { _, map, _, _ ->
-            customizeMapOrnaments(map)
+        lifecycleScope.launch {
+            runCatching {
+                mapView.awaitLoaded()
+            }.onSuccess {
+                customizeMapOrnaments()
+            }.onFailure { error ->
+                println("Failed to load mapView with error - $error")
+            }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        mapView.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mapView.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        mapView.onPause()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        mapView.onStop()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        mapView.onLowMemory()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        mapView.onDestroy()
         _binding = null
     }
 
@@ -86,9 +68,9 @@ class CustomCreditsFragment : Fragment() {
      * The size, border and placement of the credits button are yours to change. Its visibility is not - the
      * attribution has to stay on screen and tappable.
      */
-    private fun customizeMapOrnaments(map: MapLibreMap) {
+    private fun customizeMapOrnaments() {
 
-        val uiSettings = map.uiSettings
+        val uiSettings = mapView.map.uiSettings
         val margin = resources.getDimensionPixelSize(R.dimen.overlay_button_margin)
 
         // The SDK places the attribution bottom-end, for parity with the iOS SDK, once the map is ready - so a

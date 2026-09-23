@@ -19,13 +19,12 @@ import java.io.File
  * map id, so downloading a second venue never overwrites the first one, and an already-downloaded
  * venue is detected and reused instead of being fetched again.
  *
- * ⚠️ The entry in [DATASETS] below is a placeholder. Wemap sends you the map id and the dataset URL
- * of your venue by email — fill them in there before running this sample.
+ * ⚠️ The entry in [DATASETS] below is a placeholder and this sample cannot download anything until you
+ * replace it. Wemap builds the map database for your venue and gives you the map id and the dataset URL —
+ * the offline VPS entry of the location-source spinner stays unavailable until both are filled in. Add one
+ * [Dataset] per venue; the spinner lets the user pick between them.
  */
 object VpsLocalMapDownloader {
-
-    /** Placeholder map id of a dataset that has not been configured yet. */
-    private const val UNCONFIGURED_MAP_ID = -1
 
     /** Placeholder base URL of a dataset that has not been configured yet. */
     private const val UNCONFIGURED_BASE_URL = "REPLACE_WITH_DATASET_URL_FROM_WEMAP"
@@ -42,21 +41,14 @@ object VpsLocalMapDownloader {
         val mapId: Int,
         val name: String,
         val baseUrl: String,
-    ) {
-        /** Whether this entry still carries the shipped placeholders instead of the values from Wemap. */
-        val isConfigured: Boolean get() = mapId != UNCONFIGURED_MAP_ID && baseUrl != UNCONFIGURED_BASE_URL
-    }
+    )
 
-    /**
-     * Datasets this sample can download — one entry per venue. Replace the placeholder below with the
-     * map id and dataset URL Wemap sent you, and append one entry per additional venue; the offline VPS
-     * section of the initial screen lets the user pick between them.
-     */
+    /** Datasets this sample can download — one entry per venue. See the file KDoc: these are yours to fill in. */
     val DATASETS = listOf(
         Dataset(
-            mapId = UNCONFIGURED_MAP_ID,
+            mapId = 0, // TODO: Modify this value with the map id Wemap gave you for your venue
             name = "Your venue",
-            baseUrl = UNCONFIGURED_BASE_URL,
+            baseUrl = UNCONFIGURED_BASE_URL, // TODO: Modify this value with the dataset URL Wemap gave you
         ),
     )
 
@@ -125,9 +117,9 @@ object VpsLocalMapDownloader {
             "No offline VPS dataset is configured for map id $mapId. Add a VpsLocalMapDownloader.Dataset " +
                     "with the map id and dataset URL Wemap sent you by email before running this sample."
         }
-        check(dataset.isConfigured) {
-            "The offline VPS dataset \"${dataset.name}\" still carries the shipped placeholders. Set its " +
-                    "mapId and baseUrl to the values Wemap sent you by email before running this sample."
+        check(dataset.baseUrl != UNCONFIGURED_BASE_URL) {
+            "The offline VPS dataset of map id $mapId is not configured. Set its baseUrl to the value " +
+                    "Wemap sent you by email before running this sample."
         }
         return dataset
     }

@@ -6,13 +6,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
+import com.getwemap.example.common.map.SessionViewModel
+import com.getwemap.example.map.positioning.Config
 import com.getwemap.example.map.positioning.VpsLocalSessionHistory
 import com.getwemap.example.map.positioning.databinding.FragmentVpsLocalHistoryMapBinding
-import com.getwemap.sdk.core.model.entities.MapData
-import com.getwemap.sdk.map.OnMapViewReadyCallback
+import com.getwemap.sdk.core.awaitLoaded
+import com.getwemap.sdk.map.MapSession
 import com.getwemap.sdk.map.WemapMapView
-import kotlinx.serialization.json.Json
-import org.maplibre.android.MapLibre
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
@@ -41,21 +45,24 @@ import java.util.Locale
  * while one that zig-zags across walls or jumps between rooms is the signature of ambiguous matches, and
  * neither shows up in an accepted-percentage.
  */
-class VpsLocalHistoryMapFragment : Fragment(), OnMapViewReadyCallback {
+class VpsLocalHistoryMapFragment : Fragment() {
 
     private var _binding: FragmentVpsLocalHistoryMapBinding? = null
     private val binding get() = _binding!!
 
     private val mapView get() = binding.mapView
 
+    private val sessionViewModel: SessionViewModel by activityViewModels()
+
+    /** The recorded VPS session being drawn. Not to be confused with [mapSession], the SDK's. */
     private lateinit var session: VpsLocalSessionHistory.Session
+    private lateinit var mapSession: MapSession
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        MapLibre.getInstance(requireContext())
         _binding = FragmentVpsLocalHistoryMapBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -71,13 +78,21 @@ class VpsLocalHistoryMapFragment : Fragment(), OnMapViewReadyCallback {
         }
         session = loaded
 
-        val mapData = Json.decodeFromString<MapData>(requireArguments().getString(ARG_MAP_DATA)!!)
-        mapView.mapData = mapData
-        mapView.getMapViewAsync(this)
+        mapSession = sessionViewModel.session!!
+        mapView.configure(mapSession, Config.makeMapViewConfig(requireContext()))
+        lifecycleScope.launch {
+            runCatching {
+                mapView.awaitLoaded()
+            }.onSuccess {
+                onMapViewReady(it, it.map, it.map.style!!)
+            }.onFailure { error ->
+                Snackbar.make(binding.root, "Failed to load MapView with error - $error", Snackbar.LENGTH_LONG).show()
+            }
+        }
     }
 
-    override fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap, style: Style, data: MapData) {
-        binding.levelsSwitcher.bind(mapView.buildingManager)
+    private fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap, style: Style) {
+        binding.levelsSwitcher.bind(mapView.buildingManager, viewLifecycleOwner.lifecycleScope)
 
         style.addSource(GeoJsonSource(TRACE_SOURCE_ID, traceLine()))
         style.addLayer(
@@ -171,21 +186,15 @@ class VpsLocalHistoryMapFragment : Fragment(), OnMapViewReadyCallback {
         return true
     }
 
-    override fun onStart() { super.onStart(); mapView.onStart() }
-    override fun onResume() { super.onResume(); mapView.onResume() }
-    override fun onPause() { mapView.onPause(); super.onPause() }
-    override fun onStop() { mapView.onStop(); super.onStop() }
+    // No lifecycle forwarding: WemapMapView drives MapLibre itself from the lifecycle it finds in the view tree.
 
     override fun onDestroyView() {
-        binding.levelsSwitcher.unbind()
-        mapView.onDestroy()
         super.onDestroyView()
         _binding = null
     }
 
     companion object {
         const val ARG_SESSION_FILE = "sessionFile"
-        const val ARG_MAP_DATA = "mapData"
 
         private const val TRACE_SOURCE_ID = "vps-local-history-trace-source"
         private const val TRACE_LINE_LAYER_ID = "vps-local-history-trace-line"

@@ -4,7 +4,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.os.Environment
+import android.os.Environment.DIRECTORY_DOCUMENTS
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -22,38 +22,38 @@ import androidx.core.content.edit
 import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.Constants
+import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.Config
+import com.getwemap.example.map.LocationSourceType
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentInitialBinding
-import com.getwemap.sdk.core.Environment.Dev
-import com.getwemap.sdk.core.Environment.Prod
-import com.getwemap.sdk.core.WemapCoreSDK
+import com.getwemap.sdk.core.configs.Environment
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
-import com.getwemap.sdk.core.model.entities.MapData
-import com.getwemap.sdk.map.WemapMapSDK
-import com.getwemap.sdk.map.internal.MapDependencyManager
-import com.getwemap.sdk.map.offline.IPackdataManager
+import com.getwemap.sdk.map.MapSession
 import com.getwemap.sdk.map.offline.Packdata
+import com.getwemap.sdk.map.offline.PackdataService
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.File
 
 class InitialFragment : Fragment(), MenuProvider {
 
-    // region ------ Packdata UI ------
+    // region Packdata UI
     private val packdataLabel: TextView get() = binding.packdataLabel
     private val packdataLayout: LinearLayout get() = binding.packdataLayout
     private val checkAndDownloadButton: Button get() = binding.checkAndDownloadButton
-    // endregion ------ Packdata UI ------
+    // endregion Packdata UI
 
-    // region ------ Common UI ------
+    // region Common UI
     private var _binding: FragmentInitialBinding? = null
     private val binding: FragmentInitialBinding get() = _binding!!
 
@@ -62,11 +62,11 @@ class InitialFragment : Fragment(), MenuProvider {
     private val mapIdTextView: EditText get() = binding.mapIdTextView
     private val loadMapButton: Button get() = binding.buttonLoadMap
     private val envSwitch: SwitchCompat get() = binding.envSwitch
-    // endregion ------ Common UI ------
+    // endregion Common UI
 
-    private val packdataManager: IPackdataManager by lazy {
-        MapDependencyManager.getPackdataManager(requireContext())
-    }
+    private val sessionViewModel: SessionViewModel by activityViewModels()
+
+    private var packdataService: PackdataService? = null
     private val userPreferences: SharedPreferences by lazy {
         requireContext().getSharedPreferences("wemap_prefs", Context.MODE_PRIVATE)
     }
@@ -83,13 +83,9 @@ class InitialFragment : Fragment(), MenuProvider {
 
         updateSwitchText()
 
-        mapIdTextView.setText("${Constants.mapId}")
+        mapIdTextView.setText("${Constants.MAP_ID}")
 
-        ArrayAdapter
-            .createFromResource(
-                requireContext(), R.array.location_sources,
-                android.R.layout.simple_spinner_item
-            )
+        ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, LocationSourceType.titles)
             .also { adapter ->
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 spinner.adapter = adapter
@@ -105,12 +101,7 @@ class InitialFragment : Fragment(), MenuProvider {
 
         envSwitch.setOnClickListener {
             envSwitch.text = if (envSwitch.isChecked) "Prod" else "Dev"
-
-            val env = if (envSwitch.isChecked) Prod() else Dev()
-            WemapCoreSDK.setEnvironment(env)
-            WemapCoreSDK.setItinerariesEnvironment(env)
-
-            mapIdTextView.setText("${Constants.mapId}")
+            mapIdTextView.setText("${Constants.MAP_ID}")
         }
 
         checkAndDownloadButton.setOnClickListener {
@@ -124,9 +115,9 @@ class InitialFragment : Fragment(), MenuProvider {
         // if you need to retrieve all points of interest for some map in advance
 //        lifecycleScope.launch {
 //            runCatching {
-//                ServiceFactory
-//                    .getPointOfInterestService()
-//                    .pointsOfInterestById(Constants.mapId)
+//                MapSession.create(requireContext(), Constants.MAP_ID, Constants.TOKEN)
+//                    .pointOfInterestService
+//                    .pointsOfInterest()
 //            }.onSuccess {
 //                println("received pois - $it")
 //            }.onFailure {
@@ -134,13 +125,15 @@ class InitialFragment : Fragment(), MenuProvider {
 //            }
 //        }
 
-        packdata = loadPackdataIfAvailable()
-        if (packdata != null) {
-            packdataLabel.text = "Offline packdata (v${packdata!!.version})"
-            loadMapButton.isEnabled = true
-        } else {
-            checkAndDownloadButton.text = "Download"
-            checkAndDownloadButton.isSelected = true
+        lifecycleScope.launch {
+            packdata = loadPackdataIfAvailable()
+            if (packdata != null) {
+                packdataLabel.text = "Offline packdata (v${packdata!!.version})"
+                loadMapButton.isEnabled = true
+            } else {
+                checkAndDownloadButton.text = "Download"
+                checkAndDownloadButton.isSelected = true
+            }
         }
     }
 
@@ -163,7 +156,7 @@ class InitialFragment : Fragment(), MenuProvider {
         }
     }
 
-    // region ------ Private ------
+    // region Private
     private fun updateSwitchText() {
         onlineSwitch.text = if (onlineSwitch.isChecked) "Online" else "Offline"
         packdataLayout.isVisible = !onlineSwitch.isChecked
@@ -187,7 +180,7 @@ class InitialFragment : Fragment(), MenuProvider {
             .show()
     }
 
-    private fun getMapID(): Int? {
+    private fun getMapId(): Int? {
         val text = mapIdTextView.text.toString()
         return text.toIntOrNull() ?: run {
             val text = "Failed to get int ID from - $text"
@@ -201,10 +194,10 @@ class InitialFragment : Fragment(), MenuProvider {
 
         lifecycleScope.launch {
             try {
-                val mapData = (if (onlineSwitch.isChecked) getRemoteMapDataRequest() else getLocalMapDataRequest())
+                val session = (if (onlineSwitch.isChecked) createRemoteSession() else createLocalSession())
                     ?: throw IllegalArgumentException()
 
-                showMap(mapData)
+                showMap(session)
             } catch(e: Exception) {
                 val text = "Failed to load map with error - $e"
                 Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
@@ -214,44 +207,48 @@ class InitialFragment : Fragment(), MenuProvider {
         }
     }
 
-    private suspend fun getRemoteMapDataRequest(): MapData? {
-        val id = getMapID()
+    private suspend fun createRemoteSession(): MapSession? {
+        val id = getMapId()
             ?: return null
 
-        return WemapMapSDK.instance.mapData(id, Constants.TOKEN)
+        return MapSession.create(requireContext(), id, Constants.TOKEN, Config.makeSessionConfig(requireContext()))
     }
 
-    private fun showMap(mapData: MapData) {
+    private fun showMap(session: MapSession) {
 
-        val bundle = Bundle()
-        bundle.putInt("locationSourceId", spinner.selectedItemPosition)
-        bundle.putString("mapData", Json.encodeToString(mapData))
+        // A session is not serializable, so hand it to the view fragments via the activity-scoped ViewModel.
+        // replace(), not a bare assignment: coming back here and loading again would otherwise drop the previous
+        // session without deiniting it.
+        sessionViewModel.replace(session)
 
-        Config.applyGlobalOptions(requireContext())
+        val bundle = LocationSourceType.entries[spinner.selectedItemPosition].putInto(Bundle())
+
+        Config.applyAppOptions(requireContext())
         findNavController().navigate(R.id.action_InitialFragment_to_SamplesListFragment, bundle)
     }
-    // endregion ------ Private ------
+    // endregion Private
 
-    // region ------ Packdata ------
-    private suspend fun getLocalMapDataRequest(): MapData? {
+    // region Packdata
+    private suspend fun createLocalSession(): MapSession? {
         val packdataItem = packdata
             ?: return null
 
-        val documentsDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+        val documentsDir = requireContext().getExternalFilesDir(DIRECTORY_DOCUMENTS)
         val packdataFile = File(documentsDir, packdataItem.fileName)
 
-        return packdataManager.loadMapData(packdataFile)
+        return MapSession.create(requireContext(), packdataFile, Config.makeSessionConfig(requireContext()))
     }
 
     private fun downloadNewPackdata() {
-        val id = getMapID()
+        val id = getMapId()
             ?: return
 
         checkAndDownloadButton.isEnabled = false
 
         lifecycleScope.launch {
+            val service = getPackdataService(id)
             runCatching {
-                packdataManager.downloadPackdata(id)
+                service.downloadPackdata()
             }.onSuccess { packdataItem ->
                 if (storePackdata(packdataItem)) {
                     checkAndDownloadButton.isSelected = false
@@ -267,7 +264,7 @@ class InitialFragment : Fragment(), MenuProvider {
     }
 
     private fun checkForUpdates() {
-        val id = getMapID()
+        val id = getMapId()
             ?: return
 
         val eTag = getETag()
@@ -276,8 +273,9 @@ class InitialFragment : Fragment(), MenuProvider {
         checkAndDownloadButton.isEnabled = false
 
         lifecycleScope.launch {
+            val service = getPackdataService(id)
             runCatching {
-                packdataManager.isNewPackdataAvailable(id, eTag)
+                service.isNewPackdataAvailable(eTag)
             }.onSuccess { available ->
                 checkAndDownloadButton.isSelected = available
                 val title = if (available) "Download new packdata" else "Check for updates"
@@ -294,8 +292,9 @@ class InitialFragment : Fragment(), MenuProvider {
         }
     }
 
-    private fun loadPackdataIfAvailable(): Packdata? {
-        val data = userPreferences.getString("packdata", null)
+    private suspend fun loadPackdataIfAvailable(): Packdata? {
+        // Off-main: the first prefs access initializes the lazy (dir check) and blocks on the XML load.
+        val data = withContext(Dispatchers.IO) { userPreferences.getString("packdata", null) }
             ?: return null
 
         return try {
@@ -307,19 +306,22 @@ class InitialFragment : Fragment(), MenuProvider {
         }
     }
 
-    private fun storePackdata(packdata: Packdata): Boolean {
-        val documentsDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-        val destinationFile = File(documentsDir, packdata.fileName)
-
+    private suspend fun storePackdata(packdata: Packdata): Boolean {
         return try {
-            if (destinationFile.exists()) {
-                destinationFile.delete()
-            }
-            File(packdata.filePath).copyTo(destinationFile)
+            // Off-main: resolves the external files dir, copies the packdata file, and writes prefs.
+            withContext(Dispatchers.IO) {
+                val documentsDir = requireContext().getExternalFilesDir(DIRECTORY_DOCUMENTS)
+                val destinationFile = File(documentsDir, packdata.fileName)
 
-            val encoded = Json.encodeToString(packdata)
-            userPreferences.edit(commit = true) {
-                putString("packdata", encoded)
+                if (destinationFile.exists()) {
+                    destinationFile.delete()
+                }
+                File(packdata.filePath).copyTo(destinationFile)
+
+                val encoded = Json.encodeToString(packdata)
+                userPreferences.edit(commit = true) {
+                    putString("packdata", encoded)
+                }
             }
             this.packdata = packdata
             true
@@ -339,5 +341,12 @@ class InitialFragment : Fragment(), MenuProvider {
         return eTag
     }
 
-    // endregion ------ Packdata ------
+    private suspend fun getPackdataService(mapId: Int): PackdataService {
+        return packdataService ?: MapSession.createPackdataService(mapId, Environment.PROD).also {
+            packdataService = it
+        }
+    }
+
+    // endregion Packdata
+
 }

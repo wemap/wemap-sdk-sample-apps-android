@@ -7,7 +7,7 @@ import kotlinx.serialization.json.Json
 
 object ItineraryLoader {
 
-    fun loadFromGeoJSON(context: Context): Itinerary? {
+    fun loadFromGeoJson(context: Context): Itinerary? {
         try {
             val inputStream = context.assets.open("geoJsonItinerary.json")
             val jsonString = inputStream.bufferedReader().use { it.readText() }

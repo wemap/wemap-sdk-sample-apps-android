@@ -9,7 +9,7 @@ import com.getwemap.sdk.core.model.entities.Attitude
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.positioning.wemapvpslocal.AlphaVpsLocalApi
 import com.getwemap.sdk.positioning.wemapvpslocal.VpsLocalLocationSource
-import com.getwemap.sdk.positioning.wemapvpslocal.constants.VpsLocalConstants
+import com.getwemap.sdk.positioning.wemapvpslocal.configs.VpsLocalConfig
 import org.json.JSONObject
 import java.io.Closeable
 import java.io.File
@@ -38,7 +38,11 @@ import java.util.concurrent.TimeUnit
  * Callbacks arrive on the SDK's scan threads, so every write is handed to a single-threaded executor: the
  * scan loop must never block on file IO.
  */
-class VpsLocalSessionRecorder(context: Context, private val mapId: Int) : Closeable {
+class VpsLocalSessionRecorder(
+    context: Context,
+    private val mapId: Int,
+    private val config: VpsLocalConfig,
+) : Closeable {
 
     private val writerThread = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "VpsLocalSessionRecorder")
@@ -51,17 +55,19 @@ class VpsLocalSessionRecorder(context: Context, private val mapId: Int) : Closea
         file.parentFile?.mkdirs()
         // The header records the settings in force, because a session's fix rate cannot be read without
         // them: the same walk looks very different at a 4 m rescan distance and a 10 s max interval.
+        // These come from the same config instance handed to the location source, so the header cannot
+        // drift from what actually ran.
         append(
             JSONObject()
                 .put("event", "session")
                 .put("mapId", mapId)
                 .put("device", "${Build.MANUFACTURER} ${Build.MODEL}")
                 .put("androidSdk", Build.VERSION.SDK_INT)
-                .put("minScanIntervalMs", VpsLocalConstants.MIN_SCAN_INTERVAL_MS)
-                .put("maxScanIntervalMs", VpsLocalConstants.MAX_SCAN_INTERVAL_MS)
-                .put("rescanDistanceMeters", VpsLocalConstants.RESCAN_DISTANCE_METERS)
-                .put("stepLengthMeters", VpsLocalConstants.STEP_LENGTH_METERS)
-                .put("cameraAutoSwitch", VpsLocalConstants.CAMERA_AUTO_SWITCH_ENABLED)
+                .put("minScanIntervalMs", config.minScanInterval.inWholeMilliseconds)
+                .put("maxScanIntervalMs", config.maxScanInterval.inWholeMilliseconds)
+                .put("rescanDistanceMeters", config.rescanDistanceMeters)
+                .put("stepLengthMeters", config.stepLengthMeters)
+                .put("cameraAutoSwitch", config.cameraAutoSwitchEnabled)
         )
         Log.i(TAG, "recording session to ${file.absolutePath}")
     }
@@ -71,12 +77,13 @@ class VpsLocalSessionRecorder(context: Context, private val mapId: Int) : Closea
         append(
             JSONObject()
                 .put("event", "fix")
-                .put("lat", coordinate.location.latitude)
-                .put("lon", coordinate.location.longitude)
-                // Coordinate.levels is a list (a level *range* for a coordinate spanning floors); the
-                // offline source always reports a single level, so the first entry is the one to keep.
-                .put("level", coordinate.levels.firstOrNull() ?: JSONObject.NULL)
-                .put("accuracy", coordinate.location.accuracy)
+                .put("lat", coordinate.latitude)
+                .put("lon", coordinate.longitude)
+                // Coordinate.levels is a sealed Levels (Outdoor / Single / Range — a range for a coordinate
+                // spanning floors). The offline source always reports a single level, and `single` is exactly
+                // "the level for Single, the lower bound for Range, null for Outdoor".
+                .put("level", coordinate.levels.single ?: JSONObject.NULL)
+                .put("accuracy", coordinate.horizontalAccuracy)
                 .put("heading", attitude.headingDegrees)
         )
     }

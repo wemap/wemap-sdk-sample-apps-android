@@ -10,21 +10,24 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.Constants
+import com.getwemap.example.common.SessionViewModel
 import com.getwemap.example.common.multiline
 import com.getwemap.example.positioning.ar.R
 import com.getwemap.example.positioning.ar.databinding.FragmentInitialBinding
-import com.getwemap.sdk.core.internal.helpers.Logger
-import com.getwemap.sdk.core.model.ServiceFactory
+import com.getwemap.sdk.core.CoreSession
+import com.getwemap.sdk.core.configs.SessionConfig
+import com.getwemap.sdk.core.helpers.Logger
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 class InitialFragment : Fragment(), MenuProvider {
+
+    private val sessionViewModel: SessionViewModel by activityViewModels()
 
     private var request: Job? = null
 
@@ -43,11 +46,7 @@ class InitialFragment : Fragment(), MenuProvider {
         requireActivity().addMenuProvider(this, viewLifecycleOwner)
 
         Logger.level = Log.VERBOSE
-        mapIdTextView.setText("${Constants.mapId}") // 22418
-
-        // uncomment if you want to use dev environment
-//        WemapCoreSDK.setEnvironment(Environment.Dev())
-//        WemapCoreSDK.setItinerariesEnvironment(Environment.Dev())
+        mapIdTextView.setText("${Constants.MAP_ID}")
 
         binding.buttonLoadMap.setOnClickListener {
             loadMap()
@@ -64,15 +63,14 @@ class InitialFragment : Fragment(), MenuProvider {
 
         request = lifecycleScope.launch {
             runCatching {
-                ServiceFactory.getMapService().mapById(id, Constants.TOKEN)
+                CoreSession.create(requireContext(), id, Constants.TOKEN, SessionConfig())
             }.onSuccess {
-                println("Received map data - $it")
-                val bundle = Bundle()
-                bundle.putString("mapData", Json.encodeToString(it))
+                println("Created session - $it")
+                sessionViewModel.replace(it)
 
-                findNavController().navigate(R.id.action_InitialFragment_to_SamplesListFragment, bundle)
+                findNavController().navigate(R.id.action_InitialFragment_to_SamplesListFragment)
             }.onFailure {
-                val str = "Failed to receive map data with error - ${it.message}"
+                val str = "Failed to create session with error - ${it.message}"
                 Snackbar.make(binding.root, str, Snackbar.LENGTH_LONG).multiline().show()
             }
         }

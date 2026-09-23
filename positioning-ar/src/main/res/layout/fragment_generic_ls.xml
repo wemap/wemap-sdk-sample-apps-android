@@ -28,7 +28,7 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/addPOI"
+                android:id="@+id/addPoi"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -36,7 +36,7 @@
                 android:text="@string/add_poi" />
 
             <Button
-                android:id="@+id/removePOI"
+                android:id="@+id/removePoi"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -50,7 +50,7 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/addPOIs"
+                android:id="@+id/addPois"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -58,7 +58,7 @@
                 android:text="@string/add_pois" />
 
             <Button
-                android:id="@+id/removePOIs"
+                android:id="@+id/removePois"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

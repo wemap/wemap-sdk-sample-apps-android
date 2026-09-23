@@ -13,9 +13,6 @@
     <string name="start_navigation" translatable="false">Start navigation</string>
     <string name="stop_navigation" translatable="false">Stop navigation</string>
 
-    <string name="start_navigation_user_created_annotations" translatable="false">Start navigation from user-created annotations</string>
-    <string name="remove_user_created_annotations" translatable="false">Remove user-created annotations</string>
-
     <!-- Offline VPS session history -->
     <string name="vps_local_history_label" translatable="false">Scan history</string>
     <string name="vps_local_history_button" translatable="false">History</string>

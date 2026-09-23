@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string-array name="location_sources">
-        <item>Simulator</item>
-        <item>System Default</item>
-        <item>Fused GMS</item>
-        <item>Gare De Lyon Simulator</item>
-    </string-array>
-</resources>

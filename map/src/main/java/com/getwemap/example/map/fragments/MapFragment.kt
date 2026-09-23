@@ -1,36 +1,45 @@
 package com.getwemap.example.map.fragments
 
-import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.getwemap.example.common.CommonAppConstants
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.map.MapLevelsSwitcher
+import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.common.multiline
-import com.getwemap.example.map.GareDeLyonSimulatorsLocationSource
+import com.getwemap.example.map.Config
+import com.getwemap.example.map.LocationSourceType
+import com.getwemap.example.map.insetCompassBelowTransparentAppBar
+import com.getwemap.sdk.core.awaitLoaded
 import com.getwemap.sdk.core.location.LocationSource
 import com.getwemap.sdk.core.location.simulation.SimulationOptions
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
-import com.getwemap.sdk.core.model.entities.MapData
+import com.getwemap.sdk.map.MapSession
 import com.getwemap.sdk.map.WemapMapView
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.launch
 
 abstract class MapFragment : Fragment() {
 
     protected abstract val mapView: WemapMapView
     protected abstract val levelsSwitcher: MapLevelsSwitcher
 
-    protected lateinit var mapData: MapData
+    private val sessionViewModel: SessionViewModel by activityViewModels()
+
+    protected lateinit var session: MapSession
 
     // also you can use simulator to generate locations along the itinerary
     protected val simulator: SimulatorLocationSource?
         get() = mapView.locationManager.locationSource as? SimulatorLocationSource
 
-    protected var locationSourceId: Int = -1
+    protected lateinit var locationSource: LocationSourceType
 
     protected val pointOfInterestManager get() = mapView.pointOfInterestManager
     protected val focusedBuilding get() = buildingManager.focusedBuilding
@@ -47,23 +56,32 @@ abstract class MapFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val args = requireArguments()
-        locationSourceId = args.getInt("locationSourceId")
+        locationSource = LocationSourceType.from(requireArguments())
 
         createPermissionsHelper()
 
-        val mapDataString = args.getString("mapData")!!
-        mapData = Json.decodeFromString(mapDataString)
+        // The session was created in InitialFragment and shared via the activity-scoped ViewModel.
+        session = sessionViewModel.session!!
 
-        mapView.mapData = mapData
-        // camera bounds can be specified even if they don't exist in MapData
+        mapView.configure(session, Config.makeMapViewConfig(requireContext()))
+
+        // camera bounds can be specified even if they don't exist in the map data
 //        mapView.cameraBounds = maxBounds
-        mapView.onCreate(savedInstanceState)
 
-        mapView.getMapViewAsync { _, _, _, _ ->
-            checkPermissionsAndSetupLocationSource()
-            levelsSwitcher.bind(buildingManager)
+        lifecycleScope.launch {
+            runCatching {
+                mapView.awaitLoaded()
+            }.onSuccess {
+                // The compass is inside the map, so it needs the inset applied to its own margins rather than
+                // to a layout param — and only once the map is loaded.
+                mapView.insetCompassBelowTransparentAppBar()
+                checkPermissionsAndSetupLocationSource()
+                levelsSwitcher.bind(buildingManager, viewLifecycleOwner.lifecycleScope)
+            }.onFailure { error ->
+                println("Failed to load mapView with error - $error")
+            }
         }
+
     }
 
     @SuppressLint("MissingPermission")
@@ -76,15 +94,13 @@ abstract class MapFragment : Fragment() {
             SimulationOptions(deviationRange = -rangeBound/2 .. rangeBound/2)
         }
 
-        val locationSource: LocationSource? = when (locationSourceId) {
-            0 -> SimulatorLocationSource(mapData, simulationOptions)
-            1 -> null
-            2 -> GmsFusedLocationSource(requireContext(), mapData)
-            3 -> GareDeLyonSimulatorsLocationSource.fromIndoorToOutdoor(mapData)
-            else -> throw IllegalArgumentException("Location source id should be passed in Bundle")
+        val source: LocationSource? = when (locationSource) {
+            LocationSourceType.SIMULATOR -> SimulatorLocationSource(session, simulationOptions)
+            LocationSourceType.SYSTEM_DEFAULT -> null
+            LocationSourceType.FUSED_GMS -> GmsFusedLocationSource(requireContext(), session)
         }
         mapView.locationManager.apply {
-            this.locationSource = locationSource
+            this.locationSource = source
             isEnabled = true
         }
 
@@ -95,49 +111,9 @@ abstract class MapFragment : Fragment() {
         // no-op
     }
 
-    override fun onStart() {
-        super.onStart()
-        mapView.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mapView.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        mapView.onPause()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        mapView.onStop()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        mapView.onLowMemory()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        mapView.onDestroy()
-    }
-
-    // region ------ Permissions ------
+    // region Permissions
     private fun createPermissionsHelper() {
-        val requiredPermissions = when (locationSourceId) {
-            0, 3 -> listOf() // Simulator
-            1, 2 -> listOf(ACCESS_FINE_LOCATION) // GMS and default
-            else -> throw IllegalArgumentException("Location source id should be passed in Bundle")
-        }
-        permissionHelper = PermissionHelper(this, requiredPermissions)
+        permissionHelper = PermissionHelper(this, locationSource.requiredPermissions)
     }
 
     private fun checkPermissionsAndSetupLocationSource() {
@@ -151,5 +127,5 @@ abstract class MapFragment : Fragment() {
                 }
             }
     }
-    // endregion ------ Permissions ------
+    // endregion Permissions
 }

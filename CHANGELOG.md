@@ -1,20 +1,80 @@
 # Change Log
 
+This log covers the **sample apps**. The SDKs they use have their own change history in
+[`SDK_CHANGELOG.md`](SDK_CHANGELOG.md), linked from every section below that has one. Sections older than
+1.0.0-beta.1 predate it and carry no link.
+
 ---
+
+## [1.0.0-beta.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/1.0.0-beta.1)
+
+SDK changes in this release: [Wemap SDKs 1.0.0-beta.1](SDK_CHANGELOG.md#100-beta1)
+
+**1.0 is a breaking release.** Every sample in this repository is rewritten against the new API and is
+the worked example for each change below. See [Upgrading to 1.0](README.md#upgrading-to-10).
+
+### Breaking changes
+
+* SDKs: static singletons replaced by per-instance sessions — `WemapCoreSDK.instance`,
+  `WemapMapSDK.instance`, `WemapMapSDK.mapData`, `ServiceFactory` and `DependencyManager` are gone; every
+  view and location source takes a `CoreSession` or `MapSession`, created by a suspending `create` and
+  shared across a screen's map, AR view and location source
+* SDKs: global mutable constants replaced by immutable configs — `CoreConstants`, `MapConstants`,
+  `ARConstants`, `VPSControllerConstants` and `StateManagerConstants` are gone; each sample builds a config
+  at creation time
+* SDKs: every manager and location-source listener replaced by a `Flow` —
+  `PointOfInterestManagerListener`, `LocationSourceListener` and `WemapVPSARCoreLocationSourceListener` are
+  gone, and views report loading through `LoadPhase` in place of `getMapViewAsync` / `getARViewAsync` /
+  `isLoaded`
+* SDKs: the public API follows Kotlin idiom — acronyms are no longer all-caps (`addPOI` -> `addPoi`,
+  `WemapVPSARCoreLocationSource` -> `VpsARCoreLocationSource`), interfaces dropped their `I` prefix, public
+  `Float` scalars are `Double`, time values are `kotlin.time.Duration`, and errors are sealed hierarchies
+* SDKs: `Coordinate` is an immutable value type around a GeoJSON `Point`, levels are a `Levels` value, and
+  `Level` moved from the Core SDK to the Map SDK
+* SDKs: map metadata is read from the session rather than from `MapData`
+* GeoAR: no SceneView type is part of the public API — `GeoARView` holds a `SceneView` instead of extending
+  one
+* Core: a directions request the server rejects throws `DirectionsServiceError.RequestFailed(code, reason)`,
+  and `NoItinerariesFound` carries the reason the server reported
+* Samples: Kotlin 2.2 and `compileSdk` 37 to build; the Positioning, Map+Positioning and Positioning+AR apps
+  need Android 7.0 (API 24), and Positioning+AR needs Java 17
 
 ### Added
 
-* Pos(VPS Local): the offline VPS sample loads the venue from a downloaded packdata instead of the backend, so the map, positioning and scan history all work with no network
-* Pos(VPS Local): scan history resolves its venue offline too, so a recorded walk stays reviewable without a network
-* Map: the Levels sample restores the camera and active level across screen recreation
+* Map/GeoAR: native Jetpack Compose support — the map and the AR view can be used directly from Compose,
+  through the new `map-compose` and `geo-ar-compose` artifacts
+* Sample(Map): new `Map in Compose` sample — the map on its own in Compose, with camera state that survives
+  rotation and the user's position read off the loaded map
+* Sample(Positioning+AR): new `AR in Compose` sample — the AR view in Compose on the simulated location
+  source
+* Sample(Map): the Levels sample restores the camera and active level across screen recreation
+* Map: `UserLocationManager.locationState` and `locationStates` report whether the position the map shows
+  is still current
+* Map/GeoAR: initial POI loading reports errors and times out instead of hanging
+* SDKs: every public error type declares a non-null `message`
 
 ### Changed
 
-* Map: the CustomCredits sample customizes the size, border and position of the (i) button, and styles the screen's own controls to match
+* Pos(VPS Local): `com.getwemap.sdk.positioning:wemap-vps-local` is published to the public Wemap Maven
+  repository, on a version of its own — `1.0.0-alpha.4`, not `1.0.0-beta.1`. Its whole API is
+  `@AlphaVpsLocalApi` and does not follow semantic versioning
+* Sample(Map): the Custom credits sample customizes the size, border and position of the credits button,
+  and styles the screen's own controls to match
+* Samples: every sample's description is rewritten, and location sources are chosen from a
+  `LocationSourceType` enum instead of an index into a string array
 
 ### Fixed
 
-* Pos(VPS Local): opening a recorded session's trace crashed unless a map had been loaded earlier in the same process
+* Sample(Map+Positioning): the user location never went stale — the stale-timeout preference was read in
+  the wrong unit. It is now `STALE_TIMEOUT_SECONDS`, defaulting to `5`
+* Sample(Map+Positioning): the VPS screens showed a black screen instead of the map on some devices, and
+  the scan view ran at a few frames per second on mid-range ones
+
+### Compatibility
+
+* Android 6.0 (API 23) or newer — Android 7.0 (API 24) for the VPS and AR apps
+* Kotlin 2.2 or newer
+* Android Gradle Plugin 8.13 or newer
 
 ## [0.29.2](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/0.29.2)
 

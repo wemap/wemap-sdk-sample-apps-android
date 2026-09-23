@@ -6,21 +6,31 @@
     android:layout_height="match_parent"
     tools:context=".InitialActivity">
 
+    <include
+        android:id="@+id/content"
+        layout="@layout/content_initial" />
+
+    <!-- Declared after the content on purpose. Where the app bar is transparent the content's
+         `ScrollingViewBehavior` is nulled so the map fills the window, and a `CoordinatorLayout` draws
+         children of equal elevation in order - so the bar has to be the later one or the map covers it.
+
+         The colour is on the layout, not on the `Toolbar` inside it: the window is edge-to-edge and this
+         `CoordinatorLayout` is not `fitsSystemWindows`, so `InitialActivity` applies the status-bar inset to
+         this view as top padding, and only its own background paints behind the status bar. That is also what
+         `setTransparentAppBar` switches off over a map. -->
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fitsSystemWindows="true"
+        android:background="?attr/colorPrimary"
         android:theme="@style/Theme.WemapSDK.AppBarOverlay">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
             app:popupTheme="@style/Theme.WemapSDK.PopupOverlay" />
 
     </com.google.android.material.appbar.AppBarLayout>
-
-    <include layout="@layout/content_initial" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

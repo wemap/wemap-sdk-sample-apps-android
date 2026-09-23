@@ -14,20 +14,21 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.Constants
+import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.positioning.Config
-import com.getwemap.example.map.positioning.PackdataStore
+import com.getwemap.example.map.positioning.LocationSourceType
 import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.VpsLocalMapDownloader
 import com.getwemap.example.map.positioning.databinding.FragmentInitialBinding
-import com.getwemap.sdk.core.model.entities.MapData
-import com.getwemap.sdk.map.WemapMapSDK
+import com.getwemap.sdk.map.MapSession
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
-import com.getwemap.sdk.positioning.gps.GPSLocationSource
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
+import com.getwemap.sdk.positioning.gps.GpsLocationSource
+import com.getwemap.sdk.positioning.wemapvpsarcore.VpsARCoreLocationSource
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.ArCoreApk.Availability.SUPPORTED_INSTALLED
@@ -40,12 +41,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-
-private const val LOCATION_SOURCE_VPS_LOCAL = 5
 
 class InitialFragment : Fragment(), MenuProvider {
+
+    private val sessionViewModel: SessionViewModel by activityViewModels()
 
     private var requestJob: Job? = null
     private var downloadJob: Job? = null
@@ -56,18 +55,12 @@ class InitialFragment : Fragment(), MenuProvider {
     private val spinner get() = binding.spinner
     private val mapIdTextView get() = binding.mapIdTextView
     private val datasetSpinner get() = binding.vpsLocalDatasetSpinner
-    private val onlineSwitch get() = binding.onlineSwitch
 
     /** Map id currently typed in [mapIdTextView], or `null` when it is empty / not a number. */
     private val enteredMapId: Int? get() = mapIdTextView.text.toString().toIntOrNull()
 
     /** Guards the two-way sync between [datasetSpinner] and [mapIdTextView] against feedback loops. */
     private var isSyncingVpsLocalMapId = false
-
-    private var packdataJob: Job? = null
-
-    /** Set by an update check, so the next tap downloads the newer packdata instead of re-checking. */
-    private var isPackdataUpdateAvailable = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentInitialBinding.inflate(inflater, container, false)
@@ -78,14 +71,9 @@ class InitialFragment : Fragment(), MenuProvider {
         super.onViewCreated(view, savedInstanceState)
         requireActivity().addMenuProvider(this, viewLifecycleOwner)
 
-        mapIdTextView.setText("${Constants.mapId}")
+        mapIdTextView.setText("${Constants.MAP_ID}")
 
-        // uncomment if you want to use dev environment
-//        WemapCoreSDK.setEnvironment(Environment.Dev())
-//        WemapCoreSDK.setItinerariesEnvironment(Environment.Dev())
-
-        ArrayAdapter
-            .createFromResource(requireContext(), R.array.location_sources, android.R.layout.simple_spinner_item)
+        ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, LocationSourceType.titles)
             .also { adapter ->
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 spinner.adapter = adapter
@@ -100,15 +88,13 @@ class InitialFragment : Fragment(), MenuProvider {
 
         setupVpsLocalDatasetSpinner()
 
-        // Availability is per map id, so both the offline VPS dataset and the offline map follow
-        // whatever is typed in the field.
+        // Availability is per map id, so the offline VPS UI follows whatever is typed in the field.
         mapIdTextView.doAfterTextChanged {
-            if (spinner.selectedItemPosition == LOCATION_SOURCE_VPS_LOCAL) {
-                selectDatasetOf(enteredMapId)
-                updateVpsLocalStatus()
-            }
-            isPackdataUpdateAvailable = false
-            updatePackdataUi()
+            if (selectedSource != LocationSourceType.VPS_LOCAL)
+                return@doAfterTextChanged
+
+            selectDatasetOf(enteredMapId)
+            updateVpsLocalStatus()
         }
 
         binding.vpsLocalDownloadButton.setOnClickListener {
@@ -125,25 +111,8 @@ class InitialFragment : Fragment(), MenuProvider {
             }
             findNavController().navigate(
                 R.id.action_InitialFragment_to_VpsLocalHistoryFragment,
-                Bundle().apply {
-                    putInt(VpsLocalHistoryFragment.ARG_MAP_ID, mapId)
-                    putBoolean(VpsLocalHistoryFragment.ARG_OFFLINE, !onlineSwitch.isChecked)
-                },
+                Bundle().apply { putInt(VpsLocalHistoryFragment.ARG_MAP_ID, mapId) },
             )
-        }
-
-        onlineSwitch.setOnClickListener {
-            updatePackdataUi()
-        }
-
-        binding.packdataButton.setOnClickListener {
-            val mapId = enteredMapId
-                ?: return@setOnClickListener
-
-            if (storedPackdata(mapId) == null || isPackdataUpdateAvailable)
-                downloadPackdata(mapId)
-            else
-                checkPackdataUpdates(mapId)
         }
 
         binding.buttonLoadMap.setOnClickListener {
@@ -151,34 +120,38 @@ class InitialFragment : Fragment(), MenuProvider {
         }
 
         updateVpsLocalUi()
-        updatePackdataUi()
     }
 
+    /** The row the spinner is on. Its position is an index into [LocationSourceType.entries] by construction. */
+    private val selectedSource get() = LocationSourceType.entries[spinner.selectedItemPosition]
+
     private fun checkAvailability() {
-        when (spinner.selectedItemPosition) {
-            0 -> // VPS
-                WemapVPSARCoreLocationSource.checkAvailabilityAsync(requireContext()) { availability ->
+        val source = selectedSource
+        when {
+            source.usesVps ->
+                VpsARCoreLocationSource.checkAvailabilityAsync(requireContext()) { availability ->
                     when (availability) {
                         SUPPORTED_INSTALLED -> loadMap()
                         SUPPORTED_NOT_INSTALLED -> installARCore()
                         else -> showUnavailableAlert()
                     }
                 }
-            1, 2 -> loadMap() // Simulator, System Default
-            3 -> if (GPSLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
-            4 -> if (GmsFusedLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
-            LOCATION_SOURCE_VPS_LOCAL -> { // VPS Local (offline)
+            source == LocationSourceType.VPS_LOCAL -> {
                 val mapId = enteredMapId
                 if (mapId != null && VpsLocalMapDownloader.isAvailable(requireContext(), mapId))
                     loadMap()
                 else
                     showUnavailableAlert("Offline VPS map database of map $mapId is not downloaded yet")
             }
-            else ->  throw IllegalArgumentException("Unknown Location Source")
+            source == LocationSourceType.GPS ->
+                if (GpsLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
+            source == LocationSourceType.FUSED_GMS ->
+                if (GmsFusedLocationSource.isAvailable(requireContext())) loadMap() else showUnavailableAlert()
+            else -> loadMap() // Simulator, System Default
         }
     }
 
-    // region ------ VPS Local (offline) ------
+    // region VPS Local (offline)
 
     /**
      * Fills the dataset spinner with the venues [VpsLocalMapDownloader] knows about. Picking one only
@@ -199,11 +172,6 @@ class InitialFragment : Fragment(), MenuProvider {
                     return
 
                 val dataset = VpsLocalMapDownloader.DATASETS.getOrNull(position) ?: return
-                // An unconfigured placeholder entry has no real map id to offer — leave the field alone
-                // so the user can type one instead of seeing the placeholder value appear.
-                if (!dataset.isConfigured)
-                    return
-
                 mapIdTextView.setText("${dataset.mapId}")
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -222,15 +190,15 @@ class InitialFragment : Fragment(), MenuProvider {
     }
 
     private fun updateVpsLocalUi() {
-        val isVpsLocal = spinner.selectedItemPosition == LOCATION_SOURCE_VPS_LOCAL
+        val isVpsLocal = selectedSource == LocationSourceType.VPS_LOCAL
         binding.vpsLocalLayout.isVisible = isVpsLocal
         if (!isVpsLocal)
             return
 
         // Prefill the map id of the selected dataset, unless the typed one already matches a dataset.
-        if (enteredMapId?.let { VpsLocalMapDownloader.datasetFor(it) } == null) {
+        if (VpsLocalMapDownloader.datasetFor(enteredMapId ?: -1) == null) {
             val selected = VpsLocalMapDownloader.DATASETS.getOrNull(datasetSpinner.selectedItemPosition)
-            if (selected != null && selected.isConfigured)
+            if (selected != null)
                 mapIdTextView.setText("${selected.mapId}")
         }
 
@@ -251,10 +219,9 @@ class InitialFragment : Fragment(), MenuProvider {
         val downloadButton = binding.vpsLocalDownloadButton
 
         when {
-            dataset == null || !dataset.isConfigured -> {
+            dataset == null -> {
                 binding.vpsLocalStatus.text =
-                    "No offline VPS dataset configured for map id ${mapId ?: "?"}. Add the map id and " +
-                            "dataset URL Wemap sent you to VpsLocalMapDownloader.DATASETS"
+                    "No offline VPS dataset configured for map id ${mapId ?: "?"}"
                 downloadButton.isEnabled = false
                 downloadButton.text = "Download"
             }
@@ -326,90 +293,7 @@ class InitialFragment : Fragment(), MenuProvider {
             }
         }
     }
-    // endregion ------ VPS Local (offline) ------
-
-    // region ------ Offline map (packdata) ------
-
-    /**
-     * Reflects the offline switch. The packdata section is only relevant offline, and offline the map
-     * can only be loaded once a packdata for the entered map id sits on the device.
-     */
-    private fun updatePackdataUi() {
-        val isOffline = !onlineSwitch.isChecked
-        onlineSwitch.text = if (isOffline) "Offline" else "Online"
-        binding.packdataLayout.isVisible = isOffline
-        binding.buttonLoadMap.isEnabled = !isOffline || enteredMapId?.let { storedPackdata(it) } != null
-
-        if (isOffline) {
-            updatePackdataStatus()
-        }
-    }
-
-    /** Reports the state of the packdata of the currently entered map id. */
-    private fun updatePackdataStatus() {
-        if (packdataJob?.isActive == true)
-            return
-
-        val mapId = enteredMapId
-        val stored = mapId?.let { storedPackdata(it) }
-
-        binding.packdataStatus.text = when {
-            mapId == null -> "Enter a map id to use an offline map"
-            stored == null -> "Offline map of map $mapId is not downloaded"
-            isPackdataUpdateAvailable -> "Offline map of map $mapId is outdated (v${stored.version})"
-            else -> "Offline map of map $mapId is ready (v${stored.version})"
-        }
-        binding.packdataButton.isEnabled = mapId != null
-        binding.packdataButton.text =
-            if (stored == null || isPackdataUpdateAvailable) "Download" else "Check for updates"
-    }
-
-    private fun downloadPackdata(mapId: Int) {
-        if (packdataJob?.isActive == true)
-            return
-
-        binding.packdataButton.isEnabled = false
-        binding.packdataStatus.text = "Downloading offline map of map $mapId…"
-
-        packdataJob = lifecycleScope.launch {
-            try {
-                PackdataStore.download(requireContext(), mapId)
-                isPackdataUpdateAvailable = false
-            } catch (e: Exception) {
-                val text = "Failed to download offline map with error - ${e.message}"
-                Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
-            } finally {
-                packdataJob = null
-                updatePackdataUi()
-            }
-        }
-    }
-
-    private fun checkPackdataUpdates(mapId: Int) {
-        if (packdataJob?.isActive == true)
-            return
-
-        binding.packdataButton.isEnabled = false
-
-        packdataJob = lifecycleScope.launch {
-            try {
-                isPackdataUpdateAvailable = PackdataStore.isUpdateAvailable(requireContext(), mapId)
-                if (!isPackdataUpdateAvailable) {
-                    val text = "No new offline map available yet"
-                    Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
-                }
-            } catch (e: Exception) {
-                val text = "Failed to check for offline map updates with error - ${e.message}"
-                Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).multiline().show()
-            } finally {
-                packdataJob = null
-                updatePackdataUi()
-            }
-        }
-    }
-
-    private fun storedPackdata(mapId: Int) = PackdataStore.stored(requireContext(), mapId)
-    // endregion ------ Offline map (packdata) ------
+    // endregion VPS Local (offline)
 
     // requestInstall(Activity, true) will triggers installation of
     // Google Play Services for AR if necessary.
@@ -449,12 +333,11 @@ class InitialFragment : Fragment(), MenuProvider {
 
         requestJob = lifecycleScope.launch {
             try {
-                val mapData = if (onlineSwitch.isChecked)
-                    WemapMapSDK.instance.mapData(id, Constants.TOKEN)
-                else
-                    PackdataStore.loadMapData(requireContext(), id)
-
-                showMap(mapData)
+                val session = MapSession.create(
+                    requireContext(), id, Constants.TOKEN, Config.makeSessionConfig(requireContext())
+                )
+                sessionViewModel.replace(session)
+                showMap(session)
             } catch (e: Exception) {
                 val str = "Failed to receive map data with error - ${e.message}"
                 Snackbar.make(binding.root, str, Snackbar.LENGTH_LONG).multiline().show()
@@ -464,28 +347,28 @@ class InitialFragment : Fragment(), MenuProvider {
         }
     }
 
-    private fun showMap(mapData: MapData) {
-        Config.applyGlobalOptions(requireContext())
+    private fun showMap(session: MapSession) {
+        Config.applyAppOptions(requireContext())
 
-        val position = spinner.selectedItemPosition
+        val source = selectedSource
 
-        if (position == 0 && mapData.extras?.vpsEndpoint == null) { // VPS
-            val text = "This map(${mapData.id}) is not compatible with VPS Location Source"
+        if (source.usesVps && !session.isVpsEnabled) {
+            val text = "This map(${session.mapId}) is not compatible with VPS Location Source"
             Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).show()
             return
         }
 
-        val bundle = Bundle().apply {
-            putInt("locationSourceId", position)
-            putString("mapData", Json.encodeToString(mapData))
-            if (spinner.selectedItemPosition == LOCATION_SOURCE_VPS_LOCAL) {
-                putString("mapDir", VpsLocalMapDownloader.mapDir(requireContext(), mapData.id).absolutePath)
+        // Primitives only: the session is not serializable and rides the activity-scoped SessionViewModel
+        // (already set by the caller), so nothing here carries a session-owned object.
+        val bundle = source.putInto(Bundle()).apply {
+            if (source == LocationSourceType.VPS_LOCAL) {
+                putString("mapDir", VpsLocalMapDownloader.mapDir(requireContext(), session.mapId).absolutePath)
             }
         }
 
-        val destination = when (position) {
-            0 -> R.id.action_InitialFragment_to_MapVPSFragment
-            LOCATION_SOURCE_VPS_LOCAL -> R.id.action_InitialFragment_to_MapVPSLocalFragment
+        val destination = when (source) {
+            LocationSourceType.VPS -> R.id.action_InitialFragment_to_MapVpsFragment
+            LocationSourceType.VPS_LOCAL -> R.id.action_InitialFragment_to_MapVpsLocalFragment
             else -> R.id.action_InitialFragment_to_MapFragment
         }
 
@@ -495,7 +378,6 @@ class InitialFragment : Fragment(), MenuProvider {
     override fun onDestroyView() {
         requestJob?.cancel()
         downloadJob?.cancel()
-        packdataJob?.cancel()
         super.onDestroyView()
         _binding = null
     }
@@ -508,9 +390,7 @@ class InitialFragment : Fragment(), MenuProvider {
         return when (menuItem.itemId) {
             R.id.preferences -> {
                 // Pass the selected source so Settings shows only the relevant preference categories.
-                val bundle = Bundle().apply {
-                    putInt("locationSourceId", spinner.selectedItemPosition)
-                }
+                val bundle = selectedSource.putInto(Bundle())
                 findNavController().navigate(R.id.action_Anywhere_to_SettingsFragment, bundle)
                 true
             }

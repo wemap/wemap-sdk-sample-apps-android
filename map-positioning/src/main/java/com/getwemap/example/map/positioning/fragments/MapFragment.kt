@@ -9,13 +9,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import com.getwemap.example.map.positioning.LocationSourceType
 import com.getwemap.example.map.positioning.databinding.FragmentMapBinding
 import com.getwemap.sdk.core.extensions.toCoordinate
 import com.getwemap.sdk.core.location.LocationSource
 import com.getwemap.sdk.core.location.simulation.SimulationOptions
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
-import com.getwemap.sdk.positioning.gps.GPSLocationSource
+import com.getwemap.sdk.positioning.gps.GpsLocationSource
 import org.maplibre.android.MapLibre
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
@@ -25,7 +26,7 @@ class MapFragment : BaseFragment() {
     override val mapView get() = binding.mapView
     override val levelsSwitcher get() = binding.levelsSwitcher
 
-    private var locationSourceId: Int = -1
+    private lateinit var locationSource: LocationSourceType
 
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
@@ -39,16 +40,21 @@ class MapFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val args = requireArguments()
-        locationSourceId = args.getInt("locationSourceId")
+        locationSource = LocationSourceType.from(requireArguments())
     }
 
     override fun checkPermissionsAndSetupLocationSource() {
-        val permissionsAccepted = when (locationSourceId) {
-            1 -> true // no permissions needed for simulator
-            2, 3, 4 -> checkGPSPermission()
-            5, 6 -> checkGPSPermission() && checkBluetoothPermission()
-            else -> throw IllegalArgumentException("Location source id should be passed in Bundle")
+        val permissionsAccepted = when (locationSource) {
+            LocationSourceType.SIMULATOR -> true // no permissions needed for simulator
+            LocationSourceType.SYSTEM_DEFAULT,
+            LocationSourceType.GPS,
+            LocationSourceType.FUSED_GMS -> checkGpsPermission()
+            // Kept from the pre-enum version, and unreachable today: InitialFragment routes the offline VPS
+            // to a screen of its own, which asks for its own permissions. Left in place rather than folded
+            // into the throw below because the beacon scan is what it would need if it ever came back.
+            LocationSourceType.VPS_LOCAL -> checkGpsPermission() && checkBluetoothPermission()
+            // VPS has its own fragment and never lands here.
+            LocationSourceType.VPS -> throw IllegalArgumentException("$locationSource has its own screen")
         }
         if (!permissionsAccepted) return
         setupLocationSource()
@@ -69,17 +75,19 @@ class MapFragment : BaseFragment() {
 
     @SuppressLint("MissingPermission")
     override fun setupLocationSource() {
-        val locationSource: LocationSource? = when (locationSourceId) {
-            1 -> SimulatorLocationSource(mapData, SimulationOptions(deviationRange = -20.0..20.0)).apply {
-                setCoordinates(listOf(mapData.center.toCoordinate()), sample = false)
-            }
-            2 -> null
-            3 -> GPSLocationSource(requireContext(), mapData)
-            4 -> GmsFusedLocationSource(requireContext(), mapData)
-            else -> throw IllegalArgumentException("Location source id should be passed in Bundle")
+        val source: LocationSource? = when (locationSource) {
+            LocationSourceType.SIMULATOR ->
+                SimulatorLocationSource(session, SimulationOptions(deviationRange = -20.0..20.0)).apply {
+                    setCoordinates(listOf(session.mapCenter.toCoordinate()), sample = false)
+                }
+            // The platform's own fused provider, which the SDK uses when no source is set.
+            LocationSourceType.SYSTEM_DEFAULT -> null
+            LocationSourceType.GPS -> GpsLocationSource(requireContext(), session)
+            LocationSourceType.FUSED_GMS -> GmsFusedLocationSource(requireContext(), session)
+            else -> throw IllegalArgumentException("$locationSource has its own screen")
         }
         mapView.locationManager.apply {
-            this.locationSource = locationSource
+            this.locationSource = source
             isEnabled = true
             cameraMode = CameraMode.TRACKING_COMPASS
             renderMode = RenderMode.COMPASS

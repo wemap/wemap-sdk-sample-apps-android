@@ -6,16 +6,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.Constants
+import com.getwemap.example.common.SessionViewModel
 import com.getwemap.example.common.multiline
-import com.getwemap.example.positioning.Config
 import com.getwemap.example.positioning.R
 import com.getwemap.example.positioning.databinding.FragmentInitialBinding
-import com.getwemap.sdk.core.model.ServiceFactory
-import com.getwemap.sdk.core.model.entities.MapData
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
+import com.getwemap.sdk.core.CoreSession
+import com.getwemap.sdk.positioning.wemapvpsarcore.VpsARCoreLocationSource
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.ArCoreApk.Availability.SUPPORTED_INSTALLED
@@ -26,10 +26,10 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 class InitialFragment : Fragment() {
+
+    private val sessionViewModel: SessionViewModel by activityViewModels()
 
     private var request: Job? = null
 
@@ -46,11 +46,7 @@ class InitialFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mapIdTextView.setText("${Constants.mapId}")
-
-        // uncomment if you want to use dev environment
-//        WemapCoreSDK.setEnvironment(Environment.Dev())
-//        WemapCoreSDK.setItinerariesEnvironment(Environment.Dev())
+        mapIdTextView.setText("${Constants.MAP_ID}")
 
         binding.buttonLoadMap.setOnClickListener {
             checkAvailability()
@@ -58,7 +54,7 @@ class InitialFragment : Fragment() {
     }
 
     private fun checkAvailability() {
-        WemapVPSARCoreLocationSource.checkAvailabilityAsync(requireContext()) { availability ->
+        VpsARCoreLocationSource.checkAvailabilityAsync(requireContext()) { availability ->
             when (availability) {
                 SUPPORTED_INSTALLED -> loadMap()
                 SUPPORTED_NOT_INSTALLED ->  installARCore()
@@ -67,8 +63,7 @@ class InitialFragment : Fragment() {
         }
     }
 
-    // requestInstall(Activity, true) will triggers installation of
-    // Google Play Services for AR if necessary.
+    // requestInstall(Activity, true) will trigger installation of Google Play Services for AR if necessary
     private var userRequestedInstall = true
 
     private fun installARCore() {
@@ -103,7 +98,7 @@ class InitialFragment : Fragment() {
 
         request = lifecycleScope.launch {
             runCatching {
-                ServiceFactory.getMapService().mapById(id, Constants.TOKEN)
+                CoreSession.create(requireContext(), id, Constants.TOKEN)
             }.onSuccess {
                 showMap(it)
             }.onFailure {
@@ -113,20 +108,18 @@ class InitialFragment : Fragment() {
         }
     }
 
-    private fun showMap(mapData: MapData) {
-        Config.applyGlobalOptions(requireContext())
-
-        if (mapData.extras?.vpsEndpoint == null) {
-            val text = "This map(${mapData.id}) is not compatible with VPS Location Source"
+    private fun showMap(session: CoreSession) {
+        if (!session.isVpsEnabled) {
+            val text = "This map(${session.mapId}) is not compatible with VPS Location Source"
             Snackbar.make(binding.root, text, Snackbar.LENGTH_LONG).show()
+            // Nothing takes ownership of a session we never hand over, so release it here.
+            session.deinit()
             return
         }
 
-        val bundle = Bundle().apply {
-            putString("mapData", Json.encodeToString(mapData))
-        }
+        sessionViewModel.replace(session)
 
-        findNavController().navigate(R.id.action_InitialFragment_to_VPSFragment, bundle)
+        findNavController().navigate(R.id.action_InitialFragment_to_VpsFragment)
     }
 
     override fun onDestroyView() {

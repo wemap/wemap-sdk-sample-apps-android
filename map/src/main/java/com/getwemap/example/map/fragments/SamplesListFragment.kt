@@ -17,9 +17,10 @@ class SamplesListFragment : Fragment() {
         OnRecyclerViewClickListener { _, position ->
             val navId = when (position) {
                 0 -> R.id.action_SamplesListFragment_to_LevelsFragment
-                1 -> R.id.action_SamplesListFragment_to_POIsFragment
+                1 -> R.id.action_SamplesListFragment_to_PoisFragment
                 2 -> R.id.action_SamplesListFragment_to_NavigationFragment
-                3 -> R.id.action_SamplesListFragment_to_CustomCreditsFragment
+                3 -> R.id.action_SamplesListFragment_to_ComposeMapFragment
+                4 -> R.id.action_SamplesListFragment_to_CustomCreditsFragment
                 else -> throw Exception("Unsupported transition")
             }
             findNavController().navigate(navId, requireArguments())
@@ -45,19 +46,26 @@ class SamplesRecyclerViewAdapter(
         listOf(
             Pair(
                 "Levels",
-                "Shows level switching, POI selection, and map state restoration across screen recreation"
+                "Switches indoor levels, outlines a 100 m radius with a style layer, and restores map " +
+                    "state across recreation"
             ),
             Pair(
                 "Points of interest",
-                "Shows how to hide/show and select/unselect POIs"
+                "Filters POIs by tag, hides and shows them, selects them, and lists them by distance or " +
+                    "travel time"
             ),
             Pair(
                 "Navigation",
-                "Shows how to start/stop navigation to user-created annotations"
+                "Navigates between two points long-pressed on the map, reporting progress along the way"
+            ),
+            Pair(
+                "Map in Compose",
+                "The map on its own in Compose — camera state that survives rotation, and the user's position " +
+                    "read off the loaded view. The only sample that needs no other Wemap module"
             ),
             Pair(
                 "Custom credits",
-                "Shows how to override the attribution (ⓘ) button with a custom accessible credits sheet"
+                "Overrides the credits bottom sheet, restyles the credits button, and sets up accessibility"
             )
         ).map {
             SamplesItem(it.first, it.second)

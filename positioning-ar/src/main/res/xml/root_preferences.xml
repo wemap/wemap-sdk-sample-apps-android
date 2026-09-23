@@ -1,5 +1,16 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <PreferenceCategory app:title="@string/global_preferences">
+
+        <EditTextPreference
+            app:defaultValue="10"
+            app:key="POINTS_OF_INTEREST_LOADING_TIMEOUT_SECONDS"
+            app:title="@string/points_of_interest_loading_timeout_seconds"
+            app:dialogMessage="@string/points_of_interest_loading_timeout_seconds_message"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/ar_preferences">
 
         <EditTextPreference

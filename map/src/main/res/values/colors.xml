@@ -2,4 +2,8 @@
 <resources>
     <!-- Hairline around the overlay controls of the Custom credits screen. -->
     <color name="overlay_button_border">#1F000000</color>
+
+    <!-- The app bar's title and back arrow where the bar is transparent over a map. Not `colorOnSurface`:
+         what they sit on is the map style, which is light in either theme. -->
+    <color name="transparent_bar_content">#1A1C1E</color>
 </resources>

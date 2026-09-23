@@ -5,13 +5,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.lifecycleScope
 import com.getwemap.example.map.databinding.FragmentLevelsBinding
-import com.getwemap.sdk.core.internal.geo.LevelUtils
-import com.getwemap.sdk.core.internal.helpers.Logger
+import com.getwemap.sdk.core.awaitLoaded
+import com.getwemap.sdk.core.model.entities.Levels
 import com.getwemap.sdk.core.model.entities.PointOfInterest
-import com.getwemap.sdk.map.buildings.Building
-import com.getwemap.sdk.map.buildings.BuildingManager
-import com.getwemap.sdk.map.buildings.BuildingManagerListener
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.constants.MapLibreConstants
@@ -28,11 +29,12 @@ import org.maplibre.turf.TurfTransformation
 /**
  * Demonstrates level switching, POI selection, and state restoration across activity recreation.
  *
- * [MapFragment] forwards the saved instance state to MapLibre, which initially restores the complete camera.
- * Pre-v1 [com.getwemap.sdk.map.WemapMapView] then applies the map-data camera after its style loads, so this
- * fragment retains MapLibre's saved camera and reapplies it when Wemap reports the map ready. The SDK does not
- * put the active level in that bundle, so the fragment saves its ID and reapplies it when the recreated map
- * focuses a building.
+ * [MapFragment] forwards the saved instance state to MapLibre, which restores the complete camera before the
+ * map loads; the map then applies the map-data camera once its style is ready, so this fragment keeps
+ * MapLibre's saved camera and reapplies it afterwards. The SDK does not put the active level in that bundle,
+ * so the fragment saves its ID and reapplies it once the recreated map focuses a building.
+ *
+ * Rotate the device to check both: the camera should stay where you left it, on the level you chose.
  */
 class LevelsFragment : MapFragment() {
 
@@ -45,17 +47,11 @@ class LevelsFragment : MapFragment() {
     private var _binding: FragmentLevelsBinding? = null
     private val binding get() = _binding!!
 
-    private val pois: Set<PointOfInterest> get() = pointOfInterestManager.getPOIs()
+    private val pois: Set<PointOfInterest> get() = pointOfInterestManager.getPois()
     private var uniqueLevels: Set<Float> = emptySet()
-    private var observedBuildingManager: BuildingManager? = null
     private var cameraPositionToRestore: CameraPosition? = null
     private var currentLevelId: Float? = null
     private var levelIdToRestore: Float? = null
-
-    private val buildingManagerListener = BuildingManagerListener(
-        onActiveLevelChanged = { _, level -> currentLevelId = level.id },
-        onFocusedBuildingChanged = ::restoreOrRememberLevel
-    )
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         MapLibre.getInstance(requireContext())
@@ -73,20 +69,40 @@ class LevelsFragment : MapFragment() {
         buttonFirstPOI.setOnClickListener { firstClicked() }
         buttonSecondPOI.setOnClickListener { secondClicked() }
 
-        mapView.getMapViewAsync { loadedView, map, style, _ ->
-            val manager = loadedView.buildingManager
-            if (manager.addListener(buildingManagerListener)) {
-                observedBuildingManager = manager
-            }
+        lifecycleScope.launch {
+            runCatching {
+                mapView.awaitLoaded()
+            }.onSuccess {
+                val map = mapView.map
+                cameraPositionToRestore?.let {
+                    map.cameraPosition = it
+                    cameraPositionToRestore = null
+                }
 
-            cameraPositionToRestore?.let {
-                map.cameraPosition = it
-                cameraPositionToRestore = null
-            }
+                uniqueLevels = pois.mapNotNull { it.coordinate.levels.single }.toSet()
+                map.style?.let { drawCircleAroundCenter(map, it) }
 
-            uniqueLevels = pois.mapNotNull { it.coordinate.levels.firstOrNull() }.toSet()
-            drawCircleAroundCenter(map, style)
-            restoreOrRememberLevel(manager.focusedBuilding)
+                // Reading `buildingManager` before the map is loaded throws — the manager itself is gated,
+                // not just the values it reports — so both collectors start here rather than above.
+                val buildingManager = mapView.buildingManager
+
+                launch {
+                    // A StateFlow, so a building focused already arrives at once; otherwise this waits.
+                    val building = buildingManager.focusedBuildings.filterNotNull().first()
+                    val savedLevelId = levelIdToRestore
+                    if (savedLevelId != null && building.levels.any { it.id == savedLevelId }) {
+                        building.activeLevelId = savedLevelId
+                    }
+                    currentLevelId = building.activeLevelId
+                    levelIdToRestore = null
+                }
+
+                launch {
+                    buildingManager.activeLevelChanges.collect { (_, level) -> currentLevelId = level.id }
+                }
+            }.onFailure { error ->
+                println("Failed to load mapView with error - $error")
+            }
         }
     }
 
@@ -95,25 +111,31 @@ class LevelsFragment : MapFragment() {
         super.onSaveInstanceState(outState)
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    // region ------ Private ------
     private fun firstClicked() {
         val minLevel = uniqueLevels.minOrNull()
-            ?: return Logger.e("Failed to select POI on min level because there are no levels")
+            ?: return println("Failed to select POI on min level because there are no levels")
 
         selectPOI(minLevel)
     }
 
     private fun secondClicked() {
         val maxLevel = uniqueLevels.maxOrNull()
-            ?: return Logger.e("Failed to select POI on max level because there are no levels")
+            ?: return println("Failed to select POI on max level because there are no levels")
 
         selectPOI(maxLevel)
     }
 
     private fun selectPOI(level: Float) {
-        val randomPOI = pois.filter { LevelUtils.intersects(it.coordinate.levels, listOf(level)) }.randomOrNull()
-            ?: return Logger.e("Failed to get random POI at level $level")
+        val randomPOI = pois.filter { it.coordinate.levels.intersects(Levels.Single(level)) }.randomOrNull()
+            ?: return println("Failed to get random POI at level $level")
 
-        pointOfInterestManager.selectPOI(randomPOI)
+        pointOfInterestManager.selectPoi(randomPOI)
     }
 
     private fun drawCircleAroundCenter(map: MapLibreMap, style: Style) {
@@ -136,32 +158,10 @@ class LevelsFragment : MapFragment() {
         )
     }
 
-    override fun onDestroyView() {
-        observedBuildingManager?.removeListener(buildingManagerListener)
-        observedBuildingManager = null
-        super.onDestroyView()
-        _binding = null
-    }
-
-    private fun restoreOrRememberLevel(building: Building?) {
-        val focusedBuilding = building ?: return
-        val savedLevelId = levelIdToRestore
-        if (savedLevelId != null) {
-            if (focusedBuilding.levels.any { it.id == savedLevelId }) {
-                focusedBuilding.activeLevelId = savedLevelId
-                currentLevelId = savedLevelId
-            } else {
-                currentLevelId = focusedBuilding.activeLevelId
-            }
-            levelIdToRestore = null
-        } else {
-            currentLevelId = focusedBuilding.activeLevelId
-        }
-    }
-
     @Suppress("DEPRECATION")
     private fun Bundle.savedCameraPosition(): CameraPosition? =
         getParcelable(MapLibreConstants.STATE_CAMERA_POSITION)
+    // endregion ------ Private ------
 
     companion object {
         private const val SAVED_LEVEL_ID = "savedLevelId"

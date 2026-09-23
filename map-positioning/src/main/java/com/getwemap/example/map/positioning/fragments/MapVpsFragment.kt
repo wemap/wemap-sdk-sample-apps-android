@@ -2,6 +2,7 @@ package com.getwemap.example.map.positioning.fragments
 
 import android.Manifest.permission
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -13,61 +14,59 @@ import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.getwemap.example.common.AlertFactory
 import com.getwemap.example.common.HapticGenerator
 import com.getwemap.example.common.PermissionHelper
 import com.getwemap.example.common.map.GlobalOptions
+import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.common.multiline
 import com.getwemap.example.common.onDismissed
+import com.getwemap.example.common.setSurfaceVisible
 import com.getwemap.example.map.positioning.AppConstants
+import com.getwemap.example.map.positioning.Config
 import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.databinding.FragmentMapVpsBinding
-import com.getwemap.sdk.core.model.entities.Attitude
+import com.getwemap.sdk.core.awaitLoaded
 import com.getwemap.sdk.core.model.entities.Coordinate
 import com.getwemap.sdk.core.model.entities.Itinerary
-import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.core.model.entities.PointOfInterest
-import com.getwemap.sdk.core.model.services.parameters.ItinerarySearchRules
-import com.getwemap.sdk.core.navigation.Navigation
+import com.getwemap.sdk.core.model.services.ItinerarySearchRules
 import com.getwemap.sdk.core.navigation.info.NavigationInfo
-import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
-import com.getwemap.sdk.core.poi.PointOfInterestManagerListener
-import com.getwemap.sdk.map.OnMapViewReadyCallback
+import com.getwemap.sdk.core.navigation.manager.NavigationEvent
+import com.getwemap.sdk.map.MapSession
 import com.getwemap.sdk.map.WemapMapView
 import com.getwemap.sdk.map.itineraries.ItineraryManager
+import com.getwemap.sdk.map.itineraries.ItineraryOptions
+import com.getwemap.sdk.map.itineraries.LineOptions
 import com.getwemap.sdk.map.location.UserLocationManager
-import com.getwemap.sdk.map.location.UserLocationManagerListener
-import com.getwemap.sdk.map.navigation.IMapNavigationManager
-import com.getwemap.sdk.map.poi.IMapPointOfInterestManager
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.ScanStatus
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource.State
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceError
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSourceListener
+import com.getwemap.sdk.map.navigation.MapNavigationManager
+import com.getwemap.sdk.map.poi.MapPointOfInterestManager
+import com.getwemap.sdk.positioning.wemapvpsarcore.VpsARCoreLocationSource
+import com.getwemap.sdk.positioning.wemapvpsarcore.VpsARCoreLocationSource.ScanStatus
+import com.getwemap.sdk.positioning.wemapvpsarcore.VpsARCoreLocationSource.State
+import com.getwemap.sdk.positioning.wemapvpsarcore.VpsARCoreLocationSourceError
 import com.google.android.material.snackbar.Snackbar
-import com.google.ar.core.TrackingFailureReason
-import com.google.ar.core.TrackingState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.Json
 import org.maplibre.android.MapLibre
 import org.maplibre.android.location.OnCameraTrackingChangedListener
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.Style
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.seconds
 
 @SuppressLint("MissingPermission")
-class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
+class MapVpsFragment : Fragment() {
 
     enum class AppState { BROWSING, POI_SELECTED, ITINERARY, NAVIGATION, SCANNING }
 
@@ -76,14 +75,16 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
 
     private val applicationContext get() = requireContext().applicationContext
     private val mapView get() = binding.mapView
-    private val pointOfInterestManager: IMapPointOfInterestManager get() = mapView.pointOfInterestManager
-    private val navigationManager: IMapNavigationManager get() = mapView.navigationManager
+    private val pointOfInterestManager: MapPointOfInterestManager get() = mapView.pointOfInterestManager
+    private val navigationManager: MapNavigationManager get() = mapView.navigationManager
     private val itineraryManager: ItineraryManager get() = mapView.itineraryManager
     private val locationManager: UserLocationManager get() = mapView.locationManager
 
-    private val currentItinerary: Itinerary? get() = mapView.itineraryManager.itineraries.firstOrNull()
+    private val currentItinerary: Itinerary? get() = mapView.itineraryManager.drawnItineraries.firstOrNull()
+    private val sessionViewModel: SessionViewModel by activityViewModels()
     private lateinit var permissionHelper: PermissionHelper
-    private lateinit var vpsLocationSource: WemapVPSARCoreLocationSource
+    private lateinit var session: MapSession
+    private lateinit var vpsLocationSource: VpsARCoreLocationSource
 
     private var scanningTimerJob: Job? = null
     private var errorTimerJob: Job? = null
@@ -109,26 +110,33 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
 
         createPermissionsHelper()
 
-        mapView.onCreate(savedInstanceState)
-
-        val mapDataString = requireArguments().getString("mapData")!!
-        val mapData = Json.decodeFromString<MapData>(mapDataString)
-        mapView.mapData = mapData
+        session = sessionViewModel.session!!
+        mapView.configure(session, Config.makeMapViewConfig(requireContext()))
 
         // Create location source
-        vpsLocationSource = WemapVPSARCoreLocationSource(applicationContext, mapData)
+        vpsLocationSource = VpsARCoreLocationSource(applicationContext, session, Config.makeVpsConfig(requireContext()))
         // Bind camera view to location source
         vpsLocationSource.bind(applicationContext, binding.surfaceView)
+        makeCameraVisible(false)
 
         // to prevent interactions with MapView before it's loaded
         binding.locateMe.isEnabled = false
 
-        mapView.getMapViewAsync(this)
+        lifecycleScope.launch {
+            runCatching {
+                mapView.awaitLoaded()
+            }.onSuccess {
+                onMapViewReady(it, it.map)
+            }.onFailure { error ->
+                val message = "Failed to load MapView with error - $error"
+                Snackbar.make(mapView, message, Snackbar.LENGTH_LONG).show()
+            }
+        }
 
         binding.locateMe.setOnClickListener { locateMeButtonClicked() }
         binding.camera.setOnClickListener { cameraButtonClicked() }
         binding.stopScanButton.setOnClickListener { stopScan() }
-        binding.itineraryCalculateButton.setOnClickListener { computeItinerariesToPOI() }
+        binding.itineraryCalculateButton.setOnClickListener { computeItinerariesToPoi() }
         binding.itineraryCloseButton.setOnClickListener { onItineraryCloseClick() }
         binding.navigationStartButton.setOnClickListener { onStartNavigationClick() }
         binding.navigationStopButton.setOnClickListener { onStopNavigationClick() }
@@ -142,22 +150,22 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
             })
     }
 
-    override fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap, style: Style, data: MapData) {
-        // Register listeners for VPS scan state and status change
-        vpsLocationSource.vpsListeners.add(vpsListener)
+    fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap) {
+        // Observe VPS scan state and status changes
+        observeVps()
         // Bind location source to the map to show the blue dot from VPS
         // This action can be done only when mapView is ready
         locationManager.locationSource = vpsLocationSource
         // It enables the blue dot orientation rendering
         locationManager.renderMode = RenderMode.COMPASS
 
-        locationManager.addListener(locationManagerListener)
-        pointOfInterestManager.addListener(poiListener)
-        navigationManager.addListener(navigationManagerListener)
+        observeUserLocationManager()
+        observePointOfInterestManager()
+        observeNavigationManager()
 
-        mapView.map.addOnMapClickListener {
+        map.addOnMapClickListener {
             if (getAppState() == AppState.POI_SELECTED)
-                pointOfInterestManager.unselectPOI()
+                pointOfInterestManager.unselectPoi()
 
             return@addOnMapClickListener true
         }
@@ -171,56 +179,23 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
             }
         })
 
-        binding.levelsSwitcher.bind(mapView.buildingManager)
+        binding.levelsSwitcher.bind(mapView.buildingManager, viewLifecycleOwner.lifecycleScope)
         binding.locateMe.isEnabled = true
 
-        mapView.map.uiSettings.attributionGravity = Gravity.START or Gravity.BOTTOM
-    }
-
-    override fun onStart() {
-        super.onStart()
-        mapView.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mapView.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        mapView.onPause()
+        // Moved clear of this screen's own bottom-trailing button stack, which would otherwise sit on top of
+        // the attribution. The SDK's corner (bottom-trailing, matching iOS) is right for a screen without one.
+        map.uiSettings.attributionGravity = Gravity.START or Gravity.BOTTOM
     }
 
     override fun onStop() {
         super.onStop()
-        mapView.onStop()
         errorTimerJob?.cancel()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onLowMemory() {
-        super.onLowMemory()
-        mapView.onLowMemory()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
 
-        binding.levelsSwitcher.unbind()
 
-        if (mapView.isLoaded) {
-            navigationManager.removeListener(navigationManagerListener)
-            pointOfInterestManager.removeListener(poiListener)
-            locationManager.removeListener(locationManagerListener)
-            locationManager.locationSource = null
-        }
-        vpsLocationSource.vpsListeners.remove(vpsListener)
         vpsLocationSource.unbind()
         vpsLocationSource.deinit()
 
@@ -230,14 +205,13 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
             isScreenWakeLockEnabled = false
         }
 
-        mapView.onDestroy()
         backgroundScanHint?.dismiss()
 
         _binding = null
 
         System.gc()
     }
-    // endregion
+    // endregion Lifecycle
 
     // region Location
     private fun locateMeButtonClicked() {
@@ -247,9 +221,9 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
         }
 
         when (vpsLocationSource.state) {
-            State.ACCURATE_POSITIONING ->
+            is State.AccuratePositioning ->
                 toggleNextUserTrackingMode()
-            State.DEGRADED_POSITIONING ->
+            is State.DegradedPositioning ->
                 if (rescanSuggested) {
                     toggleNextUserTrackingMode()
                 } else {
@@ -281,8 +255,8 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
 
     private fun cameraButtonClicked() {
         val message = when (vpsLocationSource.state) {
-            State.ACCURATE_POSITIONING -> "Do you think your position is inaccurate? Scan again"
-            State.DEGRADED_POSITIONING -> impreciseMessage
+            is State.AccuratePositioning -> "Do you think your position is inaccurate? Scan again"
+            is State.DegradedPositioning -> impreciseMessage
             else -> null // should never happen by design
         }
         locateUser(message)
@@ -334,13 +308,22 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
         vpsLocationSource.stopScan()
     }
 
+    private fun makeCameraVisible(visible: Boolean) {
+        binding.cameraLayout.visibility = if (visible) View.VISIBLE else View.INVISIBLE
+        binding.surfaceView.setSurfaceVisible(visible)
+        // Hiding the map lets it release its render surface while the camera covers it: an INVISIBLE
+        // SurfaceView releases its surface, which stops MapLibre's render loop. A visible one keeps drawing
+        // at full rate behind an opaque feed, for nobody.
+        binding.mapLayout.visibility = if (visible) View.INVISIBLE else View.VISIBLE
+    }
+
     private fun updateLocateMeButtonIcon() {
-        val iconID: Int = when (locationManager.cameraMode) {
+        val iconId: Int = when (locationManager.cameraMode) {
             CameraMode.TRACKING -> R.drawable.baseline_my_location_24
             CameraMode.TRACKING_COMPASS -> R.drawable.explore_24px
             else /* NONE */ -> R.drawable.location_searching_24px
         }
-        binding.locateMe.setImageDrawable(ContextCompat.getDrawable(requireContext(), iconID))
+        binding.locateMe.setImageDrawable(ContextCompat.getDrawable(requireContext(), iconId))
     }
 
     private suspend fun askForScan(message: String) {
@@ -349,7 +332,7 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
         )
     }
 
-    private fun positioningLost(reason: WemapVPSARCoreLocationSource.NotPositioningReason) {
+    private fun positioningLost(reason: VpsARCoreLocationSource.NotPositioningReason) {
         // use this if you want to hide blue dot completely instead of having last known position visible.
         // blue dot becomes gray be default when tracking is lost
 //        locationManager.isEnabled = false
@@ -360,15 +343,17 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
             locateUser("We lost your position. In order to relocalize you we will use your camera. $reason")
     }
 
-    private val locationManagerListener by lazy {
-        UserLocationManagerListener { error ->
-            setErrorMessageAndStartTimer(error)
+    private fun observeUserLocationManager() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            locationManager.errors.collect { error ->
+                setErrorMessageAndStartTimer(error)
+            }
         }
     }
 
     private fun setErrorMessageAndStartTimer(error: Throwable) {
 
-        if (error == WemapVPSARCoreLocationSourceError.slowConnectionDetected) {
+        if (error is VpsARCoreLocationSourceError.SlowConnectionDetected) {
             val text = "This is taking longer than expected. It looks like your internet connection is slow or unstable"
             return Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
         }
@@ -377,6 +362,9 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
             isVisible = true
             text = error.message
         }
+        // Cancel first: VPS reports TiltTooHigh once per frame while the phone points down, so without this a
+        // fresh job stacks up at camera rate and each one races the next to clear the label.
+        errorTimerJob?.cancel()
         errorTimerJob = lifecycleScope.launch {
             delay(1.seconds)
             binding.cameraDebugText.apply {
@@ -386,52 +374,55 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
         }
     }
 
-    private val vpsListener by lazy {
-        object: WemapVPSARCoreLocationSourceListener {
-            override fun onScanStatusChanged(status: ScanStatus) {
-                Log.d("WEMAP", "onScanStatusChanged. Status: ${status.name}")
-                when (status) {
-                    ScanStatus.STARTED -> {
-                        binding.cameraLayout.visibility = View.VISIBLE
-                        createScanningTimer()
-                        updateScreenWakeLock()
-                    }
-                    ScanStatus.STOPPED -> {
-                        binding.cameraLayout.visibility = View.INVISIBLE
-                        scanningTimerJob?.cancel()
-                        updateScreenWakeLock()
+    private fun observeVps() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            launch {
+                vpsLocationSource.scanStatuses.collect { status ->
+                    Log.d("WEMAP", "onScanStatusChanged. Status: $status")
+                    when (status) {
+                        ScanStatus.STARTED -> {
+                            makeCameraVisible(true)
+                            createScanningTimer()
+                            updateScreenWakeLock()
+                        }
+                        ScanStatus.STOPPED -> {
+                            makeCameraVisible(false)
+                            scanningTimerJob?.cancel()
+                            updateScreenWakeLock()
+                        }
                     }
                 }
             }
+            launch {
+                vpsLocationSource.states.drop(1).collect { state ->
+                    Log.d("WEMAP", "onStateChanged. State: $state")
+                    showBackgroundScanHintIfNeeded()
 
-            override fun onStateChanged(state: State) {
-                Log.d("WEMAP", "onStateChanged. State: ${state.name}")
-                showBackgroundScanHintIfNeeded()
+                    binding.camera.isVisible = !state.isLost
+                    binding.degradedIcon.isVisible = state.isDegraded
 
-                binding.camera.isVisible = !state.isLost
-                binding.degradedIcon.isVisible = state.isDegraded
-
-                if (state.isLost)
-                    positioningLost(vpsLocationSource.notPositioningReason)
+                    if (state is State.NotPositioning)
+                        positioningLost(state.reason)
+                }
             }
-
-            override fun onBackgroundScanStatusChanged(status: ScanStatus) {
-                Log.d("WEMAP", "onBackgroundScanStatusChanged. State: ${status.name}")
-                showBackgroundScanHintIfNeeded()
+            launch {
+                vpsLocationSource.backgroundScanStatuses.collect { status ->
+                    Log.d("WEMAP", "onBackgroundScanStatusChanged. State: $status")
+                    showBackgroundScanHintIfNeeded()
+                }
             }
-
-            override fun onLocalizedUser(coordinate: Coordinate, attitude: Attitude, backgroundScan: Boolean) {
-                if (backgroundScan && !vpsLocationSource.state.isDegraded)
-                    return
-                haptic?.success()
+            launch {
+                vpsLocationSource.userLocalizationUpdates.collect { update ->
+                    if (update.backgroundScan && !vpsLocationSource.state.isDegraded)
+                        return@collect
+                    haptic?.success()
+                }
             }
-
-            override fun onTrackingStateChanged(reason: TrackingState) {
-                println("Tracking state changed - $reason")
-            }
-
-            override fun onTrackingFailureReasonChanged(reason: TrackingFailureReason) {
-                println("Tracking failure reason changed - $reason")
+            launch {
+                vpsLocationSource.cameraTrackingStates.collect { camera ->
+                    println("Tracking state changed - ${camera.trackingState}")
+                    println("Tracking failure reason changed - ${camera.trackingFailureReason}")
+                }
             }
         }
     }
@@ -489,7 +480,7 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
             }
         }
     }
-    // endregion
+    // endregion Location
 
     // region PoIs
     private fun renderPoI(poi: PointOfInterest) {
@@ -498,29 +489,28 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
         binding.poiInfo.text = poi.name
     }
 
-    private val poiListener by lazy {
-        PointOfInterestManagerListener(
-            {
-                renderPoI(it)
-            },
-            {
-                hideAllStatesUI()
+    private fun observePointOfInterestManager() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            pointOfInterestManager.selectionUpdates.collect { update ->
+                if (update.unselected.isNotEmpty())
+                    hideAllStatesUI()
+                update.selected.forEach { renderPoI(it) }
             }
-        )
+        }
     }
-    // endregion
+    // endregion PoIs
 
     // region Itinerary
-    private fun computeItinerariesToPOI() {
-        val selectedPOI = pointOfInterestManager.getSelectedPOI()
-        if (selectedPOI == null) {
+    private fun computeItinerariesToPoi() {
+        val selectedPoi = pointOfInterestManager.getSelectedPoi()
+        if (selectedPoi == null) {
             Log.e("WEMAP", "Can't compute itineraries, there is no selected POI")
             return
         }
 
         val origin = locationManager.lastCoordinate
         if (origin != null) {
-            calculateAndDrawItinerary(origin, selectedPOI.coordinate)
+            calculateAndDrawItinerary(origin, selectedPoi.coordinate)
             return
         }
 
@@ -532,10 +522,10 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
                 startScan()
 
                 withTimeout(20.seconds) {
-                    locationManager.coordinateFlow.first()
+                    locationManager.coordinates.first()
                 }
             }.onSuccess {
-                calculateAndDrawItinerary(it, selectedPOI.coordinate)
+                calculateAndDrawItinerary(it, selectedPoi.coordinate)
             }.onFailure {
                 val text = "Failed to start itinerary with error - $it"
                 Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
@@ -548,7 +538,7 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
 
         lifecycleScope.launch {
             runCatching {
-                itineraryManager.getItineraries(origin, destination, searchRules = searchRules)
+                itineraryManager.computeItineraries(origin, destination, searchRules = searchRules)
             }.onSuccess {
                 renderItinerary(it.first())
             }.onFailure {
@@ -567,7 +557,7 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
         hideAllStatesUI()
         binding.itineraryContainer.visibility = View.VISIBLE
 
-        val currentPoi = pointOfInterestManager.getSelectedPOI()!!
+        val currentPoi = pointOfInterestManager.getSelectedPoi()!!
         binding.itineraryInfo.text = "Itinerary from user position to ${currentPoi.name}\n" +
                 "Distance: ${itinerary.distance.toInt()}m\n" +
                 "Duration: ${itinerary.duration.toInt()}s"
@@ -579,21 +569,23 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
 
         pointOfInterestManager.isUserSelectionEnabled = true
 
-        val selectedPoI = pointOfInterestManager.getSelectedPOI()
+        val selectedPoI = pointOfInterestManager.getSelectedPoi()
         if (selectedPoI == null)
             hideAllStatesUI()
         else
             renderPoI(selectedPoI)
     }
-    // endregion
+    // endregion Itinerary
 
     // region Navigation
     private fun onStartNavigationClick() {
         val navigationOptions = GlobalOptions.navigationOptions(requireContext())
 
+        val itineraryOptions = ItineraryOptions(indoorLine = LineOptions(color = Color.GREEN))
+
         lifecycleScope.launch {
             runCatching {
-                navigationManager.startNavigation(currentItinerary!!, navigationOptions)
+                navigationManager.startNavigation(currentItinerary!!, navigationOptions, itineraryOptions = itineraryOptions)
             }.onSuccess {
                 renderNavigation()
                 updateScreenWakeLock()
@@ -607,7 +599,6 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
     private fun renderNavigation() {
         hideAllStatesUI()
         binding.navigationContainer.visibility = View.VISIBLE
-        mapView.locationManager.cameraMode = CameraMode.TRACKING_COMPASS
 
         navigationManager.getNavigationInfo()?.let {
             updateNavInfo(it)
@@ -626,37 +617,44 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
         updateScreenWakeLock()
     }
 
-    private val navigationManagerListener by lazy {
-        object : NavigationManagerListener {
-            override fun onNavigationInfoChanged(info: NavigationInfo) {
-                updateNavInfo(info)
+    private fun observeNavigationManager() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            launch {
+                navigationManager.navigationInfoUpdates.collect { info ->
+                    updateNavInfo(info)
+                }
             }
-
-            override fun onNavigationStopped(navigation: Navigation) {
-                renderItinerary(navigation.itinerary)
-                Snackbar.make(mapView, "Navigation stopped", Snackbar.LENGTH_SHORT).show()
-                updateScreenWakeLock()
+            launch {
+                navigationManager.navigationEvents.collect { event ->
+                    when (event) {
+                        is NavigationEvent.Stopped -> {
+                            renderItinerary(event.navigation.itinerary)
+                            Snackbar.make(mapView, "Navigation stopped", Snackbar.LENGTH_SHORT).show()
+                            updateScreenWakeLock()
+                        }
+                        is NavigationEvent.Arrived -> {
+                            Snackbar.make(mapView, "You arrived to destination", Snackbar.LENGTH_SHORT).show()
+                            updateScreenWakeLock()
+                        }
+                        is NavigationEvent.Recalculated -> {
+                            val text = "Navigation recalculated - ${event.navigation}"
+                            Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
+                        }
+                        is NavigationEvent.Started -> Unit
+                    }
+                }
             }
-
-            override fun onArrivedAtDestination(navigation: Navigation) {
-                Snackbar.make(mapView, "You arrived to destination", Snackbar.LENGTH_SHORT).show()
-                updateScreenWakeLock()
-            }
-
-            override fun onNavigationFailed(error: Throwable) {
-                currentItinerary?.let { renderItinerary(it) }
-                val text = "Navigation failed with error - $error"
-                Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
-                updateScreenWakeLock()
-            }
-
-            override fun onNavigationRecalculated(navigation: Navigation) {
-                val text = "Navigation recalculated - $navigation"
-                Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
+            launch {
+                navigationManager.errors.collect { error ->
+                    currentItinerary?.let { renderItinerary(it) }
+                    val text = "Navigation failed with error - $error"
+                    Snackbar.make(mapView, text, Snackbar.LENGTH_SHORT).multiline().show()
+                    updateScreenWakeLock()
+                }
             }
         }
     }
-    // endregion
+    // endregion Navigation
 
     // region Misc
     private fun hideAllStatesUI() {
@@ -670,13 +668,13 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
             vpsLocationSource.scanStatus.isStarted -> AppState.SCANNING
             navigationManager.hasActiveNavigation -> AppState.NAVIGATION
             currentItinerary != null -> AppState.ITINERARY
-            pointOfInterestManager.getSelectedPOI() != null -> AppState.POI_SELECTED
+            pointOfInterestManager.getSelectedPoi() != null -> AppState.POI_SELECTED
             else -> AppState.BROWSING
         }
     }
 
     private fun handleBackPressed() {
-        if (!mapView.isLoaded) {
+        if (!mapView.loadPhase.isReady) {
             findNavController().navigateUp()
             return
         }
@@ -685,12 +683,12 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
             AppState.SCANNING -> stopScan()
             AppState.NAVIGATION -> onStopNavigationClick()
             AppState.ITINERARY -> onItineraryCloseClick()
-            AppState.POI_SELECTED -> pointOfInterestManager.unselectPOI()
+            AppState.POI_SELECTED -> pointOfInterestManager.unselectPoi()
             // Navigate back to the previous fragment
             else -> findNavController().navigateUp()
         }
     }
-    // endregion
+    // endregion Misc
 
     // region Permissions
     private fun createPermissionsHelper() {
@@ -722,5 +720,5 @@ class MapVPSFragment : Fragment(), OnMapViewReadyCallback {
                 continuation.resumeWithException(Throwable("User denied required permissions"))
         }
     }
-    // endregion
+    // endregion Permissions
 }

@@ -18,7 +18,6 @@
         <action
             android:id="@+id/action_InitialFragment_to_SamplesListFragment"
             app:destination="@id/SamplesListFragment" />
-
     </fragment>
 
     <fragment
@@ -32,8 +31,8 @@
             app:destination="@id/SimulatorLSFragment" />
 
         <action
-            android:id="@+id/action_SamplesListFragment_to_VPSLSFragment"
-            app:destination="@id/VPSLSFragment" />
+            android:id="@+id/action_SamplesListFragment_to_VpsLSFragment"
+            app:destination="@id/VpsLSFragment" />
 
         <action
             android:id="@+id/action_SamplesListFragment_to_AndroidFusedAdaptiveLSFragment"
@@ -44,8 +43,12 @@
             app:destination="@id/FusedGMSLSFragment" />
 
         <action
-            android:id="@+id/action_SamplesListFragment_to_GPSLSFragment"
-            app:destination="@id/GPSLSFragment" />
+            android:id="@+id/action_SamplesListFragment_to_GpsLSFragment"
+            app:destination="@id/GpsLSFragment" />
+
+        <action
+            android:id="@+id/action_SamplesListFragment_to_ComposeARFragment"
+            app:destination="@id/ComposeARFragment" />
     </fragment>
 
     <fragment
@@ -55,8 +58,8 @@
         tools:layout="@layout/fragment_generic_ls"/>
 
     <fragment
-        android:id="@+id/VPSLSFragment"
-        android:name="com.getwemap.example.positioning.ar.fragments.VPSLSFragment"
+        android:id="@+id/VpsLSFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.VpsLSFragment"
         android:label="@string/vps_fragment_label"
         tools:layout="@layout/fragment_vps_ls"/>
 
@@ -73,10 +76,15 @@
         tools:layout="@layout/fragment_generic_ls"/>
 
     <fragment
-        android:id="@+id/GPSLSFragment"
+        android:id="@+id/GpsLSFragment"
         android:name="com.getwemap.example.positioning.ar.fragments.GenericLSFragment"
         android:label="@string/gps_fragment_label"
         tools:layout="@layout/fragment_generic_ls"/>
+
+    <fragment
+        android:id="@+id/ComposeARFragment"
+        android:name="com.getwemap.example.positioning.ar.fragments.ComposeARFragment"
+        android:label="@string/compose_ar_fragment_label" />
 
     <fragment
         android:id="@+id/SettingsFragment"

@@ -8,18 +8,25 @@ import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.getwemap.example.common.map.MapLevelsSwitcher
-import com.getwemap.sdk.core.model.entities.MapData
+import com.getwemap.example.common.map.SessionViewModel
+import com.getwemap.example.map.positioning.Config
+import com.getwemap.sdk.core.awaitLoaded
+import com.getwemap.sdk.map.MapSession
 import com.getwemap.sdk.map.WemapMapView
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.launch
 
 abstract class BaseFragment : Fragment() {
 
     protected abstract val mapView: WemapMapView
     protected abstract val levelsSwitcher: MapLevelsSwitcher
 
-    protected lateinit var mapData: MapData
+    private val sessionViewModel: SessionViewModel by activityViewModels()
+
+    protected lateinit var session: MapSession
 
     protected val focusedBuilding get() = buildingManager.focusedBuilding
 
@@ -37,21 +44,24 @@ abstract class BaseFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val mapDataString = requireArguments().getString("mapData")!!
-        mapData = Json.decodeFromString(mapDataString)
-        mapView.mapData = mapData
+        session = sessionViewModel.session!!
+        mapView.configure(session, Config.makeMapViewConfig(requireContext()))
 
-        mapView.onCreate(savedInstanceState)
-
-        mapView.getMapViewAsync { _, _, _, _ ->
-            checkPermissionsAndSetupLocationSource()
-            levelsSwitcher.bind(mapView.buildingManager)
+        lifecycleScope.launch {
+            runCatching {
+                mapView.awaitLoaded()
+            }.onSuccess {
+                checkPermissionsAndSetupLocationSource()
+                levelsSwitcher.bind(mapView.buildingManager, viewLifecycleOwner.lifecycleScope)
+            }.onFailure {
+                println("Failed to load MapView with error - $it")
+            }
         }
     }
 
     protected abstract fun checkPermissionsAndSetupLocationSource()
 
-    protected fun checkGPSPermission(): Boolean {
+    protected fun checkGpsPermission(): Boolean {
         return if (ContextCompat.checkSelfPermission(requireContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             activityResultLauncher.launch(ACCESS_FINE_LOCATION)
             false
@@ -62,39 +72,4 @@ abstract class BaseFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     protected abstract fun setupLocationSource()
-
-    override fun onStart() {
-        super.onStart()
-        mapView.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mapView.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        mapView.onPause()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        mapView.onStop()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        mapView.onLowMemory()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        mapView.onDestroy()
-    }
 }

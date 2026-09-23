@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/gray"
-    tools:context="fragments.MapVPSLocalFragment">
+    tools:context="fragments.MapVpsLocalFragment">
 
     <FrameLayout
         android:id="@+id/mapLayout"
@@ -22,7 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical|end"
-            android:layout_margin="16dp"
+            android:layout_margin="@dimen/overlay_inset"
             android:visibility="invisible"
             app:selectionRequired="true"
             app:singleSelection="true"
@@ -79,7 +79,7 @@
                 android:id="@+id/locate_me"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="16dp"
+                android:layout_margin="@dimen/overlay_inset"
                 android:contentDescription="@string/locate_me"
                 android:src="@drawable/location_searching_24px"
                 app:backgroundTint="@color/white"
@@ -98,14 +98,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|center_horizontal"
-            android:layout_margin="16dp"
+            android:layout_margin="@dimen/overlay_inset"
             android:background="#DD222222"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp"
-            android:visibility="gone"
-            tools:visibility="visible">
+            android:visibility="gone">
 
             <View
                 android:id="@+id/scan_activity_dot"
@@ -131,7 +130,6 @@
         android:id="@+id/cameraLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -145,7 +143,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="top"
-            android:layout_margin="16dp"
+            android:layout_margin="@dimen/overlay_inset"
             android:orientation="vertical">
 
             <TextView
@@ -169,8 +167,7 @@
                 android:padding="8dp"
                 android:textColor="@color/white"
                 android:visibility="gone"
-                tools:text="Scanning…"
-                tools:visibility="visible" />
+                tools:text="Scanning…" />
 
         </LinearLayout>
 
@@ -201,8 +198,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="140dp"
-            android:background="#DDDDDDDD"
-            android:visibility="invisible" />
+            android:background="#DDDDDDDD" />
 
     </FrameLayout>
 

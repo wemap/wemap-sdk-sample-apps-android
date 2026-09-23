@@ -9,28 +9,36 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:accessibilityTraversalAfter="@+id/dummyButton" />
+    <!--
+      Every control this screen floats over the map, in one container so the transparent app bar is cleared
+      **once** — `insetOverlayBelowTransparentAppBar()` pads this view, and everything inside it is clear.
+      Without the grouping each control needs its own call, which is what this pattern replaces.
+    -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/overlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-    <ImageButton
-        android:id="@+id/closeButton"
-        style="@style/OverlayIconButton"
-        android:layout_width="@dimen/overlay_button_size"
-        android:layout_height="@dimen/overlay_button_size"
-        android:layout_margin="@dimen/overlay_button_margin"
-        android:src="@drawable/close_24px"
-        android:contentDescription="Fermer"
-        android:accessibilityTraversalBefore="@+id/dummyButton"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
-    <ImageButton
-        android:id="@+id/dummyButton"
-        style="@style/OverlayIconButton"
-        android:layout_width="@dimen/overlay_button_size"
-        android:layout_height="@dimen/overlay_button_size"
-        android:layout_margin="@dimen/overlay_button_margin"
-        android:src="@drawable/add_24px"
-        android:contentDescription="Bouton d\'exemple"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        <!--
+          No close button of its own: this screen is pushed, so the app bar's Up arrow is the way back — and
+          with the bar transparent over the map the two landed on top of each other in the top-start corner.
+          iOS's CustomCreditsViewController carries the dummy button alone for the same reason.
+        -->
+        <ImageButton
+            android:id="@+id/dummyButton"
+            style="@style/OverlayIconButton"
+            android:layout_width="@dimen/overlay_button_size"
+            android:layout_height="@dimen/overlay_button_size"
+            android:layout_margin="@dimen/overlay_button_margin"
+            android:src="@drawable/add_24px"
+            android:contentDescription="Bouton d\'exemple"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

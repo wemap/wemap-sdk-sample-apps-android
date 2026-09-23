@@ -6,23 +6,23 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.getwemap.example.common.Constants
+import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.common.multiline
-import com.getwemap.example.map.positioning.PackdataStore
+import com.getwemap.example.map.positioning.Config
 import com.getwemap.example.map.positioning.R
 import com.getwemap.example.map.positioning.VpsLocalSessionHistory
 import com.getwemap.example.map.positioning.databinding.FragmentVpsLocalHistoryBinding
 import com.getwemap.example.map.positioning.databinding.ItemVpsLocalSessionBinding
-import com.getwemap.sdk.map.WemapMapSDK
+import com.getwemap.sdk.map.MapSession
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 /**
  * Past offline-VPS scanning sessions for one venue, newest first — how a walk went, reviewed after the fact.
@@ -37,10 +37,8 @@ class VpsLocalHistoryFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val mapId: Int by lazy { requireArguments().getInt(ARG_MAP_ID) }
-
-    /** Whether the launching screen is in offline mode — see [openTrace]. */
-    private val isOffline: Boolean by lazy { requireArguments().getBoolean(ARG_OFFLINE) }
-    private var mapDataJob: Job? = null
+    private val sessionViewModel: SessionViewModel by activityViewModels()
+    private var sessionJob: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -70,13 +68,14 @@ class VpsLocalHistoryFragment : Fragment() {
     }
 
     /**
-     * Opens a session's trace. The venue's [com.getwemap.sdk.core.model.entities.MapData] is resolved here
-     * rather than passed down from the launching screen: a session records the map id it belongs to, so
-     * history is reachable without having loaded that venue's map first.
+     * Opens a session's trace, creating the [MapSession] for its venue here rather than taking one from the
+     * launching screen: a recorded session stores the map id it belongs to, so history stays reachable
+     * without having loaded that venue's map first — and the venue may not be the one currently loaded.
      *
-     * Offline it comes from the stored packdata rather than the backend. Reviewing a walk is exactly what
-     * happens after one — often still in the venue, still without a network — so fetching the venue online
-     * would strand the whole screen there.
+     * The session goes into the shared [SessionViewModel] via [SessionViewModel.replace], not a bare
+     * assignment: this screen may be displacing the venue session the initial screen created, and that one
+     * has to be `deinit`-ed rather than dropped. Only the file path travels in the `Bundle` (primitives only
+     * — a session is not serializable).
      */
     private fun openTrace(session: VpsLocalSessionHistory.Session) {
         if (session.fixes.isEmpty()) {
@@ -84,25 +83,23 @@ class VpsLocalHistoryFragment : Fragment() {
                 .multiline().show()
             return
         }
-        mapDataJob?.cancel()
-        mapDataJob = viewLifecycleOwner.lifecycleScope.launch {
+        sessionJob?.cancel()
+        sessionJob = viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val mapData = if (isOffline)
-                    PackdataStore.loadMapData(requireContext(), session.mapId)
-                else
-                    WemapMapSDK.instance.mapData(session.mapId, Constants.TOKEN)
-
+                val mapSession = MapSession.create(
+                    requireContext(), session.mapId, Constants.TOKEN, Config.makeSessionConfig(requireContext())
+                )
+                sessionViewModel.replace(mapSession)
                 findNavController().navigate(
                     R.id.action_VpsLocalHistoryFragment_to_VpsLocalHistoryMapFragment,
                     Bundle().apply {
                         putString(VpsLocalHistoryMapFragment.ARG_SESSION_FILE, session.file.absolutePath)
-                        putString(VpsLocalHistoryMapFragment.ARG_MAP_DATA, Json.encodeToString(mapData))
                     },
                 )
             } catch (e: Exception) {
                 Snackbar.make(
                     binding.root,
-                    "Failed to receive map data with error - ${e.message}",
+                    "Failed to create session with error - ${e.message}",
                     Snackbar.LENGTH_LONG,
                 ).multiline().show()
             }
@@ -110,7 +107,7 @@ class VpsLocalHistoryFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        mapDataJob?.cancel()
+        sessionJob?.cancel()
         super.onDestroyView()
         _binding = null
     }
@@ -140,6 +137,5 @@ class VpsLocalHistoryFragment : Fragment() {
 
     companion object {
         const val ARG_MAP_ID = "mapId"
-        const val ARG_OFFLINE = "offline"
     }
 }

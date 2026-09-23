@@ -5,18 +5,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.getwemap.example.common.SessionViewModel
+import com.getwemap.example.positioning.ar.LocationSourceType
 import com.getwemap.example.positioning.ar.R
 import com.getwemap.example.positioning.ar.databinding.FragmentItemBinding
-import com.getwemap.sdk.core.model.entities.MapData
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
-import com.getwemap.sdk.positioning.wemapvpsarcore.WemapVPSARCoreLocationSource
+import com.getwemap.sdk.positioning.wemapvpsarcore.VpsARCoreLocationSource
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.serialization.json.Json
 
 class SamplesListFragment : Fragment() {
+
+    private val sessionViewModel: SessionViewModel by activityViewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.fragment_item_list, container, false) as RecyclerView
@@ -29,47 +32,56 @@ class SamplesListFragment : Fragment() {
     }
 
     private val listener by lazy {
-        OnRecyclerViewClickListener { view, position ->
-            if (!isLocationSourceAvailable(position, requireArguments()))
+        OnRecyclerViewClickListener { _, position ->
+            // Every row but the last IS its location source. The Compose sample is a rendering variant rather
+            // than a source, so it picks the simulator: it needs no fix and no location permission, which
+            // keeps the smallest AR sample runnable anywhere.
+            val isComposeSample = position == LocationSourceType.entries.size
+            val source =
+                if (isComposeSample) LocationSourceType.SIMULATOR else LocationSourceType.entries[position]
+
+            if (!isAvailable(source))
                 return@OnRecyclerViewClickListener
 
-            val navId = when (position) {
-                0 -> R.id.action_SamplesListFragment_to_SimulatorLSFragment
-                1 -> R.id.action_SamplesListFragment_to_VPSLSFragment
-                2 -> R.id.action_SamplesListFragment_to_AndroidFusedAdaptiveLSFragment
-                3 -> R.id.action_SamplesListFragment_to_FusedGMSLSFragment
-                4 -> R.id.action_SamplesListFragment_to_GPSLSFragment
-                else -> throw Exception("Unsupported transition")
+            val navId = if (isComposeSample) {
+                R.id.action_SamplesListFragment_to_ComposeARFragment
+            } else {
+                when (source) {
+                    LocationSourceType.SIMULATOR -> R.id.action_SamplesListFragment_to_SimulatorLSFragment
+                    LocationSourceType.VPS -> R.id.action_SamplesListFragment_to_VpsLSFragment
+                    LocationSourceType.ANDROID_FUSED_ADAPTIVE ->
+                        R.id.action_SamplesListFragment_to_AndroidFusedAdaptiveLSFragment
+                    LocationSourceType.FUSED_GMS -> R.id.action_SamplesListFragment_to_FusedGMSLSFragment
+                    LocationSourceType.GPS -> R.id.action_SamplesListFragment_to_GpsLSFragment
+                }
             }
-            requireArguments().putInt("locationSourceId", position)
-            findNavController().navigate(navId, arguments)
+            findNavController().navigate(navId, source.putInto(Bundle()))
         }
     }
 
-    private fun isLocationSourceAvailable(position: Int, bundle: Bundle): Boolean {
-        return when (position) {
-            1 -> {
-                if (WemapVPSARCoreLocationSource.checkAvailability(requireContext()).isUnsupported) {
+    private fun isAvailable(source: LocationSourceType): Boolean {
+        return when (source) {
+            LocationSourceType.VPS -> {
+                if (VpsARCoreLocationSource.checkAvailability(requireContext()).isUnsupported) {
                     val text = "VPS location source is not supported on this device"
                     Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show()
                     return false
                 }
-                val mapDataString = bundle.getString("mapData")!!
-                val mapData: MapData = Json.decodeFromString(mapDataString)
-                if (mapData.extras?.vpsEndpoint == null) {
-                    val text = "This map(${mapData.id}) is not compatible with VPS Location Source"
+                val session = sessionViewModel.session!!
+                if (!session.isVpsEnabled) {
+                    val text = "This map(${session.mapId}) is not compatible with VPS Location Source"
                     Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show()
                     return false
                 }
-                return true
+                true
             }
-            3 -> {
+            LocationSourceType.FUSED_GMS -> {
                 if (!GmsFusedLocationSource.isAvailable(requireContext())) {
                     val text = "Fused GMS location source is not supported on this device"
                     Snackbar.make(requireView(), text, Snackbar.LENGTH_LONG).show()
                     return false
                 }
-                return true
+                true
             }
             // else -> all other LocationSources are always available
             else -> true
@@ -81,31 +93,15 @@ class SamplesRecyclerViewAdapter(
     private val listener: OnRecyclerViewClickListener
 ) : RecyclerView.Adapter<SamplesRecyclerViewAdapter.ViewHolder>() {
 
+    // The source rows come from the enum, so a source added there appears here with no second edit. The
+    // Compose row is appended because it is not a source — see the listener above.
     private val items by lazy {
-        listOf(
-            Pair(
-                "Simulator Location Source",
-                "Shows how to simulate user movements using simulator location source in AR"
-            ),
-            Pair(
-                "VPS Location Source",
-                "Shows how to track user movements using VPS location source in AR"
-            ),
-            Pair(
-                "Android Fused Adaptive Location Source",
-                "Shows how to track user movements using Android Fused Adaptive location source in AR"
-            ),
-            Pair(
-                "Fused GMS Location Source",
-                "Shows how to track user movements using GMS Fused location source in AR"
-            ),
-            Pair(
-                "GPS Location Source",
-                "Shows how to track user movements using GPS location source in AR"
+        LocationSourceType.entries.map { SamplesItem(it.title, it.details) } +
+            SamplesItem(
+                "AR in Compose",
+                "The AR scene on its own in Compose, driven by the simulator — the smallest screen that uses " +
+                    "the Compose AR SDK"
             )
-        ).map {
-            SamplesItem(it.first, it.second)
-        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -132,6 +128,10 @@ class SamplesRecyclerViewAdapter(
 
     data class SamplesItem(val content: String, val details: String)
 }
+
+/**
+ * The one row whose position is not a location source id — see the listener.
+ */
 
 fun interface OnRecyclerViewClickListener {
     fun onClick(view: View, position: Int)

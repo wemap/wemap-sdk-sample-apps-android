@@ -13,9 +13,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.getwemap.example.map.R
 import com.getwemap.example.map.databinding.FragmentItemBinding
 import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.core.model.entities.MapData
-import com.getwemap.sdk.core.poi.PointOfInterestWithInfo
-import com.getwemap.sdk.map.poi.IMapPointOfInterestManager
+import com.getwemap.sdk.core.poi.PointOfInterestWithItineraryInfo
+import com.getwemap.sdk.map.poi.MapPointOfInterestManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
@@ -25,9 +24,8 @@ enum class SortingType {
 
 class PoisViewModel: ViewModel() {
     lateinit var sortingType: SortingType
-    lateinit var poiManager: IMapPointOfInterestManager
+    lateinit var poiManager: MapPointOfInterestManager
     lateinit var userCoordinate: Coordinate
-    lateinit var mapData: MapData
 }
 
 class PoisListFragment : BottomSheetDialogFragment() {
@@ -41,14 +39,14 @@ class PoisListFragment : BottomSheetDialogFragment() {
     private val listener by lazy {
         OnRecyclerViewClickListener { _, position ->
             val item = poisAdapter.pois[position]
-            viewModel.poiManager.selectPOI(item.first)
+            viewModel.poiManager.selectPoi(item.pointOfInterest)
             dismiss()
         }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.fragment_item_list, container, false) as RecyclerView
-        val poisWithDistance = viewModel.poiManager.getPOIs().map { PointOfInterestWithInfo(it, null) }
+        val poisWithDistance = viewModel.poiManager.getPois().map { PointOfInterestWithItineraryInfo(it, null) }
         _poisAdapter = PoisRecyclerViewAdapter(listener, poisWithDistance)
         with(view) {
             layoutManager = LinearLayoutManager(context)
@@ -64,8 +62,8 @@ class PoisListFragment : BottomSheetDialogFragment() {
         lifecycleScope.launch {
             runCatching {
                 when (viewModel.sortingType) {
-                    SortingType.DISTANCE -> poiManager.sortPOIsByGraphDistance(viewModel.userCoordinate)
-                    SortingType.TIME -> poiManager.sortPOIsByDuration(viewModel.userCoordinate)
+                    SortingType.DISTANCE -> poiManager.sortPoisByGraphDistance(viewModel.userCoordinate)
+                    SortingType.TIME -> poiManager.sortPoisByDuration(viewModel.userCoordinate)
                 }
             }.onSuccess {
                 poisAdapter.pois = it
@@ -84,16 +82,16 @@ class PoisListFragment : BottomSheetDialogFragment() {
 
 class PoisRecyclerViewAdapter(
     private val listener: OnRecyclerViewClickListener,
-    var pois: List<PointOfInterestWithInfo>
+    var pois: List<PointOfInterestWithItineraryInfo>
 ) : RecyclerView.Adapter<PoisRecyclerViewAdapter.ViewHolder>() {
 
     private val items: List<SamplesItem> get() {
         return pois.map {
-            val poi = it.first
-            val info = it.second
+            val poi = it.pointOfInterest
+            val info = it.itineraryInfo
             SamplesItem(
                 poi.name,
-                "id - ${poi.id}\nlevel - ${poi.coordinate.levels.firstOrNull() ?: "ground"}\n" +
+                "id - ${poi.id}\nlevel - ${poi.coordinate.levels.single ?: "ground"}\n" +
                         "address - ${poi.address}\ndistance - ${info?.distance ?: Double.MAX_VALUE}\n" +
                         "duration - ${info?.duration ?: Float.MAX_VALUE}"
             )

@@ -30,9 +30,16 @@
             app:title="@string/user_location_projection_on_graph_title" />
 
         <EditTextPreference
-            app:defaultValue="5000"
-            app:key="STALE_TIMEOUT_MILLISECONDS"
-            app:title="@string/stale_timeout_milliseconds"
+            app:defaultValue="10"
+            app:key="POINTS_OF_INTEREST_LOADING_TIMEOUT_SECONDS"
+            app:title="@string/points_of_interest_loading_timeout_seconds"
+            app:dialogMessage="@string/points_of_interest_loading_timeout_seconds_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="5"
+            app:key="STALE_TIMEOUT_SECONDS"
+            app:title="@string/stale_timeout_seconds"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>

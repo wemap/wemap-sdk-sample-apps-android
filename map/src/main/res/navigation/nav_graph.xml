@@ -12,7 +12,7 @@
     <fragment
         android:id="@+id/InitialFragment"
         android:name="com.getwemap.example.map.fragments.InitialFragment"
-        android:label="@string/initial_fragment_label"
+        android:label="@string/map_initial_fragment_label"
         tools:layout="@layout/fragment_initial">
 
         <action
@@ -23,36 +23,38 @@
     <fragment
         android:id="@+id/SamplesListFragment"
         android:name="com.getwemap.example.map.fragments.SamplesListFragment"
-        android:label="@string/samples_fragment_label"
+        android:label="@string/map_samples_fragment_label"
         tools:layout="@layout/fragment_item_list">
 
         <action
             android:id="@+id/action_SamplesListFragment_to_LevelsFragment"
             app:destination="@id/LevelsFragment" />
         <action
-            android:id="@+id/action_SamplesListFragment_to_POIsFragment"
-            app:destination="@id/POIsFragment" />
+            android:id="@+id/action_SamplesListFragment_to_PoisFragment"
+            app:destination="@id/PoisFragment" />
         <action
             android:id="@+id/action_SamplesListFragment_to_NavigationFragment"
             app:destination="@id/NavigationFragment" />
         <action
             android:id="@+id/action_SamplesListFragment_to_CustomCreditsFragment"
             app:destination="@id/CustomCreditsFragment" />
+        <action
+            android:id="@+id/action_SamplesListFragment_to_ComposeMapFragment"
+            app:destination="@id/ComposeMapFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/LevelsFragment"
         android:name="com.getwemap.example.map.fragments.LevelsFragment"
-        android:label="@string/levels_fragment_label"
-        tools:layout="@layout/fragment_levels"/>
+        android:label="@string/levels_fragment_label"/>
 
     <fragment
-        android:id="@+id/POIsFragment"
-        android:name="com.getwemap.example.map.fragments.POIsFragment"
+        android:id="@+id/PoisFragment"
+        android:name="com.getwemap.example.map.fragments.PoisFragment"
         android:label="@string/pois_fragment_label"
-        tools:layout="@layout/fragment_p_o_is">
+        tools:layout="@layout/fragment_pois">
         <action
-            android:id="@+id/action_POIsFragment_to_PoisListFragment"
+            android:id="@+id/action_PoisFragment_to_PoisListFragment"
             app:destination="@id/PoisListFragment" />
     </fragment>
 
@@ -61,6 +63,12 @@
         android:name="com.getwemap.example.map.fragments.NavigationFragment"
         android:label="@string/navigation_fragment_label"
         tools:layout="@layout/fragment_navigation"/>
+
+
+    <fragment
+        android:id="@+id/ComposeMapFragment"
+        android:name="com.getwemap.example.map.fragments.ComposeMapFragment"
+        android:label="@string/compose_map_fragment_label" />
 
     <fragment
         android:id="@+id/SettingsFragment"

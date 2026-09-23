@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name" translatable="false">Map</string>
+
+    <!-- The two screens whose titles name the SDK. Separate from the `*_fragment_label` strings in
+         `:examples:common` because those are shared with the other example apps, which name a different SDK. -->
+    <string name="map_initial_fragment_label" translatable="false">Wemap Map SDK Example</string>
+    <string name="map_samples_fragment_label" translatable="false">Wemap Map SDK Samples</string>
 </resources>

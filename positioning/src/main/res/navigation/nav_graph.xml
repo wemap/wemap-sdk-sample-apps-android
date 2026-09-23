@@ -11,13 +11,13 @@
         tools:layout="@layout/fragment_initial">
 
         <action
-            android:id="@+id/action_InitialFragment_to_VPSFragment"
-            app:destination="@id/VPSFragment" />
+            android:id="@+id/action_InitialFragment_to_VpsFragment"
+            app:destination="@id/VpsFragment" />
     </fragment>
 
     <fragment
-        android:id="@+id/VPSFragment"
-        android:name="com.getwemap.example.positioning.fragments.VPSFragment"
+        android:id="@+id/VpsFragment"
+        android:name="com.getwemap.example.positioning.fragments.VpsFragment"
         android:label="@string/vps_fragment_label"
         tools:layout="@layout/fragment_vps"/>
 </navigation>

@@ -1,8 +1,8 @@
 <resources>
     <!-- Strings used for fragments for navigation -->
-    <string name="levels_fragment_label" translatable="false">Levels Fragment</string>
-    <string name="pois_fragment_label" translatable="false">POIs Fragment</string>
-    <string name="navigation_fragment_label" translatable="false">Navigation Fragment</string>
+    <string name="levels_fragment_label" translatable="false">Levels</string>
+    <string name="pois_fragment_label" translatable="false">Points of interest</string>
+    <string name="navigation_fragment_label" translatable="false">Navigation</string>
     <string name="settings_fragment_label" translatable="false">Settings Fragment</string>
     <string name="initial_fragment_label" translatable="false">Initial Fragment</string>
     <string name="samples_fragment_label" translatable="false">Samples Fragment</string>
@@ -14,7 +14,9 @@
     <string name="android_fused_adaptive_fragment_label" translatable="false">Android Fused Adaptive Fragment</string>
     <string name="gps_fragment_label" translatable="false">GPS Fragment</string>
     <string name="fused_gms_fragment_label" translatable="false">Fused GMS Fragment</string>
-    <string name="custom_credits_fragment_label" translatable="false">Custom Credits Fragment</string>
+    <string name="custom_credits_fragment_label" translatable="false">Custom credits</string>
+    <string name="compose_map_fragment_label" translatable="false">Map in Compose</string>
+    <string name="compose_ar_fragment_label" translatable="false">AR in Compose</string>
 
     <string name="apply_filter" translatable="false">Apply filter</string>
     <string name="remove_filters" translatable="false">Remove filters</string>
@@ -29,8 +31,6 @@
     <string name="remove_pois" translatable="false">Remove all POIs</string>
     <string name="start_navigation" translatable="false">Start navigation</string>
     <string name="stop_navigation" translatable="false">Stop navigation</string>
-    <string name="enable_selection" translatable="false">Enable selection</string>
-    <string name="disable_selection" translatable="false">Disable selection</string>
 
     <string name="start_navigation_user_created_annotations" translatable="false">Start navigation from user-created annotations</string>
     <string name="remove_user_created_annotations" translatable="false">Remove user-created annotations</string>
@@ -82,6 +82,8 @@
     <string name="navigation_visibility_distance" translatable="false">Navigation visibility distance</string>
 
     <!-- Global Preferences -->
+    <string name="points_of_interest_loading_timeout_seconds" translatable="false">POIs loading timeout (in seconds)</string>
+    <string name="points_of_interest_loading_timeout_seconds_message" translatable="false">The maximum time in seconds allowed for the initial POIs loading. After this timeout, loading fails with an error. Default is 10 seconds</string>
     <string name="switch_levels_title" translatable="false">Switch levels automatically on user movements</string>
     <string name="recalculate_itinerary_title" translatable="false">Recalculate itinerary if user is far from itinerary</string>
     <string name="user_location_projection_on_itinerary_title" translatable="false">Project user location on itinerary</string>
@@ -90,7 +92,16 @@
     <string name="simulator_deviation_range_message" translatable="false">Simulator deviation range in degrees. This range is used to simulate random user deviation when following the itinerary. Set 0 if you want to disable it. Default value is 20 degrees</string>
 
     <!-- VPS Preferences -->
-    <string name="stale_timeout_milliseconds" translatable="false">Stale state timeout in milliseconds</string>
+    <string name="stale_timeout_seconds" translatable="false">Stale state timeout in seconds</string>
+    <string name="horizontal_accuracy_accurate" translatable="false">Horizontal accuracy for accurate positioning state</string>
+    <string name="horizontal_accuracy_accurate_message" translatable="false">Default accuracy in meters applied to coordinate returned by VPS when state is accurate</string>
+    <string name="horizontal_accuracy_degraded" translatable="false">Horizontal accuracy for degraded positioning state</string>
+    <string name="horizontal_accuracy_degraded_message" translatable="false">Default accuracy in meters applied to coordinate returned by VPS when state is degraded</string>
+    <string name="attitude_accuracy" translatable="false">Attitude accuracy</string>
+    <string name="attitude_accuracy_message" translatable="false">Default accuracy in degrees applied to attitude returned by VPS</string>
+    <string name="vps_convert_images_to_grayscale" translatable="false">Convert VPS images to grayscale</string>
+    <string name="vps_jpg_image_for_vps" translatable="false">Use JPG image for VPS</string>
+    <string name="vps_jpg_image_compression_quality" translatable="false">JPG image compression quality</string>
     <string name="slow_connection_seconds" translatable="false">Slow connection (in seconds)</string>
     <string name="slow_connection_seconds_message" translatable="false">The maximum allowed time in seconds for a VPS request, at which the connection will be considered slow and the error slowConnectionDetected will be triggered. Default is 5 seconds</string>
     <string name="foreground_scan_min_inclination_angle" translatable="false">Foreground scan minimum inclination angle (in degrees)</string>
@@ -105,6 +116,17 @@
     <string name="degraded_distance_threshold_message" translatable="false">Distance traveled in meters at which the degraded positioning state will be triggered if the scan has not been performed. Default is 75 meters</string>
     <string name="not_positioning_distance_threshold" translatable="false">Not positioning distance threshold (in meters)</string>
     <string name="not_positioning_distance_threshold_message" translatable="false">Distance traveled in meters at which the not positioning state will be triggered if the scan has not been performed. Default is 150 meters</string>
+
+    <!-- VPS Conveying Detector Preferences -->
+    <string name="vps_static_position_detector_preferences" translatable="false">VPS Static Position Detector Preferences</string>
+    <string name="vps_static_position_detector_window_duration_seconds" translatable="false">Window duration seconds</string>
+    <string name="vps_static_position_detector_geofence_radius_meters" translatable="false">Geofence radius meters</string>
+
+    <!-- VPS Static Position Detector Preferences -->
+    <string name="vps_conveying_detector_preferences" translatable="false">VPS Conveying Detector Preferences</string>
+    <string name="vps_conveying_detector_duration_seconds" translatable="false">Duration seconds</string>
+    <string name="vps_conveying_detector_elevator_buffer_width" translatable="false">Elevator buffer width</string>
+    <string name="vps_conveying_detector_linear_conveying_buffers_width" translatable="false">Linear conveying buffers width</string>
 
     <!-- Navigation Preferences -->
     <string name="arrived_distance_threshold_title" translatable="false">Arrived distance threshold</string>

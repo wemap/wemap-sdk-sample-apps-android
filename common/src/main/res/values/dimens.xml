@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="text_margin">16dp</dimen>
+
+    <!--
+      How far a control that floats over the map sits from the edge of what it floats over, on every sample
+      screen that places one itself — and the samples' own cards floating over a map with it, so the two line up.
+
+      It lives in the examples rather than the SDK because nothing in the SDK arranges a floating control: the
+      screen picks the corner and supplies the spacing, so there is nothing on that side for this number to
+      agree with. It is a convention among the hosts, and this is where the hosts keep it.
+
+      A `dimen` rather than a Kotlin constant because it has to be readable from XML layouts, which is where
+      most of its uses are; Compose reads it with `dimensionResource`.
+
+      `fragment_vps_local_history_map.xml` keeps a literal `8dp` on purpose — that screen's bottom edge is its
+      own `traceInfo` TextView. Do not "correct" it to this.
+    -->
+    <dimen name="overlay_inset">16dp</dimen>
 </resources>

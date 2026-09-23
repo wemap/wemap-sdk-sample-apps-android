@@ -32,9 +32,16 @@
             app:title="@string/user_location_projection_on_graph_title" />
 
         <EditTextPreference
-            app:defaultValue="5000"
-            app:key="STALE_TIMEOUT_MILLISECONDS"
-            app:title="@string/stale_timeout_milliseconds"
+            app:defaultValue="10"
+            app:key="POINTS_OF_INTEREST_LOADING_TIMEOUT_SECONDS"
+            app:title="@string/points_of_interest_loading_timeout_seconds"
+            app:dialogMessage="@string/points_of_interest_loading_timeout_seconds_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="5"
+            app:key="STALE_TIMEOUT_SECONDS"
+            app:title="@string/stale_timeout_seconds"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>
@@ -42,6 +49,49 @@
     <PreferenceCategory
         app:key="category_vps"
         app:title="@string/vps_preferences">
+
+        <EditTextPreference
+            app:defaultValue="1"
+            app:key="ACCURATE_STATE_ACCURACY"
+            app:title="@string/horizontal_accuracy_accurate"
+            app:dialogMessage="@string/horizontal_accuracy_accurate_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="5"
+            app:key="DEGRADED_STATE_ACCURACY"
+            app:title="@string/horizontal_accuracy_degraded"
+            app:dialogMessage="@string/horizontal_accuracy_degraded_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="35"
+            app:key="ATTITUDE_ACCURACY"
+            app:title="@string/attitude_accuracy"
+            app:dialogMessage="@string/attitude_accuracy_message"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="CONVERT_IMAGES_TO_GRAYSCALE"
+            app:title="@string/vps_convert_images_to_grayscale" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="USE_JPG_IMAGE_FOR_VPS"
+            app:title="@string/vps_jpg_image_for_vps" />
+
+        <EditTextPreference
+            app:defaultValue="70"
+            app:key="JPG_IMAGE_COMPRESSION_QUALITY"
+            app:title="@string/vps_jpg_image_compression_quality"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="category_vps_controller"
+        app:title="@string/vps_controller_preferences">
 
         <EditTextPreference
             app:defaultValue="5"
@@ -191,6 +241,48 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:key="category_vps_static_position_detector"
+        app:title="@string/vps_static_position_detector_preferences">
+
+        <EditTextPreference
+            app:defaultValue="3f"
+            app:key="WINDOW_DURATION_SECONDS"
+            app:title="@string/vps_static_position_detector_window_duration_seconds"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="1f"
+            app:key="GEOFENCE_RADIUS_METERS"
+            app:title="@string/vps_static_position_detector_geofence_radius_meters"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="category_vps_conveying_detector"
+        app:title="@string/vps_conveying_detector_preferences">
+
+        <EditTextPreference
+            app:defaultValue="3"
+            app:key="DURATION_SECONDS"
+            app:title="@string/vps_conveying_detector_duration_seconds"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="5f"
+            app:key="ELEVATOR_BUFFER_WIDTH"
+            app:title="@string/vps_conveying_detector_elevator_buffer_width"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="2f"
+            app:key="LINEAR_CONVEYING_BUFFERS_WIDTH"
+            app:title="@string/vps_conveying_detector_linear_conveying_buffers_width"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/navigation_preferences">
 
         <SwitchPreferenceCompat
@@ -218,7 +310,6 @@
             app:key="NAVIGATION_RECALCULATION_TIME_INTERVAL"
             app:title="@string/navigation_recalculation_time_interval_title"
             app:useSimpleSummaryProvider="true" />
-
 
     </PreferenceCategory>
 

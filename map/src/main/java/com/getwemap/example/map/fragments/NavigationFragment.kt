@@ -4,21 +4,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.getwemap.example.common.map.GlobalOptions
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.databinding.FragmentNavigationBinding
+import com.getwemap.example.map.insetOverlayBelowTransparentAppBar
+import com.getwemap.sdk.core.awaitLoaded
 import com.getwemap.sdk.core.model.entities.Coordinate
-import com.getwemap.sdk.core.model.entities.MapData
-import com.getwemap.sdk.core.model.services.parameters.ItinerarySearchRules
-import com.getwemap.sdk.core.navigation.manager.NavigationManagerListener
-import com.getwemap.sdk.map.OnMapViewReadyCallback
-import com.getwemap.sdk.map.WemapMapView
+import com.getwemap.sdk.core.model.entities.Levels
+import com.getwemap.sdk.core.model.services.ItinerarySearchRules
+import com.getwemap.sdk.core.navigation.manager.NavigationEvent
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
 import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
-import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
@@ -26,7 +27,17 @@ import org.maplibre.android.plugins.annotation.Circle
 import org.maplibre.android.plugins.annotation.CircleManager
 import org.maplibre.android.plugins.annotation.CircleOptions
 
-class NavigationFragment : MapFragment(), OnMapViewReadyCallback {
+/**
+ * Navigating between two points the user picks on the map, and reporting progress along the way.
+ *
+ * Long-press the map to drop an annotation. One is a destination navigated to from the user's position; two
+ * are an origin and a destination navigated between, which is how the sample can be driven without a fix.
+ *
+ * The manager reports through `Flow` properties rather than a listener interface, so the screen collects
+ * [com.getwemap.sdk.core.navigation.manager.NavigationManager.navigationEvents],
+ * `navigationInfoUpdates` and `errors` for as long as the view is alive.
+ */
+class NavigationFragment : MapFragment() {
 
     override val mapView get() = binding.mapView
     override val levelsSwitcher get() = binding.levelsSwitcher
@@ -40,6 +51,7 @@ class NavigationFragment : MapFragment(), OnMapViewReadyCallback {
     private val userLocationTextView get() = binding.userLocationTextView
 
     private val navigationManager get() = mapView.navigationManager
+    private val locationManager get() = mapView.locationManager
 
     private val userCreatedAnnotations: MutableList<Circle> = mutableListOf()
 
@@ -58,19 +70,52 @@ class NavigationFragment : MapFragment(), OnMapViewReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mapView.getMapViewAsync(this)
+        // One call for the whole screen, on the container holding its overlay controls.
+        binding.overlay.insetOverlayBelowTransparentAppBar()
 
         buttonStartNavigation.setOnClickListener { startNavigation() }
         buttonStopNavigation.setOnClickListener { stopNavigation() }
         buttonStartNavigationFromUserCreatedAnnotations.setOnClickListener { startNavigationFromUserCreatedAnnotations() }
         buttonRemoveUserCreatedAnnotations.setOnClickListener { removeUserCreatedAnnotations() }
-    }
-
-    override fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap, style: Style, data: MapData) {
 
         lifecycleScope.launch {
             runCatching {
-                mapView.itineraryManager.searchRuleNames(mapData.extras?.graphId ?: "")
+                mapView.awaitLoaded()
+            }.onSuccess {
+                onMapLoaded(mapView.map, mapView.map.style!!)
+                // `navigationManager`, like every other manager, is only reachable once the map has loaded.
+                observeNavigationManager()
+                updateUI()
+            }.onFailure { error ->
+                println("Failed to load mapView with error - $error")
+            }
+        }
+    }
+
+    override fun locationManagerReady() {
+        super.locationManagerReady()
+        lifecycleScope.launch {
+            locationManager
+                .coordinates
+                .collect {
+                    userLocationTextView.text = "$it"
+                    userLocationTextView.isVisible = true
+                }
+        }
+    }
+
+    override fun onDestroyView() {
+        _circleManager?.onDestroy()
+        super.onDestroyView()
+        _binding = null
+    }
+
+    // region ------ Private ------
+    private fun onMapLoaded(map: MapLibreMap, style: Style) {
+
+        lifecycleScope.launch {
+            runCatching {
+                mapView.itineraryManager.searchRuleNames()
             }.onSuccess {
                 println("Available rule names - $it")
             }.onFailure {
@@ -79,9 +124,8 @@ class NavigationFragment : MapFragment(), OnMapViewReadyCallback {
         }
 
         _circleManager = CircleManager(mapView, map, style)
-        setupNavigationManagerListener()
 
-        map.addOnMapLongClickListener {
+        map.addOnMapLongClickListener { latLng ->
             if (userCreatedAnnotations.size >= 2) {
                 Snackbar.make(mapView,
                     "You already created 2 annotations. Remove old ones to be able to add new",
@@ -89,15 +133,13 @@ class NavigationFragment : MapFragment(), OnMapViewReadyCallback {
                 return@addOnMapLongClickListener false
             }
 
-            val array = JsonArray()
-            if (focusedBuilding != null && focusedBuilding!!.boundingBox.contains(it))
-                array.add(focusedBuilding!!.activeLevel.id)
+            val data = JsonObject()
+            val building = focusedBuilding
+            if (building != null && building.boundingBox.contains(latLng)) {
+                data.add("level", JsonPrimitive(building.activeLevel.id))
+            }
 
-            val options = CircleOptions()
-                .withLatLng(it)
-                .withData(array)
-
-            val point = circleManager.create(options)
+            val point = circleManager.create(CircleOptions().withLatLng(latLng).withData(data))
             userCreatedAnnotations.add(point)
             updateUI()
 
@@ -105,63 +147,37 @@ class NavigationFragment : MapFragment(), OnMapViewReadyCallback {
         }
     }
 
-    override fun locationManagerReady() {
-        super.locationManagerReady()
-        lifecycleScope.launch {
-            mapView.locationManager
-                .coordinateFlow
-                .collect {
-                    userLocationTextView.text = "$it"
-                }
-        }
-    }
-
     private fun startNavigation() {
         startNavigation(null, getDestinationCoordinate())
     }
 
-    private fun stopNavigation() {
-        navigationManager.stopNavigation()
-            .onSuccess {
-                simulator?.reset()
-                buttonStopNavigation.isEnabled = false
-                updateUI()
-            }.onFailure {
-                val text = "Failed to stop navigation with error - $it"
-                Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
-            }
-    }
-
     private fun startNavigationFromUserCreatedAnnotations() {
-        val origin = getOriginCoordinate()
-        val destination = getDestinationCoordinate()
-
-        startNavigation(origin, destination)
+        startNavigation(getOriginCoordinate(), getDestinationCoordinate())
     }
 
     private fun startNavigation(origin: Coordinate?, destination: Coordinate) {
         disableStartButtons()
 
         val navOptions = GlobalOptions.navigationOptions(requireContext())
-        val rules = if (binding.wheelchairSwitch.isChecked) ItinerarySearchRules.WHEELCHAIR else ItinerarySearchRules()
+        val rules = if (binding.wheelchairSwitch.isChecked) {
+            ItinerarySearchRules.WHEELCHAIR
+        } else {
+            ItinerarySearchRules()
+        }
 
         lifecycleScope.launch {
             runCatching {
-                navigationManager
-                    .startNavigation(
-                        origin, destination,
-                        options = navOptions,
-                        searchRules = rules,
-                        itineraryOptions = GlobalOptions.itineraryOptions
-                    )
+                navigationManager.startNavigation(
+                    origin, destination,
+                    options = navOptions,
+                    searchRules = rules,
+                    itineraryOptions = GlobalOptions.itineraryOptions
+                )
             }.onSuccess {
                 // also you can use simulator to generate locations along the itinerary
                 simulator?.setItinerary(it.itinerary)
-                buttonStopNavigation.isEnabled = true
-                mapView.locationManager.apply {
-                    cameraMode = CameraMode.TRACKING_COMPASS
-                    renderMode = RenderMode.COMPASS
-                }
+                locationManager.renderMode = RenderMode.COMPASS
+                updateUI()
             }.onFailure {
                 val text = "Failed to start navigation with error - $it"
                 Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
@@ -170,45 +186,69 @@ class NavigationFragment : MapFragment(), OnMapViewReadyCallback {
         }
     }
 
-    private fun setupNavigationManagerListener() {
-        navigationManager.addListener(NavigationManagerListener(
-            onInfoChanged = { info ->
-                val nextStepInstructions = info.nextStep?.getNavigationInstructions(requireContext())?.instructions
-                textView.text = info.shortDescription + "\nNext - $nextStepInstructions"
-                textView.visibility = View.VISIBLE
-            },
-            onStarted = { navigation ->
-                textView.visibility = View.VISIBLE
-                Snackbar.make(mapView, "Navigation started", Snackbar.LENGTH_LONG).multiline().show()
-                buttonStopNavigation.isEnabled = true
-
-                navigation.itinerary.legsSteps.forEach {
-                    println(it.getNavigationInstructions(requireContext()))
-                }
-            },
-            onStopped = {
-                textView.visibility = View.GONE
-                Snackbar.make(mapView, "Navigation stopped", Snackbar.LENGTH_LONG).multiline().show()
-                buttonStopNavigation.isEnabled = false
+    private fun stopNavigation() {
+        navigationManager.stopNavigation()
+            .onSuccess {
+                simulator?.reset()
                 updateUI()
-            },
-            onArrived = {
-                Snackbar.make(mapView, "Navigation arrived at destination", Snackbar.LENGTH_LONG).multiline().show()
-            },
-            onFailed = { error ->
-                textView.visibility = View.GONE
-                Snackbar.make(mapView, "Navigation failed with error - $error", Snackbar.LENGTH_LONG).multiline().show()
-            },
-            onRecalculated = {
-                Snackbar.make(mapView, "Navigation recalculated", Snackbar.LENGTH_LONG).multiline().show()
+            }.onFailure {
+                val text = "Failed to stop navigation with error - $it"
+                Snackbar.make(mapView, text, Snackbar.LENGTH_LONG).multiline().show()
             }
-        ))
+    }
+
+    private fun observeNavigationManager() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            launch {
+                navigationManager.navigationInfoUpdates.collect { info ->
+                    val nextStepInstructions = info.nextStep?.getNavigationInstructions(requireContext())?.instructions
+                    textView.text = info.toCompactString() + "\nNext - $nextStepInstructions"
+                    textView.visibility = View.VISIBLE
+                }
+            }
+            launch {
+                navigationManager.navigationEvents.collect { event ->
+                    when (event) {
+                        is NavigationEvent.Started -> {
+                            textView.visibility = View.VISIBLE
+                            Snackbar.make(mapView, "Navigation started", Snackbar.LENGTH_LONG).multiline().show()
+                            updateUI()
+
+                            event.navigation.itinerary.legsSteps.forEach {
+                                println(it.getNavigationInstructions(requireContext()))
+                            }
+                        }
+                        is NavigationEvent.Stopped -> {
+                            textView.visibility = View.GONE
+                            Snackbar.make(mapView, "Navigation stopped", Snackbar.LENGTH_LONG).multiline().show()
+                            updateUI()
+                        }
+                        is NavigationEvent.Arrived ->
+                            Snackbar.make(mapView, "Navigation arrived at destination", Snackbar.LENGTH_LONG)
+                                .multiline().show()
+                        is NavigationEvent.Recalculated ->
+                            Snackbar.make(mapView, "Navigation recalculated", Snackbar.LENGTH_LONG).multiline().show()
+                    }
+                }
+            }
+            launch {
+                navigationManager.errors.collect { error ->
+                    textView.visibility = View.GONE
+                    Snackbar.make(mapView, "Navigation failed with error - $error", Snackbar.LENGTH_LONG)
+                        .multiline().show()
+                }
+            }
+        }
     }
 
     private fun updateUI() {
-        buttonStartNavigation.isEnabled = userCreatedAnnotations.size == 1 && !buttonStopNavigation.isEnabled
-        buttonStartNavigationFromUserCreatedAnnotations.isEnabled = userCreatedAnnotations.size == 2 && !buttonStopNavigation.isEnabled
+        // The manager is the source of truth for this — a flag of our own would have to be kept in step with
+        // navigations the SDK ends by itself, arrival being the obvious one.
+        val isNavigating = navigationManager.hasActiveNavigation
+        buttonStartNavigation.isEnabled = userCreatedAnnotations.size == 1 && !isNavigating
+        buttonStartNavigationFromUserCreatedAnnotations.isEnabled = userCreatedAnnotations.size == 2 && !isNavigating
         buttonRemoveUserCreatedAnnotations.isEnabled = userCreatedAnnotations.isNotEmpty()
+        buttonStopNavigation.isEnabled = isNavigating
     }
 
     private fun disableStartButtons() {
@@ -222,26 +262,20 @@ class NavigationFragment : MapFragment(), OnMapViewReadyCallback {
         updateUI()
     }
 
-    private fun getLevelFromAnnotation(annotation: Circle): List<Float> {
-        return annotation.data!!.asJsonArray.map { it.asFloat }
-    }
+    private fun getDestinationCoordinate(): Coordinate = getCoordinateFrom(userCreatedAnnotations.first())
 
-    private fun getDestinationCoordinate(): Coordinate {
-        return getCoordinateFrom(userCreatedAnnotations.first())
-    }
-
-    private fun getOriginCoordinate(): Coordinate {
-        return getCoordinateFrom(userCreatedAnnotations[1])
-    }
+    private fun getOriginCoordinate(): Coordinate = getCoordinateFrom(userCreatedAnnotations[1])
 
     private fun getCoordinateFrom(annotation: Circle): Coordinate {
         val to = annotation.latLng
-        return Coordinate(to.latitude, to.longitude, getLevelFromAnnotation(annotation))
+        return Coordinate(to.latitude, to.longitude, getLevelsFrom(annotation))
     }
 
-    override fun onDestroyView() {
-        _circleManager?.onDestroy()
-        super.onDestroyView()
-        _binding = null
+    private fun getLevelsFrom(annotation: Circle): Levels {
+        val level = annotation.data?.asJsonObject?.get("level")?.asFloat
+            ?: return Levels.Outdoor
+
+        return Levels.Single(level)
     }
+    // endregion ------ Private ------
 }

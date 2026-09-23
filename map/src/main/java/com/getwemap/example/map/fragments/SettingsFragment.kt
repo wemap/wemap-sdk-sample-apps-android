@@ -12,7 +12,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     override fun onDestroyView() {
-        Config.applyGlobalOptions(requireContext())
+        Config.applyAppOptions(requireContext())
         super.onDestroyView()
     }
 }
