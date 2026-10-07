@@ -34,7 +34,7 @@ worked example of the migration. The three changes you will meet first:
   each app's `Config.kt` builds a config at session or view creation time.
 
 The full guide, ordered so each step leaves your project compiling, is part of the
-[Wemap SDKs for Android documentation](https://developers.getwemap.com/docs/android-native/getting-started).
+[Wemap SDKs for Android documentation](https://developers.getwemap.com/docs/android-native/1.x/getting-started).
 
 ## Examples
 

@@ -2,15 +2,12 @@ package com.getwemap.example.map.fragments
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.getwemap.example.common.CommonAppConstants
 import com.getwemap.example.common.PermissionHelper
-import com.getwemap.example.common.map.MapLevelsSwitcher
 import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.common.multiline
 import com.getwemap.example.map.Config
@@ -22,6 +19,7 @@ import com.getwemap.sdk.core.location.simulation.SimulationOptions
 import com.getwemap.sdk.core.location.simulation.SimulatorLocationSource
 import com.getwemap.sdk.map.MapSession
 import com.getwemap.sdk.map.WemapMapView
+import com.getwemap.sdk.map.widgets.levels.LevelsSwitcherView
 import com.getwemap.sdk.positioning.fusedgms.GmsFusedLocationSource
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
@@ -29,7 +27,8 @@ import kotlinx.coroutines.launch
 abstract class MapFragment : Fragment() {
 
     protected abstract val mapView: WemapMapView
-    protected abstract val levelsSwitcher: MapLevelsSwitcher
+    /** The rail this class wires to the map, or `null` for a screen that composes its own beside other chrome. */
+    protected abstract val levelsSwitcher: LevelsSwitcherView?
 
     private val sessionViewModel: SessionViewModel by activityViewModels()
 
@@ -76,12 +75,16 @@ abstract class MapFragment : Fragment() {
                 // to a layout param — and only once the map is loaded.
                 mapView.insetCompassBelowTransparentAppBar()
                 checkPermissionsAndSetupLocationSource()
-                levelsSwitcher.bind(buildingManager, viewLifecycleOwner.lifecycleScope)
+                levelsSwitcher?.apply {
+                    buildingManager = this@MapFragment.buildingManager
+                    // Marks the level the user is standing on with a dot. Leaving it unset is how the feature is
+                    // turned off — and is indistinguishable, correctly, from a map that has never had a fix.
+                    userLocationManager = mapView.locationManager
+                }
             }.onFailure { error ->
                 println("Failed to load mapView with error - $error")
             }
         }
-
     }
 
     @SuppressLint("MissingPermission")

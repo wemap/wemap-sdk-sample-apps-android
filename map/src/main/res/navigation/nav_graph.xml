@@ -39,6 +39,12 @@
             android:id="@+id/action_SamplesListFragment_to_CustomCreditsFragment"
             app:destination="@id/CustomCreditsFragment" />
         <action
+            android:id="@+id/action_SamplesListFragment_to_ItineraryPlannerFragment"
+            app:destination="@id/ItineraryPlannerFragment" />
+        <action
+            android:id="@+id/action_SamplesListFragment_to_ComposeItineraryPlannerFragment"
+            app:destination="@id/ComposeItineraryPlannerFragment" />
+        <action
             android:id="@+id/action_SamplesListFragment_to_ComposeMapFragment"
             app:destination="@id/ComposeMapFragment" />
     </fragment>
@@ -64,6 +70,16 @@
         android:label="@string/navigation_fragment_label"
         tools:layout="@layout/fragment_navigation"/>
 
+    <fragment
+        android:id="@+id/ItineraryPlannerFragment"
+        android:name="com.getwemap.example.map.fragments.ItineraryPlannerFragment"
+        android:label="@string/itinerary_planner_fragment_label"
+        tools:layout="@layout/fragment_itinerary_planner"/>
+
+    <fragment
+        android:id="@+id/ComposeItineraryPlannerFragment"
+        android:name="com.getwemap.example.map.fragments.ComposeItineraryPlannerFragment"
+        android:label="@string/compose_itinerary_planner_fragment_label" />
 
     <fragment
         android:id="@+id/ComposeMapFragment"

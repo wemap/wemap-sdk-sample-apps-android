@@ -46,7 +46,8 @@ class NavigationFragment : MapFragment() {
 
     private val buttonStartNavigation get() = binding.startNavigation
     private val buttonStopNavigation get() = binding.stopNavigation
-    private val buttonStartNavigationFromUserCreatedAnnotations get() = binding.startNavigationFromUserCreatedAnnotations
+    private val buttonStartNavigationFromUserCreatedAnnotations
+        get() = binding.startNavigationFromUserCreatedAnnotations
     private val buttonRemoveUserCreatedAnnotations get() = binding.removeUserCreatedAnnotations
     private val userLocationTextView get() = binding.userLocationTextView
 
@@ -75,7 +76,9 @@ class NavigationFragment : MapFragment() {
 
         buttonStartNavigation.setOnClickListener { startNavigation() }
         buttonStopNavigation.setOnClickListener { stopNavigation() }
-        buttonStartNavigationFromUserCreatedAnnotations.setOnClickListener { startNavigationFromUserCreatedAnnotations() }
+        buttonStartNavigationFromUserCreatedAnnotations.setOnClickListener {
+            startNavigationFromUserCreatedAnnotations()
+        }
         buttonRemoveUserCreatedAnnotations.setOnClickListener { removeUserCreatedAnnotations() }
 
         lifecycleScope.launch {
@@ -110,7 +113,7 @@ class NavigationFragment : MapFragment() {
         _binding = null
     }
 
-    // region ------ Private ------
+    // region Private
     private fun onMapLoaded(map: MapLibreMap, style: Style) {
 
         lifecycleScope.launch {
@@ -277,5 +280,5 @@ class NavigationFragment : MapFragment() {
 
         return Levels.Single(level)
     }
-    // endregion ------ Private ------
+    // endregion Private
 }

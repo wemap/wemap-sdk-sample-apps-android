@@ -94,7 +94,7 @@ class VpsLocalHistoryMapFragment : Fragment() {
     }
 
     private fun onMapViewReady(mapView: WemapMapView, map: MapLibreMap, style: Style) {
-        binding.levelsSwitcher.bind(mapView.buildingManager, viewLifecycleOwner.lifecycleScope)
+        binding.levelsSwitcher.buildingManager = mapView.buildingManager
 
         style.addSource(GeoJsonSource(TRACE_SOURCE_ID, traceLine()))
         style.addLayer(

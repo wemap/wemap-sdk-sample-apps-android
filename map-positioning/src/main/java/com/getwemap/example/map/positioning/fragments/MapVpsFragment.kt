@@ -179,7 +179,7 @@ class MapVpsFragment : Fragment() {
             }
         })
 
-        binding.levelsSwitcher.bind(mapView.buildingManager, viewLifecycleOwner.lifecycleScope)
+        binding.levelsSwitcher.buildingManager = mapView.buildingManager
         binding.locateMe.isEnabled = true
 
         // Moved clear of this screen's own bottom-trailing button stack, which would otherwise sit on top of

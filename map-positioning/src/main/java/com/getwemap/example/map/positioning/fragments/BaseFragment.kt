@@ -10,19 +10,19 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import com.getwemap.example.common.map.MapLevelsSwitcher
 import com.getwemap.example.common.map.SessionViewModel
 import com.getwemap.example.map.positioning.Config
 import com.getwemap.sdk.core.awaitLoaded
 import com.getwemap.sdk.map.MapSession
 import com.getwemap.sdk.map.WemapMapView
+import com.getwemap.sdk.map.widgets.levels.LevelsSwitcherView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 
 abstract class BaseFragment : Fragment() {
 
     protected abstract val mapView: WemapMapView
-    protected abstract val levelsSwitcher: MapLevelsSwitcher
+    protected abstract val levelsSwitcher: LevelsSwitcherView
 
     private val sessionViewModel: SessionViewModel by activityViewModels()
 
@@ -52,7 +52,7 @@ abstract class BaseFragment : Fragment() {
                 mapView.awaitLoaded()
             }.onSuccess {
                 checkPermissionsAndSetupLocationSource()
-                levelsSwitcher.bind(mapView.buildingManager, viewLifecycleOwner.lifecycleScope)
+                levelsSwitcher.buildingManager = mapView.buildingManager
             }.onFailure {
                 println("Failed to load MapView with error - $it")
             }

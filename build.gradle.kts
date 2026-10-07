@@ -5,9 +5,11 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
 }
 
-val wemapVersion = libs.versions.wemap.get()
+// The samples' own release name, CalVer YYYY.M.MICRO — not an SDK version: the SDK pins are in
+// gradle/libs.versions.toml, and the change log names both under each release.
+val samplesVersion = "2026.10.0"
 
 allprojects {
     group = "com.getwemap.example"
-    version = wemapVersion
+    version = samplesVersion
 }

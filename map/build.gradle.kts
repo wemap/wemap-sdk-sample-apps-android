@@ -53,6 +53,7 @@ dependencies {
 
     implementation(libs.wemap.map)
     implementation(libs.wemap.map.compose)
+    implementation(libs.wemap.map.widgets)
     implementation(libs.wemap.positioning.fused.gms)
 
     implementation(platform(libs.androidx.compose.bom))

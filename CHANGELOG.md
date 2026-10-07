@@ -1,24 +1,45 @@
 # Change Log
 
-This log covers the **sample apps**. The SDKs they use have their own change history in
-[`SDK_CHANGELOG.md`](SDK_CHANGELOG.md), linked from every section below that has one. Sections older than
-1.0.0-beta.1 predate it and carry no link.
+This log covers the **sample apps**, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
+From 2026.10.0 a release is named by date, with [CalVer](https://calver.org/) `YYYY.M.MICRO`; its `Dependencies`
+names the Wemap SDKs and map widgets releases it is built with, whose own changes are in
+[`SDK_CHANGELOG.md`](SDK_CHANGELOG.md) and [`WIDGETS_CHANGELOG.md`](WIDGETS_CHANGELOG.md). Earlier sections are
+named after the SDK release they shipped with; those older than 1.0.0-beta.1 carry no link to the SDK changes.
 
 ---
 
 ## [Unreleased]
 
+## [2026.10.0](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/2026.10.0)
+
 ### Added
 
-* Sample(Map+Positioning): the offline VPS sample can run against an offline map, so the whole flow works with
-  no network at all — an Online/Offline switch on the initial screen creates the session from a downloaded
-  packdata instead of the backend, with Download and Check for updates controls, and scan history opens a
-  recorded session's venue the same way
+* Sample(Map): *Itinerary planner*, on Views and in Compose — plans a route with the map widgets' itinerary form,
+  previews it, then navigates it
+* Sample(Map+Pos[VPS Local]): run the offline VPS sample against an offline map, so the whole flow works with
+  no network at all
+  * an Online/Offline switch creates the session from a downloaded packdata instead of the backend, with
+    download and update-check controls
+  * one packdata is kept per map id, so a venue's offline map sits beside its offline VPS database and several
+    venues coexist on the device
+  * scan history resolves the venue of a recorded session the same way, so it is reviewable without a
+    network — which is where it is needed, right after a walk
+
+### Changed
+
+* Sample(Map), Sample(Map+Pos): every map screen shows the map widgets' levels rail, which also marks the level
+  the user is on, in place of the samples' own; the Levels sample hosts it in Compose
 
 ### Fixed
 
-* Sample(Map+Positioning): opening a recorded session's trace crashed unless a map had been loaded earlier in
-  the same process
+* Sample(Map+Pos[VPS Local]): opening a recorded session's trace crashed unless a map had been loaded earlier
+  in the same process — the scan-history map inflated `WemapMapView` without initializing MapLibre first
+
+### Dependencies
+
+* [Wemap SDKs 1.0.0-beta.1](https://github.com/wemap/wemap-sdk-sample-apps-android/blob/main/SDK_CHANGELOG.md#100-beta1),
+  unchanged
+* [Map widgets 0.1.0](https://github.com/wemap/wemap-sdk-sample-apps-android/blob/main/WIDGETS_CHANGELOG.md#010), new
 
 ## [1.0.0-beta.1](https://github.com/wemap/wemap-sdk-sample-apps-android/releases/tag/1.0.0-beta.1)
 

@@ -139,4 +139,8 @@
     <string name="navigation_recalculation_time_interval_summary" translatable="false">The navigation recalculation time interval, measured in seconds, indicates the interval between consecutive navigation recalculations. An interval of less than 5 seconds is forbidden. Default is 5 seconds</string>
 
     <string name="use_wheelchair" translatable="false">Use wheelchair</string>
+
+    <string name="itinerary_planner_fragment_label" translatable="false">Itinerary planner</string>
+    <string name="compose_itinerary_planner_fragment_label" translatable="false">Itinerary planner (Compose)</string>
+    <string name="plan_itinerary" translatable="false">Plan itinerary</string>
 </resources>

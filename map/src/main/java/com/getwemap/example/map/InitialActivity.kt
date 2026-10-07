@@ -132,6 +132,8 @@ private val MAP_DESTINATIONS = setOf(
     R.id.LevelsFragment,
     R.id.PoisFragment,
     R.id.NavigationFragment,
+    R.id.ItineraryPlannerFragment,
+    R.id.ComposeItineraryPlannerFragment,
     R.id.CustomCreditsFragment,
     R.id.ComposeMapFragment
 )

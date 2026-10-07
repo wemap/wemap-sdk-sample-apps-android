@@ -27,18 +27,14 @@
         app:layout_constraintTop_toTopOf="parent">
 
 
-        <com.getwemap.example.common.map.MapLevelsSwitcher
+        <com.getwemap.sdk.map.widgets.levels.LevelsSwitcherView
             android:id="@+id/levelsSwitcher"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/overlay_inset"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:visibility="invisible"
-            app:selectionRequired="true"
-            app:singleSelection="true"
-            tools:visibility="visible" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/userSelectionSwitch"

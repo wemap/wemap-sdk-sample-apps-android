@@ -50,6 +50,7 @@ dependencies {
     implementation(project(":common-map"))
 
     implementation(libs.wemap.map)
+    implementation(libs.wemap.map.widgets)
     implementation(libs.wemap.positioning.vps.arcore)
     implementation(libs.wemap.positioning.vps.local)
     implementation(libs.wemap.positioning.gps)

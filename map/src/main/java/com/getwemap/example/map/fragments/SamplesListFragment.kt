@@ -19,8 +19,10 @@ class SamplesListFragment : Fragment() {
                 0 -> R.id.action_SamplesListFragment_to_LevelsFragment
                 1 -> R.id.action_SamplesListFragment_to_PoisFragment
                 2 -> R.id.action_SamplesListFragment_to_NavigationFragment
-                3 -> R.id.action_SamplesListFragment_to_ComposeMapFragment
-                4 -> R.id.action_SamplesListFragment_to_CustomCreditsFragment
+                3 -> R.id.action_SamplesListFragment_to_ItineraryPlannerFragment
+                4 -> R.id.action_SamplesListFragment_to_ComposeItineraryPlannerFragment
+                5 -> R.id.action_SamplesListFragment_to_ComposeMapFragment
+                6 -> R.id.action_SamplesListFragment_to_CustomCreditsFragment
                 else -> throw Exception("Unsupported transition")
             }
             findNavController().navigate(navId, requireArguments())
@@ -46,8 +48,8 @@ class SamplesRecyclerViewAdapter(
         listOf(
             Pair(
                 "Levels",
-                "Switches indoor levels, outlines a 100 m radius with a style layer, and restores map " +
-                    "state across recreation"
+                "Switches indoor levels with the SDK's levels rail, outlines a 100 m radius with a style " +
+                    "layer, and restores map state across recreation"
             ),
             Pair(
                 "Points of interest",
@@ -57,6 +59,14 @@ class SamplesRecyclerViewAdapter(
             Pair(
                 "Navigation",
                 "Navigates between two points long-pressed on the map, reporting progress along the way"
+            ),
+            Pair(
+                "Itinerary planner",
+                "Plans an itinerary with the SDK's itinerary form, then navigates the previewed route"
+            ),
+            Pair(
+                "Itinerary planner (Compose)",
+                "Plans an itinerary on a map with no location source, so both ends are picked on the map"
             ),
             Pair(
                 "Map in Compose",

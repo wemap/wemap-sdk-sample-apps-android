@@ -3,6 +3,9 @@ wemap = "1.0.0-beta.1"
 # The offline VPS module publishes with the base SDKs but under a version of its own: its whole public
 # API is `@AlphaVpsLocalApi` and does not follow semantic versioning, so it keeps an `-alpha.N` suffix.
 wemapVpsLocal = "1.0.0-alpha.4"
+# The map widgets are on a `0.x` version line of their own: any release may change their API. Each release is
+# built against one Wemap SDKs release, which `wemap` above stays on.
+wemapWidgets = "0.1.0"
 
 # plugins
 androidGradlePlugin = "8.13.2"
@@ -52,6 +55,7 @@ androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lif
 wemap-core = { group = "com.getwemap.sdk", name = "core", version.ref = "wemap" }
 wemap-map = { group = "com.getwemap.sdk", name = "map", version.ref = "wemap" }
 wemap-map-compose = { group = "com.getwemap.sdk", name = "map-compose", version.ref = "wemap" }
+wemap-map-widgets = { group = "com.getwemap.sdk", name = "map-widgets", version.ref = "wemapWidgets" }
 wemap-geoar = { group = "com.getwemap.sdk", name = "geo-ar", version.ref = "wemap" }
 wemap-geoar-compose = { group = "com.getwemap.sdk", name = "geo-ar-compose", version.ref = "wemap" }
 

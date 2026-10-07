@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragments.ItineraryPlannerFragment">
+
+    <com.getwemap.sdk.map.WemapMapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!--
+      The itinerary form, its point picker's pin and the levels rail, composed together by
+      `ItineraryPlannerFragment` rather than placed here as the widgets' `View` hosts. The form's `View` host
+      places its card inside itself with nothing but an alignment, so on a small phone the rail would sit on top
+      of it; one Compose layout can keep the two apart. It is given the map's own bounds, because the pin marks
+      the map's centre.
+    -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/planner"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="@id/mapView"
+        app:layout_constraintEnd_toEndOf="@id/mapView"
+        app:layout_constraintStart_toStartOf="@id/mapView"
+        app:layout_constraintTop_toTopOf="@id/mapView" />
+    <!--
+      Every control this screen floats over the map, in one container so the transparent app bar is cleared
+      **once** — `insetOverlayBelowTransparentAppBar()` pads this view, and everything inside it is clear.
+      Without the grouping each control needs its own call, which is what this pattern replaces.
+    -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/overlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!--
+          `layout_constrainedWidth` on both labels is what makes their side margins mean anything: a
+          `wrap_content` view between two parent constraints overflows them silently, and each of these carries a
+          line long enough to do it - so the 16dp was there and the background still ran edge to edge.
+
+          Hidden until navigation has something to say, matching the iOS sample, where the label is `hidden` in
+          the storyboard. `ItineraryPlannerFragment` already showed it on the first info update and on
+          `NavigationEvent.Started`, and hid it again on `Stopped` - only the resting state was out of step, and
+          it is what put this label under the itinerary form's card: the form can only be opened before
+          navigation starts, so a label that starts hidden never shares the screen with it.
+        -->
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="#80000000"
+            android:text="@string/navigation_placeholder"
+            android:textColor="@color/white"
+            android:visibility="gone"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!--
+          Hidden until the first location arrives, for the same reason as the label above: a caption reading
+          "Navigation info will be here" where the user's coordinate goes says nothing, and this one has no iOS
+          counterpart to copy a resting state from - `ItineraryPlannerViewController` declares only
+          `navigationInfo`. `ItineraryPlannerFragment` shows it on the first coordinate and never hides it again,
+          there being no event that says a location source stopped.
+        -->
+        <TextView
+            android:id="@+id/userLocationTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:background="#80000000"
+            android:text="@string/navigation_placeholder"
+            android:textColor="@color/white"
+            android:visibility="gone"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintBottom_toTopOf="@id/buttons"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!--
+          `0dp` rather than `wrap_content`, on the row and on every button in it. A `wrap_content` row between
+          two parent constraints overflows them, which is what had the first button touching the screen edge with
+          a 16dp margin set on it; and `wrap_content` with a weight divides only the *leftover* space, so once the
+          row was inset the three buttons came out unequal and the first one wrapped mid-word. With `0dp` the
+          weights divide the row itself, into equal thirds.
+
+          `textAllCaps="false"` because a third of the row cannot hold "START NAVIGATION" - Material 2's button
+          style upper-cases the label, and the sentence case underneath is both narrower and what the iOS sample
+          shows. The other samples' buttons are still upper-cased; aligning those belongs in a theme, not here.
+        -->
+        <LinearLayout
+            android:id="@+id/buttons"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <Button
+                android:id="@+id/planItinerary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:enabled="false"
+                android:gravity="center"
+                android:textAllCaps="false"
+                android:text="@string/plan_itinerary" />
+
+            <Button
+                android:id="@+id/startNavigation"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:enabled="false"
+                android:gravity="center"
+                android:textAllCaps="false"
+                android:text="@string/start_navigation" />
+
+            <Button
+                android:id="@+id/stopNavigation"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:enabled="false"
+                android:gravity="center"
+                android:textAllCaps="false"
+                android:text="@string/stop_navigation" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
